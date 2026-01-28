@@ -1,0 +1,313 @@
+Replit App Build Prompt
+
+Build a desktop-first web application with optional mobile browser support.
+The app is a running-consistency companion game that integrates with third-party fitness platforms.
+
+App Name (working)
+
+Running Companion
+
+Product Overview
+
+Build a web app that rewards users for running consistently by keeping a pixel-art character alive, healthy, and visually customizable.
+
+This app is not a fitness tracker.
+It is a habit and consistency companion layered on top of existing fitness platforms.
+
+The emotional core of the app is:
+
+A real-world running habit directly determines the survival and legacy of a digital companion.
+
+Authentication & Data Sources
+Login Methods
+
+OAuth via Strava (primary)
+
+OAuth via Google (account identity only)
+
+Users must connect at least one supported fitness provider
+
+Supported Fitness Providers
+
+Strava
+
+Garmin Connect
+
+Coros
+
+Apple Health (via available APIs or abstraction)
+
+Activity Rules
+
+All running data must come exclusively from connected fitness providers
+
+No manual activity entry
+
+Minimum eligible run distance: 1 kilometer
+
+Activities under 1 km do not count
+
+Core Gameplay Loop
+
+User completes a run using a connected fitness platform
+
+Activity syncs automatically
+
+App:
+
+Validates distance ≥ 1 km
+
+Updates streak and health logic
+
+Updates character growth
+
+Rolls for cosmetic item drops based on distance
+
+User visits dashboard to see character state and inventory
+
+Typical daily session: under 1 minute
+
+Character System
+Character Creation
+
+Upon first login, automatically generate a pixel-art character
+
+No tutorial overlay
+
+Character immediately appears on the dashboard
+
+Character Health States
+
+Health is determined by consecutive days without a run, with intentional rest supported.
+
+Day	Condition	Effect
+Day 0	Run logged	Character fully nourished
+Day 1	No run	Treated the same as a run (intentional rest)
+Day 2	No run	Character weakens slightly
+Day 3	No run	Character enters critical state
+Day 4+	No run	Character dies
+Growth
+
+Growth is cosmetic only
+
+Based on consistent days, not performance metrics
+
+Examples:
+
+More detailed sprite
+
+Subtle idle animation changes
+
+Visual posture improvements
+
+No stats, no power, no gameplay advantages.
+
+Death & Archive System
+Permanent Death
+
+When a character dies, it cannot be revived
+
+Character is permanently finalized
+
+Archive
+
+Dead characters are stored in a user profile section called Archive
+
+Each archived character displays:
+
+Character sprite snapshot
+
+Lifespan (days alive)
+
+Total runs completed
+
+Total distance run
+
+Cause of death (inactivity)
+
+Archive entries are read-only and purely historical.
+
+New Characters
+
+User may immediately create a new character
+
+New characters do not reference past characters
+
+The only persistent progression across characters is cosmetic inventory
+
+Item & Inventory System
+Item Philosophy
+
+Cosmetic only
+
+No gameplay advantages
+
+Earned passively through running
+
+Designed to create delight and surprise
+
+Item Categories
+
+Wearables
+
+Hats, cloaks, boots
+
+Nordic-inspired pixel art
+
+Accessories
+
+Necklaces, charms, handheld items
+
+No environmental effects
+No species shifts
+No location-based drops
+
+Distance-Based Rarity System
+Core Rule
+
+Any run of 1 km or more can roll any rarity tier, including Legendary.
+
+Distance does not unlock rarities — it weights probabilities.
+
+Distance Buckets
+
+1k–5k
+
+5k–10k
+
+10k–15k
+
+15k–20k
+
+20k–30k
+
+30k–40k
+
+40k–50k
+
+50k+
+
+Example Probability Weighting (Tunable)
+Distance	Common	Uncommon	Rare	Epic	Legendary
+1–5k	68%	24%	6%	1.5%	0.5%
+5–10k	55%	25%	13%	5%	2%
+10–15k	45%	25%	18%	8%	4%
+15–20k	35%	25%	22%	12%	6%
+20–30k	25%	25%	28%	15%	7%
+30–40k	18%	22%	30%	18%	12%
+40–50k	10%	20%	32%	22%	16%
+High-Distance Guarantees
+
+50k+
+
+Guaranteed Epic item
+
++1 additional roll (Rare / Epic / Legendary)
+
+100k+
+
+Guaranteed Legendary item
+
++2 additional rolls (Rare / Epic / Legendary)
+
+Guaranteed drops stack with weighted rolls.
+
+UI / UX Requirements
+Platform Focus
+
+Desktop-first
+
+Mobile browser compatible
+
+No native apps required
+
+Visual Style
+
+Cozy pixel art
+
+Nordic / Scandinavian minimalism
+
+Muted color palette
+
+Calm animations
+
+Plenty of whitespace
+
+Layout
+
+Character is always the visual focus
+
+Health and streak clearly visible
+
+Inventory accessible but secondary
+
+Tone
+
+Calm
+
+Encouraging
+
+Non-judgmental
+
+Never shaming
+
+Example copy:
+
+“Your companion rests.”
+
+“Your companion grows weary.”
+
+“Your companion has passed into legend.”
+
+Behavioral Design Constraints
+
+Explicitly do not include:
+
+Leaderboards
+
+Pace comparisons
+
+Calorie tracking
+
+Social competition
+
+Manual logging
+
+This app should feel:
+
+Supportive
+
+Sustainable
+
+Emotionally meaningful
+
+Low pressure
+
+Technical Expectations (MVP)
+
+Frontend: modern React-based UI
+
+Backend: simple REST or serverless architecture
+
+OAuth-based authentication
+
+Database tables for:
+
+Users
+
+Characters
+
+Activities
+
+Items
+
+Inventory
+
+Archive entries
+
+Pixel art assets may be placeholders initially
+
+System should be easy to iterate on post-MVP
+
+Build this app with clean, readable code, sensible defaults, and clear separation of concerns.
+Optimize for correctness, clarity, and future extensibility rather than over-engineering.
