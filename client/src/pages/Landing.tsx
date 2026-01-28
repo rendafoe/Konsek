@@ -26,7 +26,7 @@ export default function Landing() {
       <nav className="relative z-10 max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <Mountain size={32} className="text-white" />
-          <h1 className="text-xl font-bold text-white tracking-tight">Konsekvens</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">Konsek</h1>
         </div>
         <a 
           href="/api/login" 
