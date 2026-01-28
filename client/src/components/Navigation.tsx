@@ -1,71 +1,87 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Home, List, Archive, LogOut, Settings } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Home, Sparkles, Archive, LogOut, Settings, Mountain } from "lucide-react";
 
 export function Navigation() {
   const [location] = useLocation();
   const { logout } = useAuth();
-  const { toast } = useToast();
 
   const handleLogout = () => {
-    logout(undefined, {
-      onSuccess: () => {
-        toast({ title: "Logged out", description: "See you next run!" });
-      }
-    });
+    window.location.href = "/api/logout";
   };
 
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
-    { href: "/inventory", icon: List, label: "Gear" },
-    { href: "/archive", icon: Archive, label: "History" },
+    { href: "/inventory", icon: Sparkles, label: "Gear" },
+    { href: "/archive", icon: Archive, label: "Archive" },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full md:left-0 md:top-0 md:bottom-auto md:w-24 md:h-screen bg-card border-t-4 md:border-t-0 md:border-r-4 border-border z-50 flex md:flex-col items-center justify-between p-4 md:py-8">
+    <nav className="fixed bottom-0 left-0 w-full md:static md:w-20 lg:w-24 md:min-h-screen bg-white/95 dark:bg-card backdrop-blur-sm border-t md:border-t-0 md:border-r-2 border-border z-50 flex md:flex-col items-center justify-between p-3 md:py-8 shadow-lg md:shadow-none">
       {/* Logo Area */}
-      <div className="hidden md:flex flex-col items-center mb-8">
-        <div className="w-12 h-12 bg-primary mb-2 border-4 border-black" />
-        <span className="font-pixel text-[10px] text-center leading-tight">RUN<br/>COMP</span>
+      <div className="hidden md:flex flex-col items-center mb-10">
+        <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-2 shadow-md">
+          <Mountain size={24} className="text-white" />
+        </div>
+        <span className="text-[10px] font-bold text-center text-muted-foreground uppercase tracking-wider">
+          Konse<br/>kvens
+        </span>
       </div>
 
       {/* Nav Links */}
-      <div className="flex md:flex-col gap-6 md:gap-8 w-full justify-around md:justify-start">
+      <div className="flex md:flex-col gap-2 md:gap-3 w-full justify-around md:justify-start md:px-2">
         {navItems.map((item) => {
           const isActive = location === item.href;
           return (
-            <Link key={item.href} href={item.href} className={`
-                flex flex-col items-center gap-1 group transition-colors
-                ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}
-              `}>
-                <div className={`p-2 rounded-none transition-transform group-hover:-translate-y-1 ${isActive ? 'bg-primary/10' : ''}`}>
-                  <item.icon size={24} strokeWidth={isActive ? 3 : 2} />
-                </div>
-                <span className="font-pixel text-[8px] md:text-[10px] hidden sm:block">{item.label}</span>
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              className={`
+                flex flex-col items-center gap-1 p-3 rounded-xl transition-all
+                ${isActive 
+                  ? 'bg-primary text-white shadow-md' 
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }
+              `}
+              data-testid={`nav-${item.label.toLowerCase()}`}
+            >
+              <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-[9px] font-semibold hidden md:block uppercase tracking-wide">
+                {item.label}
+              </span>
             </Link>
           );
         })}
       </div>
 
       {/* Footer Actions */}
-      <div className="hidden md:flex flex-col gap-4 mt-auto">
-        <Link href="/settings" className="p-2 text-muted-foreground hover:text-foreground transition-transform hover:-translate-y-1">
-          <Settings size={24} />
+      <div className="hidden md:flex flex-col gap-2 mt-auto px-2 w-full">
+        <Link 
+          href="/settings" 
+          className="flex flex-col items-center gap-1 p-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+          data-testid="nav-settings"
+        >
+          <Settings size={22} />
+          <span className="text-[9px] font-semibold uppercase tracking-wide">Settings</span>
         </Link>
         <button 
           onClick={handleLogout}
-          className="p-2 text-destructive hover:text-destructive/80 transition-transform hover:-translate-y-1"
+          className="flex flex-col items-center gap-1 p-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+          data-testid="button-logout"
         >
-          <LogOut size={24} />
+          <LogOut size={22} />
+          <span className="text-[9px] font-semibold uppercase tracking-wide">Logout</span>
         </button>
       </div>
       
-      {/* Mobile Settings/Logout would likely be in a drawer, simplified here */}
-      <div className="md:hidden">
-          <Link href="/settings" className="text-muted-foreground hover:text-foreground">
-             <Settings size={24} />
-          </Link>
+      {/* Mobile Settings */}
+      <div className="md:hidden flex gap-2">
+        <Link 
+          href="/settings" 
+          className="p-3 rounded-xl text-muted-foreground hover:bg-muted transition-all"
+        >
+          <Settings size={22} />
+        </Link>
       </div>
     </nav>
   );

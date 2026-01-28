@@ -2,9 +2,8 @@ import { useCharacter, useCreateCharacter } from "@/hooks/use-character";
 import { useStravaStatus, useStravaSync } from "@/hooks/use-strava";
 import { useRuns } from "@/hooks/use-runs";
 import { PixelCharacter } from "@/components/PixelCharacter";
-import { StatCard } from "@/components/StatCard";
 import { Navigation } from "@/components/Navigation";
-import { Loader2, RefreshCw, AlertTriangle, Activity } from "lucide-react";
+import { Loader2, RefreshCw, AlertTriangle, Activity, Mountain, Trophy, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -35,141 +34,245 @@ export default function Dashboard() {
   };
 
   if (isCharLoading || isStravaLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin w-8 h-8 text-primary" /></div>;
+    return (
+      <div className="min-h-screen aurora-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin w-10 h-10 text-white/80" />
+          <p className="text-white/60 text-sm">Loading your companion...</p>
+        </div>
+      </div>
+    );
   }
 
   // Case: No Character created yet
   if (!character && !isCharLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      <div className="min-h-screen aurora-bg flex flex-col md:flex-row">
         <Navigation />
         <main className="flex-1 p-6 md:p-12 flex items-center justify-center">
-           <div className="max-w-md w-full bg-card p-8 pixel-border">
-             <h2 className="text-xl font-pixel mb-4 text-center">New Game</h2>
-             <p className="text-muted-foreground mb-6 text-center text-sm">
-               You don't have a companion yet. Name your new friend to begin your journey.
-             </p>
-             <form onSubmit={handleCreate} className="space-y-4">
-               <div>
-                 <label className="block text-xs font-pixel mb-2 uppercase text-muted-foreground">Name</label>
-                 <input 
-                   value={newCharName}
-                   onChange={(e) => setNewCharName(e.target.value)}
-                   className="w-full bg-background border-2 border-border p-3 font-pixel text-sm focus:outline-none focus:border-primary transition-colors"
-                   placeholder="e.g. Runner"
-                   maxLength={12}
-                 />
-               </div>
-               <button 
-                 type="submit" 
-                 disabled={isCreating || !newCharName}
-                 className="w-full pixel-btn-primary py-3"
-               >
-                 {isCreating ? "Birthing..." : "Start Journey"}
-               </button>
-             </form>
-           </div>
+          <div className="max-w-md w-full bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-xl">
+            <div className="text-center mb-8">
+              <Mountain size={48} className="mx-auto text-primary mb-4" />
+              <h2 className="font-pixel text-lg text-foreground mb-2">New Game</h2>
+              <p className="text-muted-foreground text-sm">
+                You don't have a companion yet. Name your new friend to begin your journey.
+              </p>
+            </div>
+            <form onSubmit={handleCreate} className="space-y-6">
+              <div>
+                <label className="block text-xs font-bold mb-2 uppercase text-muted-foreground tracking-wide">
+                  Companion Name
+                </label>
+                <input 
+                  value={newCharName}
+                  onChange={(e) => setNewCharName(e.target.value)}
+                  className="w-full bg-background border-2 border-border p-4 rounded-xl text-foreground focus:outline-none focus:border-primary transition-colors font-mono"
+                  placeholder="e.g. Bjornheim"
+                  maxLength={12}
+                  data-testid="input-character-name"
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={isCreating || !newCharName}
+                className="w-full py-4 rounded-xl font-bold text-white bg-primary hover:brightness-110 transition-all disabled:opacity-50"
+                data-testid="button-create-character"
+              >
+                {isCreating ? "Birthing..." : "Start Journey"}
+              </button>
+            </form>
+          </div>
         </main>
       </div>
     );
   }
 
+  // Calculate streak (simplified)
+  const calculateStreak = () => {
+    if (!runs || runs.length === 0) return 0;
+    return Math.min(runs.length, 7); // Simplified for now
+  };
+
   // Dashboard View
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row font-ui">
+    <div className="min-h-screen aurora-bg flex flex-col md:flex-row">
       <Navigation />
       
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto mb-20 md:mb-0">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-pixel text-foreground mb-2">
-              {character?.name}
-            </h1>
-            <div className="flex items-center gap-2">
-              <span className={`inline-block w-2 h-2 rounded-full ${character?.status === 'alive' ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className="text-sm text-muted-foreground uppercase tracking-widest font-bold">
-                 Day {character?.daysAlive || 0}
-              </span>
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        {/* Header */}
+        <header className="bg-white/95 backdrop-blur-sm rounded-xl p-5 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg border-b-4 border-primary/20">
+          <div className="flex items-center gap-4">
+            <Mountain size={32} className="text-primary" />
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Konsekvens</h1>
+              <p className="text-sm text-muted-foreground">Running Companion</p>
             </div>
           </div>
           
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-3 items-center">
             {stravaStatus?.isConnected ? (
               <button 
                 onClick={handleSync}
                 disabled={isSyncing}
-                className="pixel-btn-outline flex items-center gap-2 text-xs"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
+                data-testid="button-sync-strava"
               >
-                <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
-                {isSyncing ? "Syncing..." : "Sync Strava"}
+                <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} />
+                {isSyncing ? "Syncing..." : "Sync Activities"}
               </button>
             ) : (
-              <a href="/api/strava/connect" className="pixel-btn-secondary text-xs flex items-center gap-2">
-                 <AlertTriangle size={14} /> Connect Strava
+              <a 
+                href="/api/strava/connect" 
+                className="flex items-center gap-2 px-4 py-2 strava-btn rounded-xl font-semibold text-sm"
+                data-testid="link-connect-strava"
+              >
+                <Activity size={16} /> Connect Strava
               </a>
             )}
           </div>
         </header>
 
-        {/* Main Game Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-           {/* Character Stage */}
-           <div className="lg:col-span-2 bg-card min-h-[400px] pixel-border relative flex flex-col items-center justify-center overflow-hidden group">
-              {/* Background Elements */}
-              <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-amber-50/50 opacity-50" />
-              <div className="absolute bottom-0 w-full h-1/3 bg-white border-t-2 border-border/20" />
-              
-              {/* Character */}
-              <div className="relative z-10 transition-transform duration-500 group-hover:scale-105">
-                <PixelCharacter 
-                  healthState={character?.healthState ?? 0} 
-                  status={character?.status as "alive" | "dead"} 
-                  scale={3} 
-                />
-              </div>
+        {/* Main Content Grid */}
+        <div className="max-w-6xl mx-auto grid gap-8">
+          {/* Tamagotchi Character Display */}
+          <div className="flex justify-center">
+            <PixelCharacter 
+              name={character?.name || "Companion"}
+              level={Math.floor((character?.totalRuns || 0) / 5) + 1}
+              healthState={character?.healthState ?? 0} 
+              status={character?.status as "alive" | "dead"} 
+            />
+          </div>
 
-              {/* Status HUD */}
-              <div className="absolute top-6 left-6 z-20 bg-white/80 backdrop-blur-sm p-4 border-2 border-border/50">
-                 <div className="text-[10px] font-pixel text-muted-foreground mb-2 uppercase">Condition</div>
-                 <div className="text-sm font-bold text-foreground">
-                    {character?.status === 'dead' ? 'DECEASED' : 
-                     (character?.healthState ?? 0) === 0 ? 'PEAK PERFORMANCE' :
-                     (character?.healthState ?? 0) < 3 ? 'NEEDS EXERCISE' : 'CRITICAL'}
-                 </div>
+          {/* Stats Panel */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="stat-card">
+              <div className="stat-icon bg-primary/20 text-primary">
+                <Activity size={24} />
               </div>
-           </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">{character?.totalRuns || 0}</div>
+                <div className="text-sm text-muted-foreground">Total Runs</div>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon bg-secondary/20 text-secondary">
+                <Mountain size={24} />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">{calculateStreak()} days</div>
+                <div className="text-sm text-muted-foreground">Current Streak</div>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon bg-accent/20 text-accent">
+                <Trophy size={24} />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">
+                  Lv.{Math.floor((character?.totalRuns || 0) / 5) + 1}
+                </div>
+                <div className="text-sm text-muted-foreground">Level</div>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon bg-primary/20 text-primary">
+                <Sparkles size={24} />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">
+                  {Math.round((character?.totalDistance || 0) / 1000)} km
+                </div>
+                <div className="text-sm text-muted-foreground">Total Distance</div>
+              </div>
+            </div>
+          </div>
 
-           {/* Stats Column */}
-           <div className="flex flex-col gap-4">
-              <StatCard 
-                label="Total Distance" 
-                value={`${Math.round((character?.totalDistance || 0) / 1000)} km`}
-                trend="up"
-              />
-              <StatCard 
-                label="Total Runs" 
-                value={character?.totalRuns || 0} 
-              />
-              <StatCard 
-                label="Current Health" 
-                value={character?.healthState === 0 ? "100%" : character?.healthState === 1 ? "75%" : "25%"}
-                icon={<Activity size={16} />}
-              />
+          {/* Tracker Connection & Recent Activities Row */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Activity Sync Panel */}
+            <div className="section-panel">
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Activity size={20} className="text-primary" />
+                Activity Sync
+              </h3>
               
-              {/* Recent Activity Mini-List */}
-              <div className="bg-card p-4 pixel-border flex-1">
-                 <h3 className="font-pixel text-xs mb-4 uppercase text-muted-foreground">Recent Runs</h3>
-                 <div className="space-y-3">
-                   {runs?.slice(0, 3).map(run => (
-                     <div key={run.id} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0">
-                       <span className="text-muted-foreground">{format(new Date(run.date), "MMM d")}</span>
-                       <span className="font-bold">{(run.distance / 1000).toFixed(1)} km</span>
-                     </div>
-                   ))}
-                   {!runs?.length && <p className="text-xs text-muted-foreground italic">No recent activity.</p>}
-                 </div>
-              </div>
-           </div>
+              {stravaStatus?.isConnected ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="connected-dot" />
+                    <span className="font-semibold text-foreground">Connected to Strava</span>
+                  </div>
+                  {stravaStatus.lastSync && (
+                    <p className="text-sm text-muted-foreground">
+                      Last synced: {format(new Date(stravaStatus.lastSync), "MMM d, h:mm a")}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Activities are automatically pulled from your Strava account. Click sync to check for new runs.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-amber-600">
+                    <AlertTriangle size={20} />
+                    <span className="font-semibold">Tracker Not Connected</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Connect your Strava account to automatically sync your running activities.
+                  </p>
+                  <a 
+                    href="/api/strava/connect" 
+                    className="inline-flex items-center gap-2 px-5 py-3 strava-btn rounded-xl font-semibold text-sm"
+                    data-testid="link-connect-strava-panel"
+                  >
+                    <Activity size={18} /> Log In with Strava
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Activities Panel */}
+            <div className="section-panel">
+              <h3 className="text-lg font-bold text-foreground mb-4">Recent Activities</h3>
+              
+              {runs && runs.length > 0 ? (
+                <div className="space-y-3">
+                  {runs.slice(0, 5).map((run) => (
+                    <div 
+                      key={run.id} 
+                      className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
+                      data-testid={`activity-item-${run.id}`}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
+                        <Activity size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-foreground">
+                            {(run.distance / 1000).toFixed(1)} km
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {Math.floor(run.duration / 60)} min
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(run.date), "MMM d, yyyy")}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm italic">
+                  No activities logged yet. Start running to feed your companion!
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>
