@@ -4,7 +4,7 @@ import { useRuns } from "@/hooks/use-runs";
 import { PixelCharacter } from "@/components/PixelCharacter";
 import { StatCard } from "@/components/StatCard";
 import { Navigation } from "@/components/Navigation";
-import { Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader2, RefreshCw, AlertTriangle, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { format } from "date-fns";
