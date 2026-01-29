@@ -17,6 +17,10 @@ export const stravaAccounts = pgTable("strava_accounts", {
   refreshToken: varchar("refresh_token").notNull(),
   expiresAt: integer("expires_at").notNull(), // Unix timestamp
   lastFetchAt: timestamp("last_fetch_at"),
+  // Athlete profile info
+  athleteFirstName: varchar("athlete_first_name"),
+  athleteLastName: varchar("athlete_last_name"),
+  athleteProfilePicture: varchar("athlete_profile_picture"),
 });
 
 // Character type - now only "esko" for the app mascot

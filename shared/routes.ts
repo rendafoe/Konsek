@@ -31,7 +31,12 @@ export const api = {
         method: 'GET' as const,
         path: '/api/strava/status',
         responses: {
-            200: z.object({ isConnected: z.boolean(), lastSync: z.string().nullable() })
+            200: z.object({
+              isConnected: z.boolean(),
+              lastSync: z.string().nullable(),
+              athleteName: z.string().nullable(),
+              athleteProfilePicture: z.string().nullable(),
+            })
         }
     },
     sync: {

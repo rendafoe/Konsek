@@ -218,6 +218,40 @@ export async function registerRoutes(
       }
     });
 
+    // DEV ONLY: Full reset - clear ALL user data to test as fresh user
+    app.delete("/api/dev/reset-user", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const { db } = await import("./db");
+        const { runs, runItems, inventory, characters, stravaAccounts } = await import("@shared/schema");
+        const { eq } = await import("drizzle-orm");
+        const userId = 'dev-user-1';
+
+        // Delete run items for this user
+        await db.delete(runItems).where(eq(runItems.userId, userId));
+
+        // Delete runs
+        await db.delete(runs).where(eq(runs.userId, userId));
+
+        // Delete inventory
+        await db.delete(inventory).where(eq(inventory.userId, userId));
+
+        // Delete characters
+        await db.delete(characters).where(eq(characters.userId, userId));
+
+        // Delete strava account
+        await db.delete(stravaAccounts).where(eq(stravaAccounts.userId, userId));
+
+        res.json({ message: "Full reset complete - user can now test as fresh user" });
+      } catch (error) {
+        console.error('Reset user error:', error);
+        res.status(500).json({ message: "Failed to reset user" });
+      }
+    });
+
     // Dev auth middleware for protected routes
     app.use((req: any, res, next) => {
       if (req.session.isLoggedIn) {
@@ -254,7 +288,7 @@ export async function registerRoutes(
     // Redirect to Strava
     const clientId = process.env.STRAVA_CLIENT_ID;
     const redirectUri = isDevMode
-      ? `http://localhost:3000/api/strava/callback`
+      ? `http://localhost:3001/api/strava/callback`
       : `https://${req.hostname}/api/strava/callback`;
     const scope = "activity:read_all";
     if (!clientId) {
@@ -297,14 +331,17 @@ export async function registerRoutes(
 
         const data = await response.json();
         
-        // Save to DB
+        // Save to DB (including athlete profile info)
         await storage.upsertStravaAccount({
             userId: req.user.claims.sub,
             athleteId: String(data.athlete.id),
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
             expiresAt: data.expires_at,
-            lastFetchAt: new Date()
+            lastFetchAt: new Date(),
+            athleteFirstName: data.athlete.firstname || null,
+            athleteLastName: data.athlete.lastname || null,
+            athleteProfilePicture: data.athlete.profile || null,
         });
 
         res.redirect('/settings'); // Or dashboard
@@ -318,7 +355,9 @@ export async function registerRoutes(
       const account = await storage.getStravaAccount(req.user.claims.sub);
       res.json({
           isConnected: !!account,
-          lastSync: account?.lastFetchAt ? account.lastFetchAt.toISOString() : null
+          lastSync: account?.lastFetchAt ? account.lastFetchAt.toISOString() : null,
+          athleteName: account ? `${account.athleteFirstName || ''} ${account.athleteLastName || ''}`.trim() || null : null,
+          athleteProfilePicture: account?.athleteProfilePicture || null,
       });
   });
 
