@@ -20,7 +20,7 @@ export const stravaAccounts = pgTable("strava_accounts", {
 });
 
 // Available sprite types for companions
-export const SPRITE_TYPES = ["bear", "elk", "hare", "otter", "spirit", "troll"] as const;
+export const SPRITE_TYPES = ["bear", "elk", "hare", "spirit", "troll"] as const;
 export type SpriteType = typeof SPRITE_TYPES[number];
 
 // The user's digital companion
@@ -28,7 +28,7 @@ export const characters = pgTable("characters", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
-  spriteType: text("sprite_type", { enum: ["bear", "elk", "hare", "otter", "spirit", "troll"] }).notNull(),
+  spriteType: text("sprite_type", { enum: ["bear", "elk", "hare", "spirit", "troll"] }).notNull(),
   status: text("status", { enum: ["alive", "dead"] }).default("alive").notNull(),
   
   // Health State: 0 = Fully nourished, 1 = Rest, 2 = Weak, 3 = Critical, 4 = Dead

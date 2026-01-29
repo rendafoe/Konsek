@@ -2,20 +2,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, Activity, Heart, Mountain, Sparkles } from "lucide-react";
-import { SpritePreview } from "@/components/SpriteCharacter";
-import { useState, useEffect } from "react";
-import { type SpriteType, SPRITE_TYPES } from "@shared/schema";
+import { SpritePreview, getRandomSpriteType } from "@/components/SpriteCharacter";
+import { useMemo } from "react";
+import { type SpriteType } from "@shared/schema";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [displayedSprite, setDisplayedSprite] = useState<SpriteType>("otter");
   
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDisplayedSprite(SPRITE_TYPES[Math.floor(Math.random() * SPRITE_TYPES.length)]);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
+  // Pick a random sprite type once on initial render
+  const displayedSprite = useMemo<SpriteType>(() => getRandomSpriteType(), []);
 
   if (isLoading) return null;
   if (isAuthenticated) return <Redirect to="/" />;
@@ -100,14 +95,7 @@ export default function Landing() {
                 
                 {/* Animated Creature Display */}
                 <div className="flex justify-center items-center min-h-[160px] mb-4">
-                  <motion.div
-                    key={displayedSprite}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <SpritePreview spriteType={displayedSprite} size={128} />
-                  </motion.div>
+                  <SpritePreview spriteType={displayedSprite} size={128} />
                 </div>
                 
                 {/* Health Bar */}

@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
-import { type SpriteType } from "@shared/schema";
+import { useState, useEffect, useMemo } from "react";
+import { type SpriteType, SPRITE_TYPES } from "@shared/schema";
 
 import bearSprite from "@/assets/sprites/bear.png";
 import elkSprite from "@/assets/sprites/elk.png";
 import hareSprite from "@/assets/sprites/hare.png";
-import otterSprite from "@/assets/sprites/otter.png";
 import spiritSprite from "@/assets/sprites/spirit.png";
 import trollSprite from "@/assets/sprites/troll.png";
 
@@ -12,7 +11,6 @@ const SPRITE_SHEETS: Record<SpriteType, string> = {
   bear: bearSprite,
   elk: elkSprite,
   hare: hareSprite,
-  otter: otterSprite,
   spirit: spiritSprite,
   troll: trollSprite,
 };
@@ -21,10 +19,14 @@ const SPRITE_NAMES: Record<SpriteType, string> = {
   bear: "Bear",
   elk: "Elk", 
   hare: "Hare",
-  otter: "Otter",
   spirit: "Spirit",
   troll: "Troll",
 };
+
+// Each sprite frame is 32x32 pixels, 4 frames per animation
+const FRAME_SIZE = 32;
+const TOTAL_FRAMES = 4;
+const SPRITE_SHEET_WIDTH = FRAME_SIZE * TOTAL_FRAMES; // 128px total
 
 interface SpriteCharacterProps {
   spriteType: SpriteType;
@@ -48,13 +50,12 @@ export function SpriteCharacter({
   showInfo = true,
 }: SpriteCharacterProps) {
   const [frame, setFrame] = useState(0);
-  const totalFrames = 4;
   
   useEffect(() => {
     if (isDead) return;
     
     const timer = setInterval(() => {
-      setFrame((prev) => (prev + 1) % totalFrames);
+      setFrame((prev) => (prev + 1) % TOTAL_FRAMES);
     }, 300);
     
     return () => clearInterval(timer);
@@ -63,6 +64,9 @@ export function SpriteCharacter({
   const validSpriteType = spriteType in SPRITE_SHEETS ? spriteType : "bear";
   const spriteSheet = SPRITE_SHEETS[validSpriteType];
   const spriteName = SPRITE_NAMES[validSpriteType];
+  
+  // Scale factor to display the 32x32 sprite at the desired size
+  const scale = size / FRAME_SIZE;
   
   const healthBarColor = healthPercent > 70 
     ? "health-good" 
@@ -103,13 +107,13 @@ export function SpriteCharacter({
           >
             <div
               style={{
-                width: size * totalFrames,
-                height: size,
+                width: SPRITE_SHEET_WIDTH * scale,
+                height: FRAME_SIZE * scale,
                 backgroundImage: `url(${spriteSheet})`,
-                backgroundSize: `${size * totalFrames}px ${size}px`,
+                backgroundSize: `${SPRITE_SHEET_WIDTH * scale}px ${FRAME_SIZE * scale}px`,
                 backgroundRepeat: 'no-repeat',
-                transform: `translateX(-${frame * size}px)`,
-                transition: 'transform 0.1s steps(1)',
+                backgroundPosition: '0 0',
+                transform: `translateX(-${frame * FRAME_SIZE * scale}px)`,
                 imageRendering: 'pixelated',
               }}
             />
@@ -151,16 +155,17 @@ export function SpriteCharacter({
 
 export function SpritePreview({ spriteType, size = 64 }: { spriteType: SpriteType; size?: number }) {
   const [frame, setFrame] = useState(0);
-  const totalFrames = 4;
   
   useEffect(() => {
     const timer = setInterval(() => {
-      setFrame((prev) => (prev + 1) % totalFrames);
+      setFrame((prev) => (prev + 1) % TOTAL_FRAMES);
     }, 300);
     return () => clearInterval(timer);
   }, []);
   
-  const spriteSheet = SPRITE_SHEETS[spriteType];
+  const validSpriteType = spriteType in SPRITE_SHEETS ? spriteType : "bear";
+  const spriteSheet = SPRITE_SHEETS[validSpriteType];
+  const scale = size / FRAME_SIZE;
   
   return (
     <div 
@@ -173,16 +178,21 @@ export function SpritePreview({ spriteType, size = 64 }: { spriteType: SpriteTyp
     >
       <div
         style={{
-          width: size * totalFrames,
-          height: size,
+          width: SPRITE_SHEET_WIDTH * scale,
+          height: FRAME_SIZE * scale,
           backgroundImage: `url(${spriteSheet})`,
-          backgroundSize: `${size * totalFrames}px ${size}px`,
+          backgroundSize: `${SPRITE_SHEET_WIDTH * scale}px ${FRAME_SIZE * scale}px`,
           backgroundRepeat: 'no-repeat',
-          transform: `translateX(-${frame * size}px)`,
-          transition: 'transform 0.1s steps(1)',
+          backgroundPosition: '0 0',
+          transform: `translateX(-${frame * FRAME_SIZE * scale}px)`,
           imageRendering: 'pixelated',
         }}
       />
     </div>
   );
+}
+
+// Helper to get a random sprite type
+export function getRandomSpriteType(): SpriteType {
+  return SPRITE_TYPES[Math.floor(Math.random() * SPRITE_TYPES.length)];
 }
