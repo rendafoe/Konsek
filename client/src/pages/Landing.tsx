@@ -2,9 +2,20 @@ import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, Activity, Heart, Mountain, Sparkles } from "lucide-react";
+import { SpritePreview } from "@/components/SpriteCharacter";
+import { useState, useEffect } from "react";
+import { type SpriteType, SPRITE_TYPES } from "@shared/schema";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [displayedSprite, setDisplayedSprite] = useState<SpriteType>("otter");
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDisplayedSprite(SPRITE_TYPES[Math.floor(Math.random() * SPRITE_TYPES.length)]);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading) return null;
   if (isAuthenticated) return <Redirect to="/" />;
@@ -74,80 +85,38 @@ export default function Landing() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative hidden lg:block"
           >
-            {/* Tamagotchi-style device mockup */}
+            {/* Tamagotchi-style device mockup with animated sprite */}
             <div className="device-screen mx-auto max-w-sm">
               <div className="device-screen-inner">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-4 pb-3 border-b-2 border-emerald-800/20">
-                  <span className="font-bold text-sm text-emerald-900">Bjornheim</span>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                  <span className="font-bold text-sm text-emerald-900 dark:text-emerald-100 capitalize">
+                    {displayedSprite}
+                  </span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-200">
                     Lv.7
                   </span>
                 </div>
                 
-                {/* Creature Display */}
-                <div className="flex justify-center items-center min-h-[140px] mb-4">
-                  {/* Simple pixel creature representation */}
-                  <div className="flex flex-col items-center gap-0.5">
-                    <div className="flex gap-0.5">
-                      <div className="w-4 h-4" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      <div className="w-4 h-4" />
-                      <div className="w-4 h-4 bg-stone-900" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-stone-900" />
-                      <div className="w-4 h-4" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      <div className="w-4 h-4" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-stone-900" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      <div className="w-4 h-4" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      <div className="w-4 h-4" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4" />
-                      <div className="w-4 h-4 bg-emerald-700" />
-                      <div className="w-4 h-4" />
-                    </div>
-                  </div>
+                {/* Animated Creature Display */}
+                <div className="flex justify-center items-center min-h-[160px] mb-4">
+                  <motion.div
+                    key={displayedSprite}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SpritePreview spriteType={displayedSprite} size={128} />
+                  </motion.div>
                 </div>
                 
                 {/* Health Bar */}
                 <div className="mb-2">
-                  <div className="text-xs font-bold text-center mb-2 text-emerald-800/70">Health</div>
-                  <div className="h-4 bg-emerald-200 rounded-full overflow-hidden border-2 border-emerald-800">
-                    <div className="h-full w-[85%] bg-emerald-600 transition-all" />
+                  <div className="text-xs font-bold text-center mb-2 text-emerald-800/70 dark:text-emerald-300/70">Health</div>
+                  <div className="h-4 bg-emerald-200 dark:bg-emerald-900 rounded-full overflow-hidden border-2 border-emerald-800 dark:border-emerald-600">
+                    <div className="h-full w-[85%] bg-emerald-600 dark:bg-emerald-400 transition-all" />
                   </div>
-                  <div className="text-sm font-bold text-center mt-1 text-emerald-900">85%</div>
+                  <div className="text-sm font-bold text-center mt-1 text-emerald-900 dark:text-emerald-100">85%</div>
                 </div>
               </div>
             </div>

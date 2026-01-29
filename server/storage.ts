@@ -4,7 +4,8 @@ import {
   characters, items, inventory, runs, stravaAccounts,
   type Character, type InsertCharacter,
   type Item, type InventoryItem,
-  type Run, type StravaAccount
+  type Run, type StravaAccount,
+  SPRITE_TYPES, type SpriteType
 } from "@shared/schema";
 import { type User } from "@shared/models/auth";
 
@@ -16,8 +17,8 @@ export interface IStorage {
   // Characters
   getActiveCharacter(userId: string): Promise<Character | undefined>;
   getCharacterArchive(userId: string): Promise<Character[]>;
-  createCharacter(data: InsertCharacter): Promise<Character>;
-  updateCharacter(id: number, updates: Partial<InsertCharacter>): Promise<Character>;
+  createCharacter(data: InsertCharacter & { userId: string }): Promise<Character>;
+  updateCharacter(id: number, updates: Partial<Character>): Promise<Character>;
   
   // Items & Inventory
   getAllItems(): Promise<Item[]>;
@@ -66,12 +67,16 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(characters.createdAt));
   }
 
-  async createCharacter(data: InsertCharacter): Promise<Character> {
-    const [character] = await db.insert(characters).values(data).returning();
+  async createCharacter(data: InsertCharacter & { userId: string }): Promise<Character> {
+    const randomSprite = SPRITE_TYPES[Math.floor(Math.random() * SPRITE_TYPES.length)];
+    const [character] = await db.insert(characters).values({
+      ...data,
+      spriteType: randomSprite,
+    }).returning();
     return character;
   }
 
-  async updateCharacter(id: number, updates: Partial<InsertCharacter>): Promise<Character> {
+  async updateCharacter(id: number, updates: Partial<Character>): Promise<Character> {
     const [updated] = await db.update(characters)
       .set(updates)
       .where(eq(characters.id, id))

@@ -1,8 +1,9 @@
 import { useCharacter, useCreateCharacter } from "@/hooks/use-character";
 import { useStravaStatus, useStravaSync } from "@/hooks/use-strava";
 import { useRuns } from "@/hooks/use-runs";
-import { PixelCharacter } from "@/components/PixelCharacter";
+import { SpriteCharacter } from "@/components/SpriteCharacter";
 import { Navigation } from "@/components/Navigation";
+import { type SpriteType } from "@shared/schema";
 import { Loader2, RefreshCw, AlertTriangle, Activity, Mountain, Trophy, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -136,11 +137,12 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto grid gap-8">
           {/* Tamagotchi Character Display */}
           <div className="flex justify-center">
-            <PixelCharacter 
+            <SpriteCharacter 
+              spriteType={(character?.spriteType as SpriteType) || "bear"}
               name={character?.name || "Companion"}
               level={Math.floor((character?.totalRuns || 0) / 5) + 1}
-              healthState={character?.healthState ?? 0} 
-              status={character?.status as "alive" | "dead"} 
+              healthPercent={Math.max(0, 100 - (character?.healthState ?? 0) * 25)}
+              isDead={character?.status === "dead"} 
             />
           </div>
 
