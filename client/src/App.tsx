@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Inventory from "@/pages/Inventory";
 import Archive from "@/pages/Archive";
 import Settings from "@/pages/Settings";
+import ActivityLog from "@/pages/ActivityLog";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/inventory" component={() => <ProtectedRoute component={Inventory} />} />
       <Route path="/archive" component={() => <ProtectedRoute component={Archive} />} />
+      <Route path="/activities" component={() => <ProtectedRoute component={ActivityLog} />} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
       
       {/* Public Routes */}

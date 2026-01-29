@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertCharacterSchema, characters, items, inventory, runs, stravaAccounts } from './schema';
+import { insertCharacterSchema, characters, items, inventory, runs, stravaAccounts, runItems } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -102,13 +102,38 @@ export const api = {
   // === RUNS ===
   runs: {
     list: {
-        method: 'GET' as const,
-        path: '/api/runs',
-        responses: {
-            200: z.array(z.custom<typeof runs.$inferSelect>()),
-        }
+      method: 'GET' as const,
+      path: '/api/runs',
+      responses: {
+        200: z.array(z.custom<typeof runs.$inferSelect>()),
+      }
     }
-  }
+  },
+
+  // === ACTIVITIES (Paginated) ===
+  activities: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/activities',
+      query: z.object({
+        page: z.coerce.number().min(1).default(1),
+        limit: z.coerce.number().min(1).max(100).default(25),
+      }),
+      responses: {
+        200: z.object({
+          activities: z.array(z.custom<typeof runs.$inferSelect & {
+            awardedItems?: Array<typeof runItems.$inferSelect & { item?: typeof items.$inferSelect }>
+          }>()),
+          pagination: z.object({
+            page: z.number(),
+            limit: z.number(),
+            total: z.number(),
+            totalPages: z.number(),
+          }),
+        }),
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
@@ -125,3 +150,4 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
 
 export type CharacterResponse = z.infer<typeof api.character.get.responses[200]>;
 export type InventoryResponse = z.infer<typeof api.inventory.list.responses[200]>;
+export type ActivitiesResponse = z.infer<typeof api.activities.list.responses[200]>;

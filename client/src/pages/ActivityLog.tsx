@@ -1,0 +1,259 @@
+import { useState } from "react";
+import { useActivities } from "@/hooks/use-activities";
+import { Navigation } from "@/components/Navigation";
+import { MiniRouteMap } from "@/components/MiniRouteMap";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, ClipboardList, Sparkles } from "lucide-react";
+import { format } from "date-fns";
+
+const ITEMS_PER_PAGE = 25;
+
+// Rarity color mapping
+const rarityColors: Record<string, string> = {
+  common: "bg-gray-500",
+  uncommon: "bg-green-500",
+  rare: "bg-blue-500",
+  epic: "bg-purple-500",
+  legendary: "bg-yellow-500",
+};
+
+const rarityBadgeStyles: Record<string, string> = {
+  common: "bg-gray-100 text-gray-700 border-gray-300",
+  uncommon: "bg-green-100 text-green-700 border-green-300",
+  rare: "bg-blue-100 text-blue-700 border-blue-300",
+  epic: "bg-purple-100 text-purple-700 border-purple-300",
+  legendary: "bg-yellow-100 text-yellow-800 border-yellow-400",
+};
+
+function formatDuration(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hrs > 0) {
+    return `${hrs}h ${mins}m`;
+  }
+  return `${mins}m ${secs}s`;
+}
+
+function formatDistance(meters: number, useMiles: boolean = false): string {
+  if (useMiles) {
+    const miles = meters / 1609.344;
+    return `${miles.toFixed(2)} mi`;
+  }
+  const km = meters / 1000;
+  return `${km.toFixed(2)} km`;
+}
+
+export default function ActivityLog() {
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isFetching } = useActivities({ page, limit: ITEMS_PER_PAGE });
+
+  const activities = data?.activities || [];
+  const pagination = data?.pagination;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen aurora-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin w-10 h-10 text-white/80" />
+          <p className="text-white/60 text-sm">Loading activity log...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && (!pagination || newPage <= pagination.totalPages)) {
+      setPage(newPage);
+    }
+  };
+
+  // Generate visible page numbers
+  const getVisiblePages = () => {
+    if (!pagination) return [];
+    const { totalPages } = pagination;
+    const pages: (number | "ellipsis")[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (page > 3) pages.push("ellipsis");
+
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+
+      for (let i = start; i <= end; i++) pages.push(i);
+
+      if (page < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  return (
+    <div className="min-h-screen aurora-bg flex flex-col md:flex-row">
+      <Navigation />
+
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto mb-20 md:mb-0">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <ClipboardList size={28} className="text-white" />
+            <h1 className="text-2xl md:text-3xl font-pixel text-white">Activity Log</h1>
+          </div>
+          <p className="text-white/70">
+            Your complete running history with items found.
+          </p>
+        </header>
+
+        {/* Activity Table */}
+        <div className="section-panel">
+          {activities.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <ClipboardList className="w-16 h-16 text-muted-foreground mb-4 opacity-50" />
+              <p className="font-pixel text-sm text-muted-foreground">No Activities Yet</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Go for a run to start building your log!
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[100px]">Date</TableHead>
+                      <TableHead className="min-w-[120px]">Title</TableHead>
+                      <TableHead className="min-w-[80px]">Duration</TableHead>
+                      <TableHead className="min-w-[80px]">Distance</TableHead>
+                      <TableHead className="min-w-[70px]">Route</TableHead>
+                      <TableHead className="min-w-[120px]">Items Found</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {activities.map((activity) => (
+                      <TableRow key={activity.id}>
+                        <TableCell className="font-medium">
+                          {format(new Date(activity.date), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell className="max-w-[150px] truncate">
+                          {activity.name || "Run"}
+                        </TableCell>
+                        <TableCell>{formatDuration(activity.duration)}</TableCell>
+                        <TableCell>{formatDistance(activity.distance)}</TableCell>
+                        <TableCell>
+                          <MiniRouteMap
+                            polyline={activity.polyline}
+                            width={60}
+                            height={40}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {activity.awardedItems && activity.awardedItems.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {activity.awardedItems.map((ri, idx) => (
+                                <Badge
+                                  key={idx}
+                                  variant="outline"
+                                  className={`text-[10px] px-1.5 py-0.5 ${
+                                    ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
+                                  }`}
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  {ri.item?.name || "Item"}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {(pagination.page - 1) * pagination.limit + 1}-
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+                    {pagination.total} activities
+                  </p>
+
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => handlePageChange(page - 1)}
+                          className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+
+                      {getVisiblePages().map((p, idx) =>
+                        p === "ellipsis" ? (
+                          <PaginationItem key={`ellipsis-${idx}`}>
+                            <span className="px-2">...</span>
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={p}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(p)}
+                              isActive={p === page}
+                              className="cursor-pointer"
+                            >
+                              {p}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => handlePageChange(page + 1)}
+                          className={
+                            page === pagination.totalPages
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+
+              {/* Loading overlay for pagination */}
+              {isFetching && !isLoading && (
+                <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                  <Loader2 className="animate-spin w-6 h-6 text-primary" />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

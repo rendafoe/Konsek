@@ -2,15 +2,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, Activity, Heart, Mountain, Sparkles } from "lucide-react";
-import { SpritePreview, getRandomSpriteType } from "@/components/SpriteCharacter";
-import { useMemo } from "react";
-import { type SpriteType } from "@shared/schema";
+import { EskoPreview } from "@/components/EskoCharacter";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Pick a random sprite type once on initial render
-  const displayedSprite = useMemo<SpriteType>(() => getRandomSpriteType(), []);
 
   if (isLoading) return null;
   if (isAuthenticated) return <Redirect to="/" />;
@@ -74,30 +69,30 @@ export default function Landing() {
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative hidden lg:block"
           >
-            {/* Tamagotchi-style device mockup with animated sprite */}
+            {/* Device mockup with Esko preview */}
             <div className="device-screen mx-auto max-w-sm">
               <div className="device-screen-inner">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-4 pb-3 border-b-2 border-emerald-800/20">
-                  <span className="font-bold text-sm text-emerald-900 dark:text-emerald-100 capitalize">
-                    {displayedSprite}
+                  <span className="font-bold text-sm text-emerald-900 dark:text-emerald-100">
+                    Esko
                   </span>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-200">
-                    Lv.7
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-800 text-teal-700 dark:text-teal-200">
+                    Child
                   </span>
                 </div>
-                
-                {/* Animated Creature Display */}
+
+                {/* Esko Preview */}
                 <div className="flex justify-center items-center min-h-[160px] mb-4">
-                  <SpritePreview spriteType={displayedSprite} size={128} />
+                  <EskoPreview stage="child" size="lg" />
                 </div>
-                
+
                 {/* Health Bar */}
                 <div className="mb-2">
                   <div className="text-xs font-bold text-center mb-2 text-emerald-800/70 dark:text-emerald-300/70">Health</div>
@@ -108,9 +103,9 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-            
+
             {/* Decorative elements */}
-            <div className="absolute -top-4 -right-4 w-8 h-8 bg-amber-400 rounded-full animate-pulse" />
+            <div className="absolute -top-4 -right-4 w-8 h-8 bg-amber-400 rounded-full" />
             <div className="absolute -bottom-6 -left-6 w-12 h-12 bg-emerald-400/50 rounded-full blur-sm" />
           </motion.div>
         </div>

@@ -1,10 +1,9 @@
 import { useCharacter, useCreateCharacter } from "@/hooks/use-character";
 import { useStravaStatus, useStravaSync } from "@/hooks/use-strava";
 import { useRuns } from "@/hooks/use-runs";
-import { SpriteCharacter } from "@/components/SpriteCharacter";
+import { EskoCharacter } from "@/components/EskoCharacter";
 import { Navigation } from "@/components/Navigation";
-import { type SpriteType } from "@shared/schema";
-import { Loader2, RefreshCw, AlertTriangle, Activity, Mountain, Trophy, Sparkles } from "lucide-react";
+import { Loader2, RefreshCw, AlertTriangle, Activity, Mountain, Sparkles, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -88,10 +87,14 @@ export default function Dashboard() {
     );
   }
 
-  // Calculate streak (simplified)
-  const calculateStreak = () => {
-    if (!runs || runs.length === 0) return 0;
-    return Math.min(runs.length, 7); // Simplified for now
+  // Calculate character age in days
+  const calculateAge = () => {
+    if (!character?.createdAt) return 0;
+    const created = new Date(character.createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - created.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   // Dashboard View
@@ -135,19 +138,18 @@ export default function Dashboard() {
 
         {/* Main Content Grid */}
         <div className="max-w-6xl mx-auto grid gap-8">
-          {/* Tamagotchi Character Display */}
+          {/* Esko Character Display */}
           <div className="flex justify-center">
-            <SpriteCharacter 
-              spriteType={(character?.spriteType as SpriteType) || "bear"}
-              name={character?.name || "Companion"}
-              level={Math.floor((character?.totalRuns || 0) / 5) + 1}
+            <EskoCharacter
+              totalRuns={character?.totalRuns || 0}
+              name={character?.name || "Esko"}
               healthPercent={Math.max(0, 100 - (character?.healthState ?? 0) * 25)}
-              isDead={character?.status === "dead"} 
+              isDead={character?.status === "dead"}
             />
           </div>
 
           {/* Stats Panel */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="stat-card">
               <div className="stat-icon bg-primary/20 text-primary">
                 <Activity size={24} />
@@ -157,29 +159,17 @@ export default function Dashboard() {
                 <div className="text-sm text-muted-foreground">Total Runs</div>
               </div>
             </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon bg-secondary/20 text-secondary">
-                <Mountain size={24} />
+                <Calendar size={24} />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">{calculateStreak()} days</div>
-                <div className="text-sm text-muted-foreground">Current Streak</div>
+                <div className="text-2xl font-bold text-foreground">{calculateAge()} days</div>
+                <div className="text-sm text-muted-foreground">Age</div>
               </div>
             </div>
-            
-            <div className="stat-card">
-              <div className="stat-icon bg-accent/20 text-accent">
-                <Trophy size={24} />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-foreground">
-                  Lv.{Math.floor((character?.totalRuns || 0) / 5) + 1}
-                </div>
-                <div className="text-sm text-muted-foreground">Level</div>
-              </div>
-            </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon bg-primary/20 text-primary">
                 <Sparkles size={24} />

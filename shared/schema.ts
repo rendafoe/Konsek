@@ -11,7 +11,7 @@ import { users } from "./models/auth";
 // Strava connection details for a user
 export const stravaAccounts = pgTable("strava_accounts", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().unique().references(() => users.id),
   athleteId: varchar("athlete_id").notNull(),
   accessToken: varchar("access_token").notNull(),
   refreshToken: varchar("refresh_token").notNull(),
@@ -19,16 +19,16 @@ export const stravaAccounts = pgTable("strava_accounts", {
   lastFetchAt: timestamp("last_fetch_at"),
 });
 
-// Available sprite types for companions
-export const SPRITE_TYPES = ["bear", "elk", "hare", "spirit", "troll"] as const;
+// Character type - now only "esko" for the app mascot
+export const SPRITE_TYPES = ["esko"] as const;
 export type SpriteType = typeof SPRITE_TYPES[number];
 
-// The user's digital companion
+// The user's digital companion (Esko)
 export const characters = pgTable("characters", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
-  spriteType: text("sprite_type", { enum: ["bear", "elk", "hare", "spirit", "troll"] }).notNull(),
+  spriteType: text("sprite_type", { enum: ["esko", "bear", "elk", "hare", "spirit", "troll"] }).default("esko").notNull(),
   status: text("status", { enum: ["alive", "dead"] }).default("alive").notNull(),
   
   // Health State: 0 = Fully nourished, 1 = Rest, 2 = Weak, 3 = Critical, 4 = Dead
@@ -73,6 +73,20 @@ export const runs = pgTable("runs", {
   duration: integer("duration").notNull(), // in seconds
   date: timestamp("date").notNull(),
   processed: boolean("processed").default(false).notNull(), // Has this run been applied to game logic?
+  // Additional activity data
+  name: text("name"), // Activity title from Strava
+  polyline: text("polyline"), // Encoded route for mini-map
+  elevationGain: integer("elevation_gain"), // Meters
+  healthUpdated: boolean("health_updated").default(false).notNull(), // Was health updated for this run?
+});
+
+// Junction table for items awarded from runs
+export const runItems = pgTable("run_items", {
+  id: serial("id").primaryKey(),
+  runId: integer("run_id").notNull().references(() => runs.id),
+  itemId: integer("item_id").notNull().references(() => items.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  awardedAt: timestamp("awarded_at").defaultNow().notNull(),
 });
 
 // === RELATIONS ===
@@ -106,7 +120,7 @@ export const inventoryRelations = relations(inventory, ({ one }) => ({
   }),
 }));
 
-export const runsRelations = relations(runs, ({ one }) => ({
+export const runsRelations = relations(runs, ({ one, many }) => ({
   user: one(users, {
     fields: [runs.userId],
     references: [users.id],
@@ -114,6 +128,22 @@ export const runsRelations = relations(runs, ({ one }) => ({
   character: one(characters, {
     fields: [runs.characterId],
     references: [characters.id],
+  }),
+  awardedItems: many(runItems),
+}));
+
+export const runItemsRelations = relations(runItems, ({ one }) => ({
+  run: one(runs, {
+    fields: [runItems.runId],
+    references: [runs.id],
+  }),
+  item: one(items, {
+    fields: [runItems.itemId],
+    references: [items.id],
+  }),
+  user: one(users, {
+    fields: [runItems.userId],
+    references: [users.id],
   }),
 }));
 
@@ -139,6 +169,7 @@ export const insertStravaAccountSchema = createInsertSchema(stravaAccounts).omit
 export const insertItemSchema = createInsertSchema(items).omit({ id: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, acquiredAt: true });
 export const insertRunSchema = createInsertSchema(runs).omit({ id: true });
+export const insertRunItemSchema = createInsertSchema(runItems).omit({ id: true, awardedAt: true });
 
 // === TYPES ===
 export type Character = typeof characters.$inferSelect;
@@ -146,4 +177,7 @@ export type InsertCharacter = z.infer<typeof insertCharacterSchema>;
 export type Item = typeof items.$inferSelect;
 export type InventoryItem = typeof inventory.$inferSelect & { item?: Item };
 export type Run = typeof runs.$inferSelect;
+export type RunItem = typeof runItems.$inferSelect;
+export type RunWithItems = Run & { awardedItems?: (RunItem & { item?: Item })[] };
 export type StravaAccount = typeof stravaAccounts.$inferSelect;
+export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";

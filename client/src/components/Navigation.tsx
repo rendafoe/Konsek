@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Home, Sparkles, Archive, LogOut, Settings, Mountain } from "lucide-react";
+import { Home, Sparkles, Archive, LogOut, Settings, Mountain, ClipboardList } from "lucide-react";
 
 export function Navigation() {
   const [location] = useLocation();
@@ -12,6 +12,7 @@ export function Navigation() {
 
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
+    { href: "/activities", icon: ClipboardList, label: "Log" },
     { href: "/inventory", icon: Sparkles, label: "Gear" },
     { href: "/archive", icon: Archive, label: "Archive" },
   ];

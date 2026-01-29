@@ -1,25 +1,33 @@
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
-import { 
-  characters, items, inventory, runs, stravaAccounts,
+import { eq, desc, and, sql, count, gte, lt } from "drizzle-orm";
+import {
+  characters, items, inventory, runs, stravaAccounts, runItems,
   type Character, type InsertCharacter,
   type Item, type InventoryItem,
-  type Run, type StravaAccount,
+  type Run, type RunWithItems, type StravaAccount, type RunItem,
   SPRITE_TYPES, type SpriteType
 } from "@shared/schema";
 import { type User } from "@shared/models/auth";
+
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 export interface IStorage {
   // Strava
   getStravaAccount(userId: string): Promise<StravaAccount | undefined>;
   upsertStravaAccount(data: any): Promise<StravaAccount>;
-  
+
   // Characters
   getActiveCharacter(userId: string): Promise<Character | undefined>;
   getCharacterArchive(userId: string): Promise<Character[]>;
   createCharacter(data: InsertCharacter & { userId: string }): Promise<Character>;
   updateCharacter(id: number, updates: Partial<Character>): Promise<Character>;
-  
+
   // Items & Inventory
   getAllItems(): Promise<Item[]>;
   getItem(id: number): Promise<Item | undefined>;
@@ -27,10 +35,18 @@ export interface IStorage {
   addItemToInventory(userId: string, itemId: number): Promise<void>;
   equipItem(userId: string, inventoryId: number): Promise<void>;
   unequipItem(userId: string, inventoryId: number): Promise<void>;
-  
+  createItem(data: Omit<Item, "id">): Promise<Item>;
+
   // Runs
   createRun(data: any): Promise<Run>;
   getRuns(userId: string): Promise<Run[]>;
+  getRun(id: number): Promise<Run | undefined>;
+  updateRun(id: number, updates: Partial<Run>): Promise<Run>;
+  getActivitiesPaginated(userId: string, page: number, limit: number): Promise<PaginatedResult<RunWithItems>>;
+  hasRunOnDate(userId: string, date: Date): Promise<boolean>;
+
+  // Run Items
+  getRunItems(runId: number): Promise<(RunItem & { item: Item })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -68,10 +84,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCharacter(data: InsertCharacter & { userId: string }): Promise<Character> {
-    const randomSprite = SPRITE_TYPES[Math.floor(Math.random() * SPRITE_TYPES.length)];
+    // All characters are now Esko - the app mascot
     const [character] = await db.insert(characters).values({
       ...data,
-      spriteType: randomSprite,
+      spriteType: "esko",
     }).returning();
     return character;
   }
@@ -95,7 +111,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInventory(userId: string): Promise<InventoryItem[]> {
-    return await db.select({
+    const result = await db.select({
       id: inventory.id,
       userId: inventory.userId,
       itemId: inventory.itemId,
@@ -107,6 +123,11 @@ export class DatabaseStorage implements IStorage {
     .from(inventory)
     .leftJoin(items, eq(inventory.itemId, items.id))
     .where(eq(inventory.userId, userId));
+
+    return result.map(r => ({
+      ...r,
+      item: r.item ?? undefined
+    }));
   }
 
   async addItemToInventory(userId: string, itemId: number): Promise<void> {
@@ -131,14 +152,116 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(inventory.id, inventoryId), eq(inventory.userId, userId)));
   }
 
+  // Items
+  async createItem(data: Omit<Item, "id">): Promise<Item> {
+    const [item] = await db.insert(items).values(data).returning();
+    return item;
+  }
+
   // Runs
   async createRun(data: any): Promise<Run> {
     const [run] = await db.insert(runs).values(data).returning();
     return run;
   }
-  
+
   async getRuns(userId: string): Promise<Run[]> {
-      return await db.select().from(runs).where(eq(runs.userId, userId)).orderBy(desc(runs.date));
+    return await db.select().from(runs).where(eq(runs.userId, userId)).orderBy(desc(runs.date));
+  }
+
+  async getRun(id: number): Promise<Run | undefined> {
+    const [run] = await db.select().from(runs).where(eq(runs.id, id));
+    return run;
+  }
+
+  async updateRun(id: number, updates: Partial<Run>): Promise<Run> {
+    const [updated] = await db.update(runs)
+      .set(updates)
+      .where(eq(runs.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getActivitiesPaginated(userId: string, page: number, limit: number): Promise<PaginatedResult<RunWithItems>> {
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(runs)
+      .where(eq(runs.userId, userId));
+
+    // Get paginated runs
+    const runList = await db
+      .select()
+      .from(runs)
+      .where(eq(runs.userId, userId))
+      .orderBy(desc(runs.date))
+      .limit(limit)
+      .offset(offset);
+
+    // Get items for each run
+    const runsWithItems: RunWithItems[] = await Promise.all(
+      runList.map(async (run) => {
+        const awardedItems = await this.getRunItems(run.id);
+        return { ...run, awardedItems };
+      })
+    );
+
+    return {
+      data: runsWithItems,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async hasRunOnDate(userId: string, date: Date): Promise<boolean> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const [existing] = await db
+      .select({ id: runs.id })
+      .from(runs)
+      .where(
+        and(
+          eq(runs.userId, userId),
+          gte(runs.date, startOfDay),
+          lt(runs.date, endOfDay),
+          eq(runs.healthUpdated, true)
+        )
+      )
+      .limit(1);
+
+    return !!existing;
+  }
+
+  // Run Items
+  async getRunItems(runId: number): Promise<(RunItem & { item: Item })[]> {
+    const result = await db
+      .select({
+        id: runItems.id,
+        runId: runItems.runId,
+        itemId: runItems.itemId,
+        userId: runItems.userId,
+        awardedAt: runItems.awardedAt,
+        item: items,
+      })
+      .from(runItems)
+      .leftJoin(items, eq(runItems.itemId, items.id))
+      .where(eq(runItems.runId, runId));
+
+    return result.map((r) => ({
+      id: r.id,
+      runId: r.runId,
+      itemId: r.itemId,
+      userId: r.userId,
+      awardedAt: r.awardedAt,
+      item: r.item as Item,
+    }));
   }
 }
 

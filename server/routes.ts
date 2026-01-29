@@ -1,17 +1,241 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import session from "express-session";
+
+// Dev mode check
+const isDevMode = process.env.NODE_ENV === 'development' && !process.env.REPL_ID;
+
+// Mock user for local development
+const devUser = {
+  claims: { sub: 'dev-user-1', email: 'dev@local.test', first_name: 'Dev', last_name: 'User' },
+  expires_at: Math.floor(Date.now() / 1000) + 86400
+};
+
+// Simple auth middleware for dev mode
+const devAuth: RequestHandler = (req, res, next) => {
+  (req as any).user = devUser;
+  (req as any).isAuthenticated = () => true;
+  next();
+};
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Auth Setup
-  await setupAuth(app);
-  registerAuthRoutes(app);
+  // Auth Setup - skip Replit auth in local dev mode
+  if (isDevMode) {
+    console.log('🔧 Running in local dev mode - using mock authentication');
+    app.use(session({
+      secret: 'dev-secret-key',
+      resave: false,
+      saveUninitialized: true,
+      cookie: { secure: false }
+    }));
+
+    // Mock auth user endpoint - returns user only if "logged in"
+    app.get("/api/auth/user", (req: any, res) => {
+      if (req.session.isLoggedIn) {
+        res.json({
+          id: 'dev-user-1',
+          email: 'dev@local.test',
+          firstName: 'Dev',
+          lastName: 'User',
+          profileImageUrl: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        res.status(401).json({ message: "Not authenticated" });
+      }
+    });
+
+    // Mock login - creates dev user in DB, sets session, and redirects home
+    app.get("/api/login", async (req: any, res) => {
+      try {
+        // Import authStorage and create the dev user in the database
+        const { authStorage } = await import("./replit_integrations/auth/storage");
+        await authStorage.upsertUser({
+          id: 'dev-user-1',
+          email: 'dev@local.test',
+          firstName: 'Dev',
+          lastName: 'User',
+        });
+        req.session.isLoggedIn = true;
+        res.redirect('/');
+      } catch (error) {
+        console.error('Dev login error:', error);
+        res.status(500).send('Login failed');
+      }
+    });
+
+    // Mock logout - clears session and redirects home
+    app.get("/api/logout", (req: any, res) => {
+      req.session.isLoggedIn = false;
+      res.redirect('/');
+    });
+
+    // DEV ONLY: Generate test runs to simulate user activity over time
+    // Usage: POST /api/dev/generate-runs
+    // Body: { days: 14, runsPerWeek: 3, minDistanceKm: 5, maxDistanceKm: 30 }
+    app.post("/api/dev/generate-runs", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const {
+          days = 14,
+          runsPerWeek = 3,
+          minDistanceKm = 3,
+          maxDistanceKm = 13
+        } = req.body;
+        const userId = 'dev-user-1';
+
+        // Get active character
+        const character = await storage.getActiveCharacter(userId);
+        if (!character) {
+          return res.status(400).json({ message: "Create a character first" });
+        }
+
+        // Import item reward service
+        const { processRunRewards } = await import("./services/itemRewards");
+
+        const createdRuns = [];
+        const totalRuns = Math.ceil((days / 7) * runsPerWeek);
+        const runNames = [
+          "Morning Run", "Evening Jog", "Trail Run", "Recovery Run",
+          "Tempo Run", "Long Run", "Easy Run", "Hill Repeats",
+          "Speed Work", "Base Building", "Fartlek", "Progression Run"
+        ];
+
+        // Track which days have had health updates
+        const healthUpdateDates = new Set<string>();
+
+        for (let i = 0; i < totalRuns; i++) {
+          // Spread runs across the date range
+          const daysAgo = Math.floor((i / totalRuns) * days);
+          const runDate = new Date();
+          runDate.setDate(runDate.getDate() - (days - daysAgo));
+          runDate.setHours(Math.floor(Math.random() * 12) + 6); // 6am-6pm
+
+          // Random realistic run data with configurable distance range
+          const distanceKm = minDistanceKm + Math.random() * (maxDistanceKm - minDistanceKm);
+          const paceMinPerKm = 5 + Math.random() * 3; // 5-8 min/km
+          const distanceMeters = Math.round(distanceKm * 1000);
+
+          // Check if this is the first run of the day
+          const dateKey = runDate.toISOString().split('T')[0];
+          const isFirstRunOfDay = !healthUpdateDates.has(dateKey);
+          if (isFirstRunOfDay) {
+            healthUpdateDates.add(dateKey);
+          }
+
+          const run = await storage.createRun({
+            userId,
+            characterId: character.id,
+            stravaActivityId: `test-run-${Date.now()}-${i}`,
+            distance: distanceMeters,
+            duration: Math.round(distanceKm * paceMinPerKm * 60), // seconds
+            date: runDate,
+            processed: true,
+            name: runNames[Math.floor(Math.random() * runNames.length)],
+            elevationGain: Math.round(Math.random() * 200 + 20), // 20-220m
+            healthUpdated: isFirstRunOfDay,
+          });
+
+          // Award items for this run
+          const rewardResult = await processRunRewards(userId, run.id, distanceMeters);
+
+          createdRuns.push({
+            ...run,
+            itemsAwarded: rewardResult.items.length,
+            rarities: rewardResult.rarities,
+          });
+        }
+
+        // Update character stats
+        const totalDistanceAdded = createdRuns.reduce((sum, r) => sum + r.distance, 0);
+        await storage.updateCharacter(character.id, {
+          totalRuns: (character.totalRuns || 0) + createdRuns.length,
+          totalDistance: (character.totalDistance || 0) + totalDistanceAdded,
+        });
+
+        res.json({
+          message: `Created ${createdRuns.length} test runs over ${days} days with item rewards`,
+          runs: createdRuns
+        });
+      } catch (error) {
+        console.error('Generate runs error:', error);
+        res.status(500).json({ message: "Failed to generate runs" });
+      }
+    });
+
+    // DEV ONLY: Clear all test runs and their awarded items
+    app.delete("/api/dev/clear-runs", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const { db } = await import("./db");
+        const { runs, runItems, inventory } = await import("@shared/schema");
+        const { like, inArray, eq } = await import("drizzle-orm");
+
+        // First get all test run IDs
+        const testRuns = await db.select({ id: runs.id })
+          .from(runs)
+          .where(like(runs.stravaActivityId, 'test-run-%'));
+
+        const testRunIds = testRuns.map(r => r.id);
+
+        if (testRunIds.length > 0) {
+          // Delete run items for these runs
+          await db.delete(runItems).where(inArray(runItems.runId, testRunIds));
+        }
+
+        // Delete the runs themselves
+        await db.delete(runs).where(like(runs.stravaActivityId, 'test-run-%'));
+
+        // Also clear inventory items for test user
+        await db.delete(inventory).where(eq(inventory.userId, 'dev-user-1'));
+
+        // Reset character stats
+        const character = await storage.getActiveCharacter('dev-user-1');
+        if (character) {
+          await storage.updateCharacter(character.id, {
+            totalRuns: 0,
+            totalDistance: 0,
+          });
+        }
+
+        res.json({ message: "Cleared all test runs, run items, inventory, and reset character stats" });
+      } catch (error) {
+        console.error('Clear runs error:', error);
+        res.status(500).json({ message: "Failed to clear runs" });
+      }
+    });
+
+    // Dev auth middleware for protected routes
+    app.use((req: any, res, next) => {
+      if (req.session.isLoggedIn) {
+        req.user = devUser;
+        req.isAuthenticated = () => true;
+      } else {
+        req.isAuthenticated = () => false;
+      }
+      next();
+    });
+  } else {
+    const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
+    await setupAuth(app);
+    registerAuthRoutes(app);
+  }
+
+  // Use dev auth or real auth
+  const isAuthenticated: RequestHandler = isDevMode ? devAuth : (await import("./replit_integrations/auth")).isAuthenticated;
 
   // === SEED DATA ===
   // Create some default items if none exist
@@ -29,7 +253,9 @@ export async function registerRoutes(
   app.get(api.strava.connect.path, isAuthenticated, (req, res) => {
     // Redirect to Strava
     const clientId = process.env.STRAVA_CLIENT_ID;
-    const redirectUri = `https://${req.hostname}/api/strava/callback`;
+    const redirectUri = isDevMode
+      ? `http://localhost:3000/api/strava/callback`
+      : `https://${req.hostname}/api/strava/callback`;
     const scope = "activity:read_all";
     if (!clientId) {
        return res.status(500).send("STRAVA_CLIENT_ID not configured");
@@ -140,8 +366,34 @@ export async function registerRoutes(
   
   // === RUNS ROUTES ===
   app.get(api.runs.list.path, isAuthenticated, async (req: any, res) => {
-      const runs = await storage.getRuns(req.user.claims.sub);
-      res.json(runs);
+    const runs = await storage.getRuns(req.user.claims.sub);
+    res.json(runs);
+  });
+
+  // === ACTIVITIES ROUTES (Paginated) ===
+  app.get(api.activities.list.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const queryResult = api.activities.list.query.safeParse(req.query);
+      if (!queryResult.success) {
+        return res.status(400).json({ message: "Invalid query parameters" });
+      }
+
+      const { page, limit } = queryResult.data;
+      const result = await storage.getActivitiesPaginated(req.user.claims.sub, page, limit);
+
+      res.json({
+        activities: result.data,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      });
+    } catch (error) {
+      console.error("Activities fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch activities" });
+    }
   });
 
   return httpServer;
