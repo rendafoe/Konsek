@@ -316,10 +316,162 @@ export async function registerRoutes(
   
   app.get(api.strava.status.path, isAuthenticated, async (req: any, res) => {
       const account = await storage.getStravaAccount(req.user.claims.sub);
-      res.json({ 
+      res.json({
           isConnected: !!account,
           lastSync: account?.lastFetchAt ? account.lastFetchAt.toISOString() : null
       });
+  });
+
+  // Strava Sync - Fetch activities and create runs
+  app.post(api.strava.sync.path, isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+
+    try {
+      // Get Strava account
+      const account = await storage.getStravaAccount(userId);
+      if (!account) {
+        return res.status(400).json({ message: "Strava not connected. Please connect your account first." });
+      }
+
+      // Check if token needs refresh
+      let accessToken = account.accessToken;
+      const now = Math.floor(Date.now() / 1000);
+
+      if (account.expiresAt <= now) {
+        // Token expired, refresh it
+        const clientId = process.env.STRAVA_CLIENT_ID;
+        const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+
+        if (!clientId || !clientSecret) {
+          return res.status(500).json({ message: "Strava credentials not configured" });
+        }
+
+        const refreshResponse = await fetch('https://www.strava.com/oauth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: account.refreshToken,
+            grant_type: 'refresh_token'
+          })
+        });
+
+        if (!refreshResponse.ok) {
+          console.error("Token refresh failed:", await refreshResponse.text());
+          return res.status(400).json({ message: "Failed to refresh Strava token. Please reconnect your account." });
+        }
+
+        const refreshData = await refreshResponse.json();
+        accessToken = refreshData.access_token;
+
+        // Update tokens in database
+        await storage.upsertStravaAccount({
+          userId,
+          athleteId: account.athleteId,
+          accessToken: refreshData.access_token,
+          refreshToken: refreshData.refresh_token,
+          expiresAt: refreshData.expires_at,
+          lastFetchAt: new Date()
+        });
+      }
+
+      // Fetch activities from Strava (last 30 days, runs only)
+      const thirtyDaysAgo = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
+      const activitiesResponse = await fetch(
+        `https://www.strava.com/api/v3/athlete/activities?after=${thirtyDaysAgo}&per_page=100`,
+        {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        }
+      );
+
+      if (!activitiesResponse.ok) {
+        console.error("Strava API error:", await activitiesResponse.text());
+        return res.status(400).json({ message: "Failed to fetch activities from Strava" });
+      }
+
+      const activities = await activitiesResponse.json();
+
+      // Filter for runs only (type === "Run")
+      const runActivities = activities.filter((a: any) => a.type === "Run");
+
+      // Get existing run IDs to avoid duplicates
+      const existingRuns = await storage.getRuns(userId);
+      const existingStravaIds = new Set(existingRuns.map(r => r.stravaActivityId));
+
+      // Get active character
+      const character = await storage.getActiveCharacter(userId);
+      if (!character) {
+        return res.status(400).json({ message: "No active character. Please create one first." });
+      }
+
+      // Import item reward service
+      const { processRunRewards } = await import("./services/itemRewards");
+
+      // Process new runs
+      let syncedCount = 0;
+      let totalDistanceAdded = 0;
+
+      for (const activity of runActivities) {
+        const stravaId = String(activity.id);
+
+        // Skip if already exists
+        if (existingStravaIds.has(stravaId)) {
+          continue;
+        }
+
+        // Create run record
+        const run = await storage.createRun({
+          userId,
+          characterId: character.id,
+          stravaActivityId: stravaId,
+          distance: Math.round(activity.distance), // meters
+          duration: activity.moving_time, // seconds
+          date: new Date(activity.start_date),
+          processed: true,
+          name: activity.name || "Run",
+          polyline: activity.map?.summary_polyline || null,
+          elevationGain: activity.total_elevation_gain ? Math.round(activity.total_elevation_gain) : null,
+          healthUpdated: false, // Will be set by health logic later
+        });
+
+        // Award items for this run (only if >= 1km)
+        if (run.distance >= 1000) {
+          await processRunRewards(userId, run.id, run.distance);
+        }
+
+        syncedCount++;
+        totalDistanceAdded += run.distance;
+      }
+
+      // Update character stats if new runs were synced
+      if (syncedCount > 0) {
+        await storage.updateCharacter(character.id, {
+          totalRuns: (character.totalRuns || 0) + syncedCount,
+          totalDistance: (character.totalDistance || 0) + totalDistanceAdded,
+        });
+      }
+
+      // Update last fetch time
+      await storage.upsertStravaAccount({
+        userId,
+        athleteId: account.athleteId,
+        accessToken,
+        refreshToken: account.refreshToken,
+        expiresAt: account.expiresAt,
+        lastFetchAt: new Date()
+      });
+
+      res.json({
+        synced: syncedCount,
+        message: syncedCount > 0
+          ? `Synced ${syncedCount} new run${syncedCount > 1 ? 's' : ''}!`
+          : "No new runs to sync."
+      });
+    } catch (error) {
+      console.error("Strava sync error:", error);
+      res.status(500).json({ message: "Failed to sync activities" });
+    }
   });
 
   // === CHARACTER ROUTES ===
