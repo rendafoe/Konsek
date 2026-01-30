@@ -1,6 +1,7 @@
 import { db } from "../db";
-import { items, runItems, inventory, type Item, type Rarity } from "@shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { items, runItems, inventory, userUnlocks, type Item, type Rarity } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
+import { checkWeatherConditions, type WeatherCheckResult } from "./weatherService";
 
 // Distance-based rarity probability tables
 // Each array: [common, uncommon, rare, epic, legendary]
@@ -51,12 +52,16 @@ export function rollRarity(probabilities: number[]): Rarity {
 
 /**
  * Get a random item of a specific rarity from the database
+ * Excludes special reward items from normal rolls
  */
 export async function getRandomItemByRarity(rarity: Rarity): Promise<Item | null> {
   const matchingItems = await db
     .select()
     .from(items)
-    .where(eq(items.rarity, rarity));
+    .where(and(
+      eq(items.rarity, rarity),
+      eq(items.isSpecialReward, false)
+    ));
 
   if (matchingItems.length === 0) return null;
 
@@ -164,7 +169,7 @@ export async function rollItemsForRun(distanceMeters: number): Promise<RollResul
 
 /**
  * Award items from a run to a user
- * Stores in both runItems (for history) and inventory (for use)
+ * Stores in runItems (history), inventory (use), and userUnlocks (achievements)
  */
 export async function awardItemsToUser(
   userId: string,
@@ -185,23 +190,126 @@ export async function awardItemsToUser(
       itemId: item.id,
       equipped: false,
     });
+
+    // Track unlock for achievements (ignore if already unlocked)
+    try {
+      await db.insert(userUnlocks).values({
+        userId,
+        itemId: item.id,
+      });
+    } catch {
+      // Ignore duplicate key errors - item already unlocked
+    }
   }
+}
+
+interface SpecialRewardContext {
+  polyline: string | null;
+  runDate: Date;
+  distanceMeters: number;
+}
+
+/**
+ * Check which special rewards should be awarded for a run
+ * Special rewards are only awarded once per user
+ */
+async function checkSpecialRewards(
+  userId: string,
+  context: SpecialRewardContext
+): Promise<Item[]> {
+  const awards: Item[] = [];
+
+  // Get all special reward items
+  const specialItems = await db
+    .select()
+    .from(items)
+    .where(eq(items.isSpecialReward, true));
+
+  if (specialItems.length === 0) return awards;
+
+  // Get user's existing unlocks to avoid awarding twice
+  const existingUnlocks = await db
+    .select({ itemId: userUnlocks.itemId })
+    .from(userUnlocks)
+    .where(eq(userUnlocks.userId, userId));
+  const unlockedIds = new Set(existingUnlocks.map(u => u.itemId));
+
+  // Get weather conditions for the run
+  const weather = await checkWeatherConditions(context.polyline, context.runDate);
+
+  // Parse run time details
+  const runHour = context.runDate.getHours();
+  const runMonth = context.runDate.getMonth() + 1; // 0-indexed
+  const runDay = context.runDate.getDate();
+  const distanceKm = context.distanceMeters / 1000;
+
+  for (const item of specialItems) {
+    // Skip if already unlocked
+    if (unlockedIds.has(item.id)) continue;
+
+    const condition = item.specialRewardCondition;
+    if (!condition) continue;
+
+    let shouldAward = false;
+
+    // Check each condition type
+    if (condition.includes("temp > 100") && weather.isHot) {
+      shouldAward = true;
+    } else if (condition.includes("temp < 10") && weather.isCold) {
+      shouldAward = true;
+    } else if (condition.includes("snowing") && weather.isSnowing) {
+      shouldAward = true;
+    } else if (condition.includes("raining") && weather.isRaining) {
+      shouldAward = true;
+    } else if (condition.includes("before 6am") && runHour < 6) {
+      shouldAward = true;
+    } else if (condition.includes("after 10pm") && runHour >= 22) {
+      shouldAward = true;
+    } else if (condition.includes("Feb 14") && runMonth === 2 && runDay === 14) {
+      shouldAward = true;
+    } else if (condition.includes("> 100km") && distanceKm > 100) {
+      shouldAward = true;
+    }
+
+    if (shouldAward) {
+      console.log(`Special reward unlocked: ${item.name} (condition: ${condition})`);
+      awards.push(item);
+    }
+  }
+
+  return awards;
 }
 
 /**
  * Process a run for item rewards
- * Returns the items that were awarded
+ * Returns the items that were awarded (including special rewards)
  */
 export async function processRunRewards(
   userId: string,
   runId: number,
-  distanceMeters: number
+  distanceMeters: number,
+  polyline: string | null = null,
+  runDate: Date = new Date()
 ): Promise<RollResult> {
   const rollResult = await rollItemsForRun(distanceMeters);
 
-  if (rollResult.items.length > 0) {
-    await awardItemsToUser(userId, runId, rollResult.items);
+  // Check for special rewards (awarded on top of normal rolls)
+  const specialRewards = await checkSpecialRewards(userId, {
+    polyline,
+    runDate,
+    distanceMeters,
+  });
+
+  // Combine all items
+  const allItems = [...rollResult.items, ...specialRewards];
+  const allRarities = [
+    ...rollResult.rarities,
+    ...specialRewards.map(i => i.rarity as Rarity)
+  ];
+
+  if (allItems.length > 0) {
+    await awardItemsToUser(userId, runId, allItems);
   }
 
-  return rollResult;
+  return { items: allItems, rarities: allRarities };
 }

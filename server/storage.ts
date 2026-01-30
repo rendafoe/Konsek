@@ -1,10 +1,10 @@
 import { db } from "./db";
 import { eq, desc, and, sql, count, gte, lt } from "drizzle-orm";
 import {
-  characters, items, inventory, runs, stravaAccounts, runItems,
+  characters, items, inventory, runs, stravaAccounts, runItems, userUnlocks,
   type Character, type InsertCharacter,
   type Item, type InventoryItem,
-  type Run, type RunWithItems, type StravaAccount, type RunItem,
+  type Run, type RunWithItems, type StravaAccount, type RunItem, type UserUnlock,
   SPRITE_TYPES, type SpriteType
 } from "@shared/schema";
 import { type User } from "@shared/models/auth";
@@ -15,6 +15,11 @@ export interface PaginatedResult<T> {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface AchievementItem extends Item {
+  unlocked: boolean;
+  unlockedAt: Date | null;
 }
 
 export interface IStorage {
@@ -47,6 +52,9 @@ export interface IStorage {
 
   // Run Items
   getRunItems(runId: number): Promise<(RunItem & { item: Item })[]>;
+
+  // Achievements
+  getAchievements(userId: string): Promise<AchievementItem[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -261,6 +269,28 @@ export class DatabaseStorage implements IStorage {
       userId: r.userId,
       awardedAt: r.awardedAt,
       item: r.item as Item,
+    }));
+  }
+
+  // Achievements - get all items with unlock status for a user
+  async getAchievements(userId: string): Promise<AchievementItem[]> {
+    // Get all items ordered alphabetically
+    const allItems = await db.select().from(items).orderBy(items.name);
+
+    // Get user's unlocks
+    const unlocks = await db
+      .select()
+      .from(userUnlocks)
+      .where(eq(userUnlocks.userId, userId));
+
+    // Create a map of itemId -> unlockedAt
+    const unlockMap = new Map(unlocks.map(u => [u.itemId, u.unlockedAt]));
+
+    // Combine items with unlock status
+    return allItems.map(item => ({
+      ...item,
+      unlocked: unlockMap.has(item.id),
+      unlockedAt: unlockMap.get(item.id) || null,
     }));
   }
 }

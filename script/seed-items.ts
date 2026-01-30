@@ -1,190 +1,424 @@
 import { db } from "../server/db";
-import { items } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { items, inventory, runItems, userUnlocks } from "../shared/schema";
 
 interface SeedItem {
   name: string;
   description: string;
   rarity: "common" | "uncommon" | "rare" | "epic" | "legendary";
-  type: "wearable" | "accessory";
   imageUrl: string;
+  quote?: string;
+  isSpecialReward?: boolean;
+  specialRewardCondition?: string;
 }
 
 const seedItems: SeedItem[] = [
-  // Common (6 items)
+  // === COMMON (18 items) ===
   {
-    name: "Trail Runners",
-    description: "Basic trail running shoes. Reliable and comfortable for any terrain.",
+    name: "2L Bottle of Coke",
+    description: "A 2L bottle of soda",
     rarity: "common",
-    type: "wearable",
-    imageUrl: "/items/trail-runners.png",
+    imageUrl: "/items/2l-bottle-of-coke.png",
   },
   {
-    name: "Cotton Headband",
-    description: "A simple cotton headband to keep sweat out of your eyes.",
+    name: "7 Salt Pills",
+    description: "6 salt pills",
     rarity: "common",
-    type: "accessory",
-    imageUrl: "/items/cotton-headband.png",
+    imageUrl: "/items/7-salt-pills.png",
   },
   {
-    name: "Basic Water Bottle",
-    description: "A standard water bottle for hydration on the go.",
+    name: "Banana Peel",
+    description: "A banana peel",
     rarity: "common",
-    type: "accessory",
-    imageUrl: "/items/water-bottle.png",
+    imageUrl: "/items/banana-peel.png",
+    quote: "Watch your step!",
   },
   {
-    name: "Running Socks",
-    description: "Moisture-wicking socks that prevent blisters.",
+    name: "Bandana",
+    description: "A Bandana",
     rarity: "common",
-    type: "wearable",
-    imageUrl: "/items/running-socks.png",
+    imageUrl: "/items/bandana.png",
   },
   {
-    name: "Reflective Band",
-    description: "A simple reflective band for visibility during night runs.",
+    name: "Classic Beanie",
+    description: "A winter running beanie",
     rarity: "common",
-    type: "accessory",
-    imageUrl: "/items/reflective-band.png",
+    imageUrl: "/items/classic-beanie.png",
   },
   {
-    name: "Sports Cap",
-    description: "A lightweight cap to shield from the sun.",
+    name: "Foil Blanket",
+    description: "A foil blanket they hand out at the end of marathons",
     rarity: "common",
-    type: "wearable",
-    imageUrl: "/items/sports-cap.png",
+    imageUrl: "/items/foil-blanket.png",
+  },
+  {
+    name: "Full Tub of Vaseline",
+    description: "A tub of vaseline",
+    rarity: "common",
+    imageUrl: "/items/full-tub-of-vaseline.png",
+  },
+  {
+    name: "Gently Used Water Flask",
+    description: "A soft running flask",
+    rarity: "common",
+    imageUrl: "/items/gently-used-water-flask.png",
+  },
+  {
+    name: "Half Eaten Gel",
+    description: "A wrapper for running gel",
+    rarity: "common",
+    imageUrl: "/items/half-eaten-gel.png",
+  },
+  {
+    name: "Low-Battery Headlamp",
+    description: "A running headlamp",
+    rarity: "common",
+    imageUrl: "/items/low-battery-headlamp.png",
+  },
+  {
+    name: "Mismatched Socks",
+    description: "Mismatched pair of socks",
+    rarity: "common",
+    imageUrl: "/items/mismatched-socks.png",
+  },
+  {
+    name: "Rain Jacket",
+    description: "A rain jacket",
+    rarity: "common",
+    imageUrl: "/items/rain-jacket.png",
+  },
+  {
+    name: "Safety Whistle",
+    description: "A whistle",
+    rarity: "common",
+    imageUrl: "/items/safety-whistle.png",
+  },
+  {
+    name: "Sun Blasted Mile Marker",
+    description: "A very faded mile marker sign",
+    rarity: "common",
+    imageUrl: "/items/sun-blasted-mile-marker.png",
+  },
+  {
+    name: "Tie Dye Tee",
+    description: "A tie dye tee shirt",
+    rarity: "common",
+    imageUrl: "/items/tie-dye-tee.png",
+  },
+  {
+    name: "Tin Foil Hat",
+    description: "A tin foil hat they wear in the movies",
+    rarity: "common",
+    imageUrl: "/items/tin-foil-hat.png",
+  },
+  {
+    name: "Windbreaker",
+    description: "A windbreaker",
+    rarity: "common",
+    imageUrl: "/items/windbreaker.png",
+  },
+  {
+    name: "Wool Hood",
+    description: "A comfy looking wool hood",
+    rarity: "common",
+    imageUrl: "/items/wool-hood.png",
   },
 
-  // Uncommon (5 items)
+  // === UNCOMMON (13 items) ===
   {
-    name: "Compression Sleeves",
-    description: "Calf compression sleeves for improved circulation and recovery.",
+    name: "10g of Creatine",
+    description: "Mysterious white powder",
     rarity: "uncommon",
-    type: "wearable",
-    imageUrl: "/items/compression-sleeves.png",
+    imageUrl: "/items/10g-of-creatine.png",
   },
   {
-    name: "GPS Watch",
-    description: "A reliable GPS watch for tracking distance and pace.",
+    name: "Emergency Poncho",
+    description: "A yellow poncho",
     rarity: "uncommon",
-    type: "accessory",
-    imageUrl: "/items/gps-watch.png",
+    imageUrl: "/items/emergency-poncho.png",
   },
   {
-    name: "Trail Vest",
-    description: "A lightweight vest with pockets for carrying essentials.",
+    name: "Foam Roller",
+    description: "A foam roller",
     rarity: "uncommon",
-    type: "wearable",
-    imageUrl: "/items/trail-vest.png",
+    imageUrl: "/items/foam-roller.png",
   },
   {
-    name: "Bone Conduction Headphones",
-    description: "Headphones that let you hear your surroundings while running.",
+    name: "High Tech Chest Strap HR Monitor",
+    description: "A running chest strap HR monitor",
     rarity: "uncommon",
-    type: "accessory",
-    imageUrl: "/items/bone-headphones.png",
+    imageUrl: "/items/high-tech-chest-strap-hr-monitor.png",
   },
   {
-    name: "Running Gloves",
-    description: "Touchscreen-compatible gloves for cold weather runs.",
+    name: "Nipple Tape",
+    description: "A roll of tape the color of bandaids",
     rarity: "uncommon",
-    type: "wearable",
-    imageUrl: "/items/running-gloves.png",
+    imageUrl: "/items/nipple-tape.png",
+  },
+  {
+    name: "Old Race Bib",
+    description: "A tattered, old race bib you would have worn in a running race",
+    rarity: "uncommon",
+    imageUrl: "/items/old-race-bib.png",
+  },
+  {
+    name: "Open-topped Mug of Coffee",
+    description: "A mug of coffee",
+    rarity: "uncommon",
+    imageUrl: "/items/open-topped-mug-of-coffee.png",
+  },
+  {
+    name: "Propeller Hat",
+    description: "A Propeller Hat",
+    rarity: "uncommon",
+    imageUrl: "/items/propeller-hat.png",
+  },
+  {
+    name: "Smashed Alarm Clock",
+    description: "A smashed alarm clock",
+    rarity: "uncommon",
+    imageUrl: "/items/smashed-alarm-clock.png",
+  },
+  {
+    name: "Torn City Map",
+    description: "A torn city map",
+    rarity: "uncommon",
+    imageUrl: "/items/torn-city-map.png",
+  },
+  {
+    name: "Vintage Race Shirt",
+    description: "A vintage running race shirt",
+    rarity: "uncommon",
+    imageUrl: "/items/vintage-race-shirt.png",
+  },
+  {
+    name: "Water Balloons",
+    description: "A water balloon",
+    rarity: "uncommon",
+    imageUrl: "/items/water-balloons.png",
+  },
+  {
+    name: "Wristwatch",
+    description: "A running GPS watch",
+    rarity: "uncommon",
+    imageUrl: "/items/wristwatch.png",
+    quote: "And I've got a houseboat docked at the Himbo Dome",
   },
 
-  // Rare (4 items)
+  // === RARE (11 items) ===
   {
-    name: "Carbon Plate Shoes",
-    description: "Racing shoes with carbon fiber plates for maximum energy return.",
+    name: "Astronaut Helmet",
+    description: "An Astronaut Helmet",
     rarity: "rare",
-    type: "wearable",
-    imageUrl: "/items/carbon-shoes.png",
+    imageUrl: "/items/astronaut-helmet.png",
   },
   {
-    name: "Heart Rate Monitor",
-    description: "Precision chest strap monitor for accurate heart rate tracking.",
+    name: "Box of Assorted Chocolate Protein Powder",
+    description: "A box of assorted chocolates",
     rarity: "rare",
-    type: "accessory",
-    imageUrl: "/items/hr-monitor.png",
+    imageUrl: "/items/box-of-assorted-chocolate-protein-powder.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded on Feb 14th",
   },
   {
-    name: "Hydration Pack",
-    description: "A sleek pack with a 2L bladder for long distance runs.",
+    name: "Caffeine Shotgun",
+    description: "A shotgun but instead of the barrel it's an aluminum soft drink can",
     rarity: "rare",
-    type: "wearable",
-    imageUrl: "/items/hydration-pack.png",
+    imageUrl: "/items/caffeine-shotgun.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded for runs started after 10pm",
   },
   {
-    name: "LED Headlamp",
-    description: "Ultra-bright rechargeable headlamp for night trail running.",
+    name: "Carbon Plated Shoes",
+    description: "Carbon plated shoes",
     rarity: "rare",
-    type: "accessory",
-    imageUrl: "/items/led-headlamp.png",
+    imageUrl: "/items/carbon-plated-shoes.png",
+  },
+  {
+    name: "Doggo",
+    description: "A bernedoodle dog",
+    rarity: "rare",
+    imageUrl: "/items/doggo.png",
+  },
+  {
+    name: "High Visibility Cloak",
+    description: "A cloak made out of high visibility material and colors",
+    rarity: "rare",
+    imageUrl: "/items/high-visibility-cloak.png",
+  },
+  {
+    name: "P.F. Flyers",
+    description: "A pair of P.F. Flyers sneakers",
+    rarity: "rare",
+    imageUrl: "/items/pf-flyers.png",
+    quote: "Guaranteed to make you run faster and jump higher",
+  },
+  {
+    name: "Snowball Cannon",
+    description: "A snowball cannon",
+    rarity: "rare",
+    imageUrl: "/items/snowball-cannon.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded when snowing",
+  },
+  {
+    name: "Stolen Soul",
+    description: "A ghost",
+    rarity: "rare",
+    imageUrl: "/items/stolen-soul.png",
+    quote: "IYKYK",
+  },
+  {
+    name: "Tailwind Espresso",
+    description: "A shot of espresso in a cup",
+    rarity: "rare",
+    imageUrl: "/items/tailwind-espresso.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded for runs started before 6am",
+  },
+  {
+    name: "Umbrella Hat",
+    description: "An umbrella hat",
+    rarity: "rare",
+    imageUrl: "/items/umbrella-hat.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded when raining",
   },
 
-  // Epic (3 items)
+  // === EPIC (8 items) ===
   {
-    name: "Ultra Vest Pro",
-    description: "Professional-grade running vest designed for ultramarathons.",
+    name: "Badwater Hat",
+    description: "A hat someone would wear in the deep desert",
     rarity: "epic",
-    type: "wearable",
-    imageUrl: "/items/ultra-vest.png",
+    imageUrl: "/items/badwater-hat.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded when temp > 100°F",
   },
   {
-    name: "Smart Running Pod",
-    description: "Advanced foot pod with biomechanical analysis and coaching.",
+    name: "Barkleys Compass",
+    description: "A compass",
     rarity: "epic",
-    type: "accessory",
-    imageUrl: "/items/smart-pod.png",
+    imageUrl: "/items/barkleys-compass.png",
   },
   {
-    name: "Weather Shield Jacket",
-    description: "Ultralight waterproof jacket that packs into its own pocket.",
+    name: "Blue Party Hat",
+    description: "A blue party hat from Old School Runescape",
     rarity: "epic",
-    type: "wearable",
-    imageUrl: "/items/weather-jacket.png",
+    imageUrl: "/items/blue-party-hat.png",
+  },
+  {
+    name: "Golden Belt Buckle",
+    description: "A golden belt buckle",
+    rarity: "epic",
+    imageUrl: "/items/golden-belt-buckle.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded for runs > 100km",
+  },
+  {
+    name: "Ice Beard",
+    description: "A beard with frost and icicles",
+    rarity: "epic",
+    imageUrl: "/items/ice-beard.png",
+    isSpecialReward: true,
+    specialRewardCondition: "Rewarded when temp < 10°F",
+  },
+  {
+    name: "Katana",
+    description: "A katana sword",
+    rarity: "epic",
+    imageUrl: "/items/katana.png",
+  },
+  {
+    name: "Skill Cape",
+    description: "A superhero cape",
+    rarity: "epic",
+    imageUrl: "/items/skill-cape.png",
+  },
+  {
+    name: "Wild Mushrooms",
+    description: "Psychedelic mushrooms",
+    rarity: "epic",
+    imageUrl: "/items/wild-mushrooms.png",
+    quote: "There's only one way to find out",
   },
 
-  // Legendary (2 items)
+  // === LEGENDARY (5 items) ===
   {
-    name: "Phoenix Wings",
-    description: "Mythical shoes said to grant the speed of a rising phoenix. Glows with inner fire.",
+    name: "Courtney's Shorts",
+    description: "Men's basketball shorts",
     rarity: "legendary",
-    type: "wearable",
-    imageUrl: "/items/phoenix-wings.png",
+    imageUrl: "/items/courtneys-shorts.png",
   },
   {
-    name: "Aurora Amulet",
-    description: "An ancient amulet that pulses with the northern lights. Grants supernatural endurance.",
+    name: "Killian's Trekking Poles",
+    description: "2 trekking poles for running",
     rarity: "legendary",
-    type: "accessory",
-    imageUrl: "/items/aurora-amulet.png",
+    imageUrl: "/items/killians-trekking-poles.png",
+  },
+  {
+    name: "Laz's Flannel",
+    description: "A men's flannel",
+    rarity: "legendary",
+    imageUrl: "/items/lazs-flannel.png",
+  },
+  {
+    name: "Prefontaine's Race Singlet",
+    description: "A shiny elite runners singlet",
+    rarity: "legendary",
+    imageUrl: "/items/prefontaines-race-singlet.png",
+  },
+  {
+    name: "Walmsley's WS Race Shirt",
+    description: "A white running tee shirt with a bunch of small holes in it",
+    rarity: "legendary",
+    imageUrl: "/items/walmslys-ws-race-shirt.png",
   },
 ];
 
 async function seed() {
   console.log("Seeding items database...");
 
-  // Check if items already exist
-  const existingItems = await db.select().from(items);
-  if (existingItems.length > 0) {
-    console.log(`Found ${existingItems.length} existing items. Skipping seed.`);
-    console.log("To reseed, manually delete existing items first.");
-    process.exit(0);
-  }
+  // Clear dependent tables first (foreign key constraints)
+  console.log("Clearing dependent tables...");
+  console.log("  Clearing user_unlocks...");
+  await db.delete(userUnlocks);
+  console.log("  Clearing run_items...");
+  await db.delete(runItems);
+  console.log("  Clearing inventory...");
+  await db.delete(inventory);
+
+  // Clear existing items
+  console.log("Clearing existing items...");
+  await db.delete(items);
 
   // Insert all seed items
   for (const item of seedItems) {
-    await db.insert(items).values(item);
-    console.log(`  Added: ${item.name} (${item.rarity})`);
+    await db.insert(items).values({
+      name: item.name,
+      description: item.description,
+      rarity: item.rarity,
+      imageUrl: item.imageUrl,
+      quote: item.quote || null,
+      isSpecialReward: item.isSpecialReward || false,
+      specialRewardCondition: item.specialRewardCondition || null,
+    });
+    console.log(`  Added: ${item.name} (${item.rarity})${item.isSpecialReward ? ' [SPECIAL]' : ''}`);
   }
 
+  // Count by rarity
+  const counts = seedItems.reduce((acc, item) => {
+    acc[item.rarity] = (acc[item.rarity] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const specialCount = seedItems.filter(i => i.isSpecialReward).length;
+
   console.log(`\nSuccessfully seeded ${seedItems.length} items!`);
-  console.log("  - Common: 6");
-  console.log("  - Uncommon: 5");
-  console.log("  - Rare: 4");
-  console.log("  - Epic: 3");
-  console.log("  - Legendary: 2");
+  console.log(`  - Common: ${counts.common || 0}`);
+  console.log(`  - Uncommon: ${counts.uncommon || 0}`);
+  console.log(`  - Rare: ${counts.rare || 0}`);
+  console.log(`  - Epic: ${counts.epic || 0}`);
+  console.log(`  - Legendary: ${counts.legendary || 0}`);
+  console.log(`  - Special Rewards: ${specialCount}`);
 
   process.exit(0);
 }

@@ -139,6 +139,30 @@ export const api = {
       },
     },
   },
+
+  // === ACHIEVEMENTS ===
+  achievements: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/achievements',
+      responses: {
+        200: z.object({
+          items: z.array(z.object({
+            id: z.number(),
+            name: z.string(),
+            description: z.string(),
+            rarity: z.string(),
+            imageUrl: z.string(),
+            quote: z.string().nullable(),
+            isSpecialReward: z.boolean(),
+            specialRewardCondition: z.string().nullable(),
+            unlocked: z.boolean(),
+            unlockedAt: z.string().nullable(),
+          })),
+        }),
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
@@ -156,3 +180,4 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
 export type CharacterResponse = z.infer<typeof api.character.get.responses[200]>;
 export type InventoryResponse = z.infer<typeof api.inventory.list.responses[200]>;
 export type ActivitiesResponse = z.infer<typeof api.activities.list.responses[200]>;
+export type AchievementsResponse = z.infer<typeof api.achievements.list.responses[200]>;

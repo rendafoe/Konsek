@@ -97,13 +97,25 @@ export default function Inventory() {
                     groupedItem.item?.rarity === 'uncommon' ? 'bg-green-500' : 'bg-gray-400'}
                 `} />
 
-                <div className="aspect-square bg-background border-2 border-border mb-4 flex items-center justify-center">
-                  {/* Placeholder Pixel Art for Item */}
-                  <Shield className="w-8 h-8 text-muted-foreground opacity-50" />
+                <div className="aspect-square bg-background border-2 border-border mb-3 flex items-center justify-center overflow-hidden">
+                  {groupedItem.item?.imageUrl ? (
+                    <img
+                      src={groupedItem.item.imageUrl}
+                      alt={groupedItem.item.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <Shield className={`w-8 h-8 text-muted-foreground opacity-50 ${groupedItem.item?.imageUrl ? 'hidden' : ''}`} />
                 </div>
 
                 <h3 className="font-pixel text-[10px] truncate mb-1">{groupedItem.item?.name}</h3>
-                <p className="text-[10px] text-muted-foreground truncate">{groupedItem.item?.type}</p>
+                <p className="text-[9px] text-muted-foreground italic truncate">
+                  {groupedItem.item?.quote ? `"${groupedItem.item.quote}"` : "A mysterious item..."}
+                </p>
 
                 {groupedItem.equippedId && (
                   <div className="absolute top-2 left-2 bg-primary text-[8px] font-pixel text-primary-foreground px-1 py-0.5">

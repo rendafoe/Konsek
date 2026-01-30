@@ -53,8 +53,10 @@ export const items = pgTable("items", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   rarity: text("rarity", { enum: ["common", "uncommon", "rare", "epic", "legendary"] }).notNull(),
-  type: text("type", { enum: ["wearable", "accessory"] }).notNull(),
   imageUrl: text("image_url").notNull(), // Path to pixel art asset
+  quote: text("quote"), // Flavor text displayed in italics
+  isSpecialReward: boolean("is_special_reward").default(false).notNull(), // Special condition-based rewards
+  specialRewardCondition: text("special_reward_condition"), // Description of unlock condition
 });
 
 // User inventory (collected items)
@@ -91,6 +93,14 @@ export const runItems = pgTable("run_items", {
   itemId: integer("item_id").notNull().references(() => items.id),
   userId: varchar("user_id").notNull().references(() => users.id),
   awardedAt: timestamp("awarded_at").defaultNow().notNull(),
+});
+
+// Track first-time item acquisitions for achievements
+export const userUnlocks = pgTable("user_unlocks", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  itemId: integer("item_id").notNull().references(() => items.id),
+  unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
 });
 
 // === RELATIONS ===
@@ -151,6 +161,17 @@ export const runItemsRelations = relations(runItems, ({ one }) => ({
   }),
 }));
 
+export const userUnlocksRelations = relations(userUnlocks, ({ one }) => ({
+  user: one(users, {
+    fields: [userUnlocks.userId],
+    references: [users.id],
+  }),
+  item: one(items, {
+    fields: [userUnlocks.itemId],
+    references: [items.id],
+  }),
+}));
+
 // === ZOD SCHEMAS ===
 export const insertCharacterSchema = createInsertSchema(characters).omit({ 
   id: true, 
@@ -174,6 +195,7 @@ export const insertItemSchema = createInsertSchema(items).omit({ id: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, acquiredAt: true });
 export const insertRunSchema = createInsertSchema(runs).omit({ id: true });
 export const insertRunItemSchema = createInsertSchema(runItems).omit({ id: true, awardedAt: true });
+export const insertUserUnlockSchema = createInsertSchema(userUnlocks).omit({ id: true, unlockedAt: true });
 
 // === TYPES ===
 export type Character = typeof characters.$inferSelect;
@@ -185,3 +207,4 @@ export type RunItem = typeof runItems.$inferSelect;
 export type RunWithItems = Run & { awardedItems?: (RunItem & { item?: Item })[] };
 export type StravaAccount = typeof stravaAccounts.$inferSelect;
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
+export type UserUnlock = typeof userUnlocks.$inferSelect;

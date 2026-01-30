@@ -9,6 +9,7 @@ import NotFound from "@/pages/NotFound";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import Inventory from "@/pages/Inventory";
+import Achievements from "@/pages/Achievements";
 import Archive from "@/pages/Archive";
 import Settings from "@/pages/Settings";
 import ActivityLog from "@/pages/ActivityLog";
@@ -37,6 +38,7 @@ function Router() {
     <Switch>
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/inventory" component={() => <ProtectedRoute component={Inventory} />} />
+      <Route path="/achievements" component={() => <ProtectedRoute component={Achievements} />} />
       <Route path="/archive" component={() => <ProtectedRoute component={Archive} />} />
       <Route path="/activities" component={() => <ProtectedRoute component={ActivityLog} />} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />

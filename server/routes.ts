@@ -146,8 +146,8 @@ export async function registerRoutes(
             healthUpdated: isFirstRunOfDay,
           });
 
-          // Award items for this run
-          const rewardResult = await processRunRewards(userId, run.id, distanceMeters);
+          // Award items for this run (no polyline for dev mode, so weather rewards won't trigger)
+          const rewardResult = await processRunRewards(userId, run.id, distanceMeters, null, runDate);
 
           createdRuns.push({
             ...run,
@@ -476,7 +476,7 @@ export async function registerRoutes(
 
         // Award items for this run (only if >= 1km)
         if (run.distance >= 1000) {
-          await processRunRewards(userId, run.id, run.distance);
+          await processRunRewards(userId, run.id, run.distance, run.polyline, run.date);
         }
 
         syncedCount++;
@@ -584,6 +584,22 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Activities fetch error:", error);
       res.status(500).json({ message: "Failed to fetch activities" });
+    }
+  });
+
+  // === ACHIEVEMENTS ROUTES ===
+  app.get(api.achievements.list.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const achievements = await storage.getAchievements(req.user.claims.sub);
+      res.json({
+        items: achievements.map(item => ({
+          ...item,
+          unlockedAt: item.unlockedAt ? item.unlockedAt.toISOString() : null,
+        })),
+      });
+    } catch (error) {
+      console.error("Achievements fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
     }
   });
 
