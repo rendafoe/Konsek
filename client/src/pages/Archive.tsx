@@ -1,5 +1,6 @@
 import { useCharacterArchive } from "@/hooks/use-character";
 import { Navigation } from "@/components/Navigation";
+import { PageHeader } from "@/components/PageHeader";
 import { Loader2, Skull } from "lucide-react";
 import { format } from "date-fns";
 import { getEskoStage } from "@/components/EskoCharacter";
@@ -16,10 +17,7 @@ export default function Archive() {
       <Navigation />
 
       <main className="flex-1 p-6 md:p-12 mb-20 md:mb-0 overflow-y-auto">
-        <header className="mb-12">
-          <h1 className="text-2xl md:text-3xl font-pixel text-foreground mb-2">The Graveyard</h1>
-          <p className="text-muted-foreground">Past companions who have completed their journey.</p>
-        </header>
+        <PageHeader title="The Graveyard" subtitle="Past companions who have completed their journey" />
 
         <div className="grid gap-6">
           {graveyard?.map((char) => {

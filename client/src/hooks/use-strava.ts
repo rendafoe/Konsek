@@ -16,8 +16,12 @@ export function useStravaSync() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
+      // Send the user's current timezone with each sync request
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch(api.strava.sync.path, {
         method: api.strava.sync.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timezone }),
         credentials: "include",
       });
       if (!res.ok) {
@@ -32,6 +36,10 @@ export function useStravaSync() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/runs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/character"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/achievements"] });
+      queryClient.invalidateQueries({ queryKey: [api.medals.status.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
     },
   });
 }

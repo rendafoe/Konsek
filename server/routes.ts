@@ -366,11 +366,64 @@ export async function registerRoutes(
     const userId = req.user.claims.sub;
 
     try {
+      // Get the user's current timezone from the request (sent by browser)
+      const userTimezone = req.body?.timezone || 'UTC';
+
       // Get Strava account
       const account = await storage.getStravaAccount(userId);
       if (!account) {
         return res.status(400).json({ message: "Strava not connected. Please connect your account first." });
       }
+
+      // Get active character to check creation date (represents user's "fresh start")
+      const character = await storage.getActiveCharacter(userId);
+      if (!character) {
+        return res.status(400).json({ message: "No active character. Please create one first." });
+      }
+
+      // Helper function to get midnight (start of day) in a specific timezone as a UTC Date
+      const getMidnightInTimezone = (date: Date, timezone: string): Date => {
+        // Get the calendar date (YYYY-MM-DD) in the target timezone
+        const datePart = new Intl.DateTimeFormat('en-CA', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(date);
+
+        // Calculate the timezone offset on this specific date (handles DST)
+        // Use noon to avoid DST transition edge cases around midnight
+        const noonUTC = new Date(`${datePart}T12:00:00Z`);
+        const utcHour = 12; // We know it's noon UTC
+        const tzHour = parseInt(new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          hour: '2-digit',
+          hour12: false
+        }).format(noonUTC));
+
+        // Offset = UTC - local (positive means local is behind UTC)
+        // If noon UTC shows as 6am local, offset is +6 hours
+        let offsetHours = utcHour - tzHour;
+        if (offsetHours > 12) offsetHours -= 24;
+        if (offsetHours < -12) offsetHours += 24;
+
+        // Midnight local = midnight UTC + offset
+        // e.g., midnight Central (UTC-6) = 00:00 UTC + 6h = 06:00 UTC
+        const midnightUTC = new Date(`${datePart}T00:00:00Z`);
+        return new Date(midnightUTC.getTime() + offsetHours * 60 * 60 * 1000);
+      }
+
+      // Calculate the start of the creation day using the user's CURRENT timezone
+      // This ensures runs count even if the user travels to a different timezone
+      const characterCreatedAt = character.createdAt ? new Date(character.createdAt) : new Date(0);
+      const startOfCreationDay = getMidnightInTimezone(characterCreatedAt, userTimezone);
+
+      console.log("[Strava Sync] Debug info:");
+      console.log("  User timezone:", userTimezone);
+      console.log("  Character createdAt (UTC):", characterCreatedAt.toISOString());
+      console.log("  Character createdAt (local):", characterCreatedAt.toLocaleString('en-US', { timeZone: userTimezone }));
+      console.log("  Start of creation day (UTC):", startOfCreationDay.toISOString());
+      console.log("  Start of creation day (local):", startOfCreationDay.toLocaleString('en-US', { timeZone: userTimezone }));
 
       // Check if token needs refresh
       let accessToken = account.accessToken;
@@ -431,25 +484,63 @@ export async function registerRoutes(
 
       const activities = await activitiesResponse.json();
 
-      // Filter for runs only (type === "Run")
-      const runActivities = activities.filter((a: any) => a.type === "Run");
+      // Filter for runs only (type === "Run") and only activities on or after the day of character creation
+      const runActivities = activities.filter((a: any) => {
+        if (a.type !== "Run") return false;
+        const activityDate = new Date(a.start_date);
+        const included = activityDate >= startOfCreationDay;
+        console.log(`  Activity "${a.name}": ${activityDate.toLocaleString('en-US', { timeZone: userTimezone })} - ${included ? 'INCLUDED' : 'EXCLUDED'}`);
+        return included;
+      });
+      console.log(`  Total runs included: ${runActivities.length}`);
 
       // Get existing run IDs to avoid duplicates
       const existingRuns = await storage.getRuns(userId);
       const existingStravaIds = new Set(existingRuns.map(r => r.stravaActivityId));
 
-      // Get active character
-      const character = await storage.getActiveCharacter(userId);
-      if (!character) {
-        return res.status(400).json({ message: "No active character. Please create one first." });
+      // Helper to get calendar date string in user's timezone (YYYY-MM-DD)
+      const getCalendarDate = (date: Date, timezone: string): string => {
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(date);
       }
 
-      // Import item reward service
+      // Track which calendar days already have runs (for daysAlive calculation)
+      const existingRunDays = new Set<string>();
+      for (const run of existingRuns) {
+        const runDate = getCalendarDate(new Date(run.date), userTimezone);
+        existingRunDays.add(runDate);
+      }
+
+      // Fix: If daysAlive is out of sync with actual run days, recalculate it
+      // Age = number of distinct run days - 1 (first day is day 0)
+      const actualDaysAlive = Math.max(0, existingRunDays.size - 1);
+      if (character.daysAlive !== actualDaysAlive) {
+        console.log(`  Fixing daysAlive: was ${character.daysAlive}, should be ${actualDaysAlive} (${existingRunDays.size} distinct run days)`);
+        await storage.updateCharacter(character.id, {
+          daysAlive: actualDaysAlive,
+        });
+        // Update local reference for further calculations
+        character.daysAlive = actualDaysAlive;
+      }
+
+      // Import item reward service and medal service
       const { processRunRewards } = await import("./services/itemRewards");
+      const { checkProgressionReward } = await import("./services/medalService");
+
+      // Store previous run count for progression check
+      const previousTotalRuns = character.totalRuns || 0;
 
       // Process new runs
       let syncedCount = 0;
       let totalDistanceAdded = 0;
+      let newDaysCount = 0;
+      let totalMedalsAwarded = 0;
+      const allAwardedItems: any[] = [];
+      const newRunDays = new Set<string>();
 
       for (const activity of runActivities) {
         const stravaId = String(activity.id);
@@ -459,6 +550,18 @@ export async function registerRoutes(
           continue;
         }
 
+        const activityDate = new Date(activity.start_date);
+        const calendarDay = getCalendarDate(activityDate, userTimezone);
+
+        // Check if this is a new calendar day (not in existing runs or already counted in this sync)
+        const isNewDay = !existingRunDays.has(calendarDay) && !newRunDays.has(calendarDay);
+        console.log(`  New run on ${calendarDay}, isNewDay: ${isNewDay}`);
+        if (isNewDay) {
+          newDaysCount++;
+          newRunDays.add(calendarDay);
+          console.log(`  NEW DAY DETECTED! newDaysCount is now: ${newDaysCount}`);
+        }
+
         // Create run record
         const run = await storage.createRun({
           userId,
@@ -466,7 +569,7 @@ export async function registerRoutes(
           stravaActivityId: stravaId,
           distance: Math.round(activity.distance), // meters
           duration: activity.moving_time, // seconds
-          date: new Date(activity.start_date),
+          date: activityDate,
           processed: true,
           name: activity.name || "Run",
           polyline: activity.map?.summary_polyline || null,
@@ -476,19 +579,41 @@ export async function registerRoutes(
 
         // Award items for this run (only if >= 1km)
         if (run.distance >= 1000) {
-          await processRunRewards(userId, run.id, run.distance, run.polyline, run.date);
+          const rewardResult = await processRunRewards(userId, run.id, run.distance, run.polyline, run.date);
+          if (rewardResult.items.length > 0) {
+            allAwardedItems.push(...rewardResult.items);
+          }
+          totalMedalsAwarded += rewardResult.medalsAwarded;
         }
 
         syncedCount++;
         totalDistanceAdded += run.distance;
       }
 
-      // Update character stats if new runs were synced
+      // Check for progression reward
+      let progressionReward = null;
       if (syncedCount > 0) {
+        // daysAlive = total distinct run days - 1 (first day is day 0)
+        const totalDistinctDays = existingRunDays.size + newDaysCount;
+        const newDaysAlive = Math.max(0, totalDistinctDays - 1);
+        const newTotalRuns = previousTotalRuns + syncedCount;
+
+        console.log(`  Updating character: syncedCount=${syncedCount}, newDaysCount=${newDaysCount}, totalDistinctDays=${totalDistinctDays}, newDaysAlive=${newDaysAlive}`);
         await storage.updateCharacter(character.id, {
-          totalRuns: (character.totalRuns || 0) + syncedCount,
+          totalRuns: newTotalRuns,
           totalDistance: (character.totalDistance || 0) + totalDistanceAdded,
+          daysAlive: newDaysAlive,
         });
+
+        // Check for character progression reward
+        const progression = await checkProgressionReward(userId, previousTotalRuns, newTotalRuns);
+        if (progression) {
+          progressionReward = {
+            stage: progression.transitionKey.split('_to_')[1].replace(/_/g, ' '),
+            medalsAwarded: progression.medalsAwarded,
+          };
+          totalMedalsAwarded += progression.medalsAwarded;
+        }
       }
 
       // Update last fetch time
@@ -505,7 +630,10 @@ export async function registerRoutes(
         synced: syncedCount,
         message: syncedCount > 0
           ? `Synced ${syncedCount} new run${syncedCount > 1 ? 's' : ''}!`
-          : "No new runs to sync."
+          : "No new runs to sync.",
+        awardedItems: allAwardedItems,
+        medalsAwarded: totalMedalsAwarded > 0 ? totalMedalsAwarded : undefined,
+        progressionReward: progressionReward || undefined,
       });
     } catch (error) {
       console.error("Strava sync error:", error);
@@ -600,6 +728,152 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Achievements fetch error:", error);
       res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  // === MEDALS ROUTES ===
+  const {
+    getMedalBalance,
+    getCheckInStatus,
+    performCheckIn,
+    getMedalHistory,
+    spendMedals,
+  } = await import("./services/medalService");
+
+  // Get medal status (balance + check-in status)
+  app.get(api.medals.status.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const timezone = (req.query.timezone as string) || 'UTC';
+
+      const balance = await getMedalBalance(userId);
+      const status = await getCheckInStatus(userId, timezone);
+
+      // Ensure all values match the expected schema types
+      const response = {
+        balance: Number(balance),
+        canCheckIn: Boolean(status.canCheckIn),
+        currentStreak: Number(status.currentStreak),
+        daysUntilBonus: Number(status.daysUntilBonus),
+        lastCheckIn: status.lastCheckIn ? String(status.lastCheckIn) : null,
+      };
+      console.log("Medal status response:", JSON.stringify(response));
+      res.json(response);
+    } catch (error) {
+      console.error("Medal status error:", error);
+      res.status(500).json({ message: "Failed to fetch medal status" });
+    }
+  });
+
+  // Perform daily check-in
+  app.post(api.medals.checkIn.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const timezone = req.body?.timezone || 'UTC';
+
+      const result = await performCheckIn(userId, timezone);
+      const newBalance = await getMedalBalance(userId);
+
+      res.json({
+        medalsAwarded: result.medalsAwarded,
+        currentStreak: result.currentStreak,
+        isStreakBonus: result.isStreakBonus,
+        newBalance,
+      });
+    } catch (error: any) {
+      console.error("Check-in error:", error);
+      if (error.message === "Already checked in today") {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to check in" });
+    }
+  });
+
+  // Get medal transaction history
+  app.get(api.medals.history.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const queryResult = api.medals.history.query.safeParse(req.query);
+      const limit = queryResult.success ? queryResult.data.limit : 50;
+
+      const transactions = await getMedalHistory(userId, limit);
+
+      res.json({
+        transactions: transactions.map(t => ({
+          id: t.id,
+          amount: t.amount,
+          source: t.source,
+          description: t.description,
+          createdAt: t.createdAt.toISOString(),
+        })),
+      });
+    } catch (error) {
+      console.error("Medal history error:", error);
+      res.status(500).json({ message: "Failed to fetch medal history" });
+    }
+  });
+
+  // === SHOP ROUTES ===
+  app.post(api.shop.purchase.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { itemId } = api.shop.purchase.input.parse(req.body);
+
+      // Get the item
+      const item = await storage.getItem(itemId);
+      if (!item) {
+        return res.status(400).json({ message: "Item not found" });
+      }
+
+      // Check if item is purchasable
+      if (!item.price || item.price <= 0) {
+        return res.status(400).json({ message: "This item is not for sale" });
+      }
+
+      // Check balance
+      const balance = await getMedalBalance(userId);
+      if (balance < item.price) {
+        return res.status(400).json({ message: "Insufficient medals" });
+      }
+
+      // Spend medals
+      await spendMedals(
+        userId,
+        item.price,
+        itemId,
+        `Purchased ${item.name}`
+      );
+
+      // Add to inventory
+      await storage.addItemToInventory(userId, itemId);
+
+      // Track unlock for achievements
+      const { db } = await import("./db");
+      const { userUnlocks } = await import("@shared/schema");
+      try {
+        await db.insert(userUnlocks).values({ userId, itemId });
+      } catch {
+        // Already unlocked
+      }
+
+      const newBalance = await getMedalBalance(userId);
+
+      res.json({
+        success: true,
+        item: {
+          id: item.id,
+          name: item.name,
+          rarity: item.rarity,
+          imageUrl: item.imageUrl,
+        },
+        newBalance,
+      });
+    } catch (error: any) {
+      console.error("Purchase error:", error);
+      if (error.message === "Insufficient medal balance") {
+        return res.status(400).json({ message: "Insufficient medals" });
+      }
+      res.status(500).json({ message: "Failed to complete purchase" });
     }
   });
 

@@ -1,14 +1,16 @@
 import { db } from "../server/db";
-import { items, inventory, runItems, userUnlocks } from "../shared/schema";
+import { items } from "../shared/schema";
+import { eq } from "drizzle-orm";
 
 interface SeedItem {
   name: string;
   description: string;
-  rarity: "common" | "uncommon" | "rare" | "epic" | "legendary";
+  rarity: "common" | "uncommon" | "rare" | "epic" | "legendary" | "mythic";
   imageUrl: string;
   quote?: string;
   isSpecialReward?: boolean;
   specialRewardCondition?: string;
+  price?: number; // Medal cost for purchasable items
 }
 
 const seedItems: SeedItem[] = [
@@ -372,36 +374,99 @@ const seedItems: SeedItem[] = [
     rarity: "legendary",
     imageUrl: "/items/walmslys-ws-race-shirt.png",
   },
+
+  // === MYTHIC (5 items) - Purchased with Medals ===
+  {
+    name: "Mythic Crown",
+    description: "A radiant crown that glows with otherworldly energy",
+    rarity: "mythic",
+    imageUrl: "/items/mythic-crown.png",
+    quote: "Worn only by the most dedicated runners",
+    isSpecialReward: true,
+    specialRewardCondition: "Purchase with 50 Medals",
+    price: 50,
+  },
+  {
+    name: "Mythic Cape",
+    description: "A flowing cape woven from stardust and determination",
+    rarity: "mythic",
+    imageUrl: "/items/mythic-cape.png",
+    quote: "Each thread represents a mile conquered",
+    isSpecialReward: true,
+    specialRewardCondition: "Purchase with 50 Medals",
+    price: 50,
+  },
+  {
+    name: "Mythic Aura",
+    description: "A shimmering aura of pure running essence",
+    rarity: "mythic",
+    imageUrl: "/items/mythic-aura.png",
+    quote: "Visible only to those who have pushed their limits",
+    isSpecialReward: true,
+    specialRewardCondition: "Purchase with 50 Medals",
+    price: 50,
+  },
+  {
+    name: "Mythic Wings",
+    description: "Ethereal wings that seem to carry you forward",
+    rarity: "mythic",
+    imageUrl: "/items/mythic-wings.png",
+    quote: "For runners who have learned to fly",
+    isSpecialReward: true,
+    specialRewardCondition: "Purchase with 50 Medals",
+    price: 50,
+  },
+  {
+    name: "Mythic Trail",
+    description: "A magical trail that follows your every step",
+    rarity: "mythic",
+    imageUrl: "/items/mythic-trail.png",
+    quote: "Leaves a mark on every path you run",
+    isSpecialReward: true,
+    specialRewardCondition: "Purchase with 50 Medals",
+    price: 50,
+  },
 ];
 
 async function seed() {
-  console.log("Seeding items database...");
+  console.log("Seeding items database (upsert mode - preserves user data)...");
 
-  // Clear dependent tables first (foreign key constraints)
-  console.log("Clearing dependent tables...");
-  console.log("  Clearing user_unlocks...");
-  await db.delete(userUnlocks);
-  console.log("  Clearing run_items...");
-  await db.delete(runItems);
-  console.log("  Clearing inventory...");
-  await db.delete(inventory);
+  // Upsert all seed items - update if exists by name, insert if new
+  let inserted = 0;
+  let updated = 0;
 
-  // Clear existing items
-  console.log("Clearing existing items...");
-  await db.delete(items);
-
-  // Insert all seed items
   for (const item of seedItems) {
-    await db.insert(items).values({
-      name: item.name,
-      description: item.description,
-      rarity: item.rarity,
-      imageUrl: item.imageUrl,
-      quote: item.quote || null,
-      isSpecialReward: item.isSpecialReward || false,
-      specialRewardCondition: item.specialRewardCondition || null,
-    });
-    console.log(`  Added: ${item.name} (${item.rarity})${item.isSpecialReward ? ' [SPECIAL]' : ''}`);
+    // Check if item exists by name
+    const existing = await db.select().from(items).where(eq(items.name, item.name)).limit(1);
+
+    if (existing.length > 0) {
+      // Update existing item
+      await db.update(items).set({
+        description: item.description,
+        rarity: item.rarity,
+        imageUrl: item.imageUrl,
+        quote: item.quote || null,
+        isSpecialReward: item.isSpecialReward || false,
+        specialRewardCondition: item.specialRewardCondition || null,
+        price: item.price || null,
+      }).where(eq(items.name, item.name));
+      console.log(`  Updated: ${item.name} (${item.rarity})${item.isSpecialReward ? ' [SPECIAL]' : ''}${item.price ? ` [${item.price} Medals]` : ''}`);
+      updated++;
+    } else {
+      // Insert new item
+      await db.insert(items).values({
+        name: item.name,
+        description: item.description,
+        rarity: item.rarity,
+        imageUrl: item.imageUrl,
+        quote: item.quote || null,
+        isSpecialReward: item.isSpecialReward || false,
+        specialRewardCondition: item.specialRewardCondition || null,
+        price: item.price || null,
+      });
+      console.log(`  Added: ${item.name} (${item.rarity})${item.isSpecialReward ? ' [SPECIAL]' : ''}${item.price ? ` [${item.price} Medals]` : ''}`);
+      inserted++;
+    }
   }
 
   // Count by rarity
@@ -411,14 +476,19 @@ async function seed() {
   }, {} as Record<string, number>);
 
   const specialCount = seedItems.filter(i => i.isSpecialReward).length;
+  const purchasableCount = seedItems.filter(i => i.price).length;
 
-  console.log(`\nSuccessfully seeded ${seedItems.length} items!`);
+  console.log(`\nSuccessfully processed ${seedItems.length} items!`);
+  console.log(`  - Inserted: ${inserted}`);
+  console.log(`  - Updated: ${updated}`);
   console.log(`  - Common: ${counts.common || 0}`);
   console.log(`  - Uncommon: ${counts.uncommon || 0}`);
   console.log(`  - Rare: ${counts.rare || 0}`);
   console.log(`  - Epic: ${counts.epic || 0}`);
   console.log(`  - Legendary: ${counts.legendary || 0}`);
+  console.log(`  - Mythic: ${counts.mythic || 0}`);
   console.log(`  - Special Rewards: ${specialCount}`);
+  console.log(`  - Purchasable with Medals: ${purchasableCount}`);
 
   process.exit(0);
 }

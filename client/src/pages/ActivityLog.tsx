@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useActivities } from "@/hooks/use-activities";
 import { Navigation } from "@/components/Navigation";
+import { PageHeader } from "@/components/PageHeader";
 import { MiniRouteMap } from "@/components/MiniRouteMap";
 import {
   Table,
@@ -39,7 +40,28 @@ const rarityBadgeStyles: Record<string, string> = {
   rare: "bg-blue-100 text-blue-700 border-blue-300",
   epic: "bg-purple-100 text-purple-700 border-purple-300",
   legendary: "bg-yellow-100 text-yellow-800 border-yellow-400",
+  mythic: "bg-gradient-to-r from-yellow-100 via-pink-100 to-purple-100 text-purple-700 border-purple-300",
 };
+
+// Medal rewards per item rarity
+const rarityMedalRewards: Record<string, number> = {
+  common: 1,
+  uncommon: 2,
+  rare: 3,
+  epic: 5,
+  legendary: 8,
+  mythic: 0,
+};
+
+// Calculate medals earned from item drops
+function calculateMedalsFromItems(items: Array<{ item?: { rarity: string } }>): number {
+  return items.reduce((total, ri) => {
+    if (ri.item) {
+      return total + (rarityMedalRewards[ri.item.rarity] || 0);
+    }
+    return total;
+  }, 0);
+}
 
 function formatDuration(seconds: number): string {
   const hrs = Math.floor(seconds / 3600);
@@ -115,15 +137,7 @@ export default function ActivityLog() {
 
       <main className="flex-1 p-6 md:p-10 overflow-y-auto mb-20 md:mb-0">
         {/* Header */}
-        <header className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <ClipboardList size={28} className="text-white" />
-            <h1 className="text-2xl md:text-3xl font-pixel text-white">Activity Log</h1>
-          </div>
-          <p className="text-white/70">
-            Your complete running history with items found.
-          </p>
-        </header>
+        <PageHeader title="Activity Log" subtitle="Your complete running history with items found" />
 
         {/* Activity Table */}
         <div className="section-panel">
@@ -146,7 +160,7 @@ export default function ActivityLog() {
                       <TableHead className="min-w-[80px]">Duration</TableHead>
                       <TableHead className="min-w-[80px]">Distance</TableHead>
                       <TableHead className="min-w-[70px]">Route</TableHead>
-                      <TableHead className="min-w-[120px]">Items Found</TableHead>
+                      <TableHead className="min-w-[120px]">Rewards</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -169,19 +183,28 @@ export default function ActivityLog() {
                         </TableCell>
                         <TableCell>
                           {activity.awardedItems && activity.awardedItems.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {activity.awardedItems.map((ri, idx) => (
-                                <Badge
-                                  key={idx}
-                                  variant="outline"
-                                  className={`text-[10px] px-1.5 py-0.5 ${
-                                    ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
-                                  }`}
-                                >
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  {ri.item?.name || "Item"}
-                                </Badge>
-                              ))}
+                            <div className="flex flex-col gap-1">
+                              <div className="flex flex-wrap gap-1">
+                                {activity.awardedItems.map((ri, idx) => (
+                                  <Badge
+                                    key={idx}
+                                    variant="outline"
+                                    className={`text-[10px] px-1.5 py-0.5 ${
+                                      ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
+                                    }`}
+                                  >
+                                    <Sparkles className="w-3 h-3 mr-1" />
+                                    {ri.item?.name || "Item"}
+                                  </Badge>
+                                ))}
+                              </div>
+                              {/* Medal count */}
+                              {calculateMedalsFromItems(activity.awardedItems) > 0 && (
+                                <div className="flex items-center gap-1 text-[10px] text-yellow-700">
+                                  <img src="/items/medal.png" alt="" className="w-3 h-3" />
+                                  +{calculateMedalsFromItems(activity.awardedItems)}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-sm">-</span>

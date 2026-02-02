@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertCharacterSchema, characters, items, inventory, runs, stravaAccounts, runItems } from './schema';
+import { insertCharacterSchema, characters, items, inventory, runs, stravaAccounts, runItems, dailyCheckIns, medalTransactions } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -42,8 +42,29 @@ export const api = {
     sync: {
         method: 'POST' as const,
         path: '/api/strava/sync',
+        input: z.object({
+          timezone: z.string().optional(), // User's current timezone (e.g., "America/Chicago")
+        }),
         responses: {
-            200: z.object({ synced: z.number(), message: z.string() }),
+            200: z.object({
+              synced: z.number(),
+              message: z.string(),
+              awardedItems: z.array(z.object({
+                id: z.number(),
+                name: z.string(),
+                description: z.string(),
+                rarity: z.string(),
+                imageUrl: z.string(),
+                quote: z.string().nullable(),
+                isSpecialReward: z.boolean(),
+                specialRewardCondition: z.string().nullable(),
+              })).optional(),
+              medalsAwarded: z.number().optional(),
+              progressionReward: z.object({
+                stage: z.string(),
+                medalsAwarded: z.number(),
+              }).optional(),
+            }),
             400: errorSchemas.validation
         }
     }
@@ -156,10 +177,86 @@ export const api = {
             quote: z.string().nullable(),
             isSpecialReward: z.boolean(),
             specialRewardCondition: z.string().nullable(),
+            price: z.number().nullable(),
             unlocked: z.boolean(),
             unlockedAt: z.string().nullable(),
           })),
         }),
+      },
+    },
+  },
+
+  // === MEDALS ===
+  medals: {
+    status: {
+      method: 'GET' as const,
+      path: '/api/medals/status',
+      responses: {
+        200: z.object({
+          balance: z.number(),
+          canCheckIn: z.boolean(),
+          currentStreak: z.number(),
+          daysUntilBonus: z.number(),
+          lastCheckIn: z.string().nullable(),
+        }),
+      },
+    },
+    checkIn: {
+      method: 'POST' as const,
+      path: '/api/medals/check-in',
+      input: z.object({
+        timezone: z.string().optional(),
+      }),
+      responses: {
+        200: z.object({
+          medalsAwarded: z.number(),
+          currentStreak: z.number(),
+          isStreakBonus: z.boolean(),
+          newBalance: z.number(),
+        }),
+        400: errorSchemas.validation,
+      },
+    },
+    history: {
+      method: 'GET' as const,
+      path: '/api/medals/history',
+      query: z.object({
+        limit: z.coerce.number().min(1).max(100).default(50),
+      }),
+      responses: {
+        200: z.object({
+          transactions: z.array(z.object({
+            id: z.number(),
+            amount: z.number(),
+            source: z.string(),
+            description: z.string(),
+            createdAt: z.string(),
+          })),
+        }),
+      },
+    },
+  },
+
+  // === SHOP ===
+  shop: {
+    purchase: {
+      method: 'POST' as const,
+      path: '/api/shop/purchase',
+      input: z.object({
+        itemId: z.number(),
+      }),
+      responses: {
+        200: z.object({
+          success: z.boolean(),
+          item: z.object({
+            id: z.number(),
+            name: z.string(),
+            rarity: z.string(),
+            imageUrl: z.string(),
+          }),
+          newBalance: z.number(),
+        }),
+        400: errorSchemas.validation,
       },
     },
   },

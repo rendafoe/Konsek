@@ -1,4 +1,5 @@
 import { Navigation } from "@/components/Navigation";
+import { PageHeader } from "@/components/PageHeader";
 import { useStravaStatus } from "@/hooks/use-strava";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
@@ -12,9 +13,7 @@ export default function Settings() {
       <Navigation />
       
       <main className="flex-1 p-6 md:p-12 mb-20 md:mb-0">
-        <header className="mb-12">
-           <h1 className="text-2xl md:text-3xl font-pixel text-foreground mb-2">Settings</h1>
-        </header>
+        <PageHeader title="Settings" />
 
         <div className="max-w-xl space-y-8">
            {/* Account Section */}

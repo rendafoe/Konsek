@@ -18,10 +18,12 @@ export function useCreateCharacter() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: InsertCharacter) => {
+      // Automatically include the user's timezone from the browser
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch(api.character.create.path, {
         method: api.character.create.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, timezone }),
         credentials: "include",
       });
       if (!res.ok) {

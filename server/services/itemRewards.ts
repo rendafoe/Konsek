@@ -129,13 +129,14 @@ function rollRarityFromSubset(probabilities: number[], rarities: Rarity[]): Rari
 export interface RollResult {
   items: Item[];
   rarities: Rarity[];
+  medalsAwarded: number;
 }
 
 /**
  * Main function: Roll item(s) for a run based on distance
  */
 export async function rollItemsForRun(distanceMeters: number): Promise<RollResult> {
-  const result: RollResult = { items: [], rarities: [] };
+  const result: RollResult = { items: [], rarities: [], medalsAwarded: 0 };
 
   // Must be at least 1km to get rewards
   if (distanceMeters < 1000) {
@@ -282,7 +283,7 @@ async function checkSpecialRewards(
 
 /**
  * Process a run for item rewards
- * Returns the items that were awarded (including special rewards)
+ * Returns the items that were awarded (including special rewards) and medals
  */
 export async function processRunRewards(
   userId: string,
@@ -311,5 +312,29 @@ export async function processRunRewards(
     await awardItemsToUser(userId, runId, allItems);
   }
 
-  return { items: allItems, rarities: allRarities };
+  // Calculate and award medals for item drops
+  let medalsAwarded = 0;
+  console.log(`[ItemRewards] allRarities: ${JSON.stringify(allRarities)}`);
+  if (allRarities.length > 0) {
+    const { calculateMedalsForRarities, awardMedals } = await import("./medalService");
+    medalsAwarded = calculateMedalsForRarities(allRarities);
+    console.log(`[ItemRewards] Calculated medals: ${medalsAwarded} for rarities: ${allRarities.join(', ')}`);
+
+    if (medalsAwarded > 0) {
+      try {
+        await awardMedals(
+          userId,
+          medalsAwarded,
+          "item_drop",
+          runId,
+          `Item drops from run: ${allRarities.join(', ')}`
+        );
+        console.log(`[ItemRewards] Medals awarded successfully: ${medalsAwarded}`);
+      } catch (error) {
+        console.error(`[ItemRewards] Failed to award medals:`, error);
+      }
+    }
+  }
+
+  return { items: allItems, rarities: allRarities, medalsAwarded };
 }

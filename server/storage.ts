@@ -20,6 +20,7 @@ export interface PaginatedResult<T> {
 export interface AchievementItem extends Item {
   unlocked: boolean;
   unlockedAt: Date | null;
+  price: number | null;
 }
 
 export interface IStorage {

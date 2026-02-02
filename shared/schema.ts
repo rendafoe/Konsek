@@ -34,15 +34,21 @@ export const characters = pgTable("characters", {
   name: text("name").notNull(),
   spriteType: text("sprite_type", { enum: ["esko", "bear", "elk", "hare", "spirit", "troll"] }).default("esko").notNull(),
   status: text("status", { enum: ["alive", "dead"] }).default("alive").notNull(),
-  
+
   // Health State: 0 = Fully nourished, 1 = Rest, 2 = Weak, 3 = Critical, 4 = Dead
   healthState: integer("health_state").default(0).notNull(),
-  
+
   // Stats
   daysAlive: integer("days_alive").default(0).notNull(),
   totalDistance: integer("total_distance").default(0).notNull(), // in meters
   totalRuns: integer("total_runs").default(0).notNull(),
-  
+
+  // Medal balance (integer only)
+  medalBalance: integer("medal_balance").default(0).notNull(),
+
+  // User's timezone for accurate date comparisons (e.g., "America/Chicago")
+  timezone: text("timezone"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   deathDate: timestamp("death_date"),
 });
@@ -52,11 +58,12 @@ export const items = pgTable("items", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  rarity: text("rarity", { enum: ["common", "uncommon", "rare", "epic", "legendary"] }).notNull(),
+  rarity: text("rarity", { enum: ["common", "uncommon", "rare", "epic", "legendary", "mythic"] }).notNull(),
   imageUrl: text("image_url").notNull(), // Path to pixel art asset
   quote: text("quote"), // Flavor text displayed in italics
   isSpecialReward: boolean("is_special_reward").default(false).notNull(), // Special condition-based rewards
   specialRewardCondition: text("special_reward_condition"), // Description of unlock condition
+  price: integer("price"), // Medal cost for purchasable items (null = not purchasable)
 });
 
 // User inventory (collected items)
@@ -101,6 +108,39 @@ export const userUnlocks = pgTable("user_unlocks", {
   userId: varchar("user_id").notNull().references(() => users.id),
   itemId: integer("item_id").notNull().references(() => items.id),
   unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+});
+
+// Daily check-ins for medal rewards
+export const dailyCheckIns = pgTable("daily_check_ins", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  checkInDate: date("check_in_date").notNull(), // Calendar date of check-in
+  medalsAwarded: integer("medals_awarded").notNull(), // 1 for regular, 3-10 for streak bonus
+  streakDay: integer("streak_day").notNull(), // Which day in the current streak
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Medal transaction audit trail
+export const MEDAL_SOURCES = ["check_in", "item_drop", "progression", "referral", "purchase"] as const;
+export type MedalSource = typeof MEDAL_SOURCES[number];
+
+export const medalTransactions = pgTable("medal_transactions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  amount: integer("amount").notNull(), // Positive for earned, negative for spent
+  source: text("source", { enum: MEDAL_SOURCES }).notNull(),
+  sourceId: integer("source_id"), // Reference to run/item/etc.
+  description: text("description").notNull(), // Human-readable description
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Referrals (schema only for now - implementation deferred)
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerId: varchar("referrer_id").notNull().references(() => users.id),
+  referredUserId: varchar("referred_user_id").notNull().references(() => users.id),
+  medalsEarnedFromReferral: integer("medals_earned_from_referral").default(0).notNull(), // Max 25
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // === RELATIONS ===
@@ -172,6 +212,31 @@ export const userUnlocksRelations = relations(userUnlocks, ({ one }) => ({
   }),
 }));
 
+export const dailyCheckInsRelations = relations(dailyCheckIns, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyCheckIns.userId],
+    references: [users.id],
+  }),
+}));
+
+export const medalTransactionsRelations = relations(medalTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [medalTransactions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(users, {
+    fields: [referrals.referrerId],
+    references: [users.id],
+  }),
+  referredUser: one(users, {
+    fields: [referrals.referredUserId],
+    references: [users.id],
+  }),
+}));
+
 // === ZOD SCHEMAS ===
 export const insertCharacterSchema = createInsertSchema(characters).omit({ 
   id: true, 
@@ -196,6 +261,9 @@ export const insertInventorySchema = createInsertSchema(inventory).omit({ id: tr
 export const insertRunSchema = createInsertSchema(runs).omit({ id: true });
 export const insertRunItemSchema = createInsertSchema(runItems).omit({ id: true, awardedAt: true });
 export const insertUserUnlockSchema = createInsertSchema(userUnlocks).omit({ id: true, unlockedAt: true });
+export const insertDailyCheckInSchema = createInsertSchema(dailyCheckIns).omit({ id: true, createdAt: true });
+export const insertMedalTransactionSchema = createInsertSchema(medalTransactions).omit({ id: true, createdAt: true });
+export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
 
 // === TYPES ===
 export type Character = typeof characters.$inferSelect;
@@ -204,7 +272,10 @@ export type Item = typeof items.$inferSelect;
 export type InventoryItem = typeof inventory.$inferSelect & { item?: Item };
 export type Run = typeof runs.$inferSelect;
 export type RunItem = typeof runItems.$inferSelect;
-export type RunWithItems = Run & { awardedItems?: (RunItem & { item?: Item })[] };
+export type RunWithItems = Run & { awardedItems?: (RunItem & { item?: Item })[], medalsAwarded?: number };
 export type StravaAccount = typeof stravaAccounts.$inferSelect;
-export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
+export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "mythic";
 export type UserUnlock = typeof userUnlocks.$inferSelect;
+export type DailyCheckIn = typeof dailyCheckIns.$inferSelect;
+export type MedalTransaction = typeof medalTransactions.$inferSelect;
+export type Referral = typeof referrals.$inferSelect;

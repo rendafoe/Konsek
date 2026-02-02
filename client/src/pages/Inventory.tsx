@@ -1,8 +1,17 @@
 import { useMemo } from "react";
 import { useInventory, useEquipItem, useUnequipItem } from "@/hooks/use-inventory";
 import { Navigation } from "@/components/Navigation";
+import { PageHeader } from "@/components/PageHeader";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const rarityTextColors: Record<string, string> = {
+  common: "text-gray-500",
+  uncommon: "text-green-600",
+  rare: "text-blue-600",
+  epic: "text-purple-600",
+  legendary: "text-yellow-600",
+};
 
 interface GroupedItem {
   itemId: number;
@@ -66,10 +75,7 @@ export default function Inventory() {
       <Navigation />
 
       <main className="flex-1 p-6 md:p-12 mb-20 md:mb-0 overflow-y-auto">
-        <header className="mb-12">
-          <h1 className="text-2xl md:text-3xl font-pixel text-foreground mb-2">Gear Stash</h1>
-          <p className="text-muted-foreground">Items collected from your journeys.</p>
-        </header>
+        <PageHeader title="Gear Stash" subtitle="Items collected from your journeys" />
 
         {groupedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 border-4 border-dashed border-border rounded-lg bg-card/50">
@@ -112,7 +118,10 @@ export default function Inventory() {
                   <Shield className={`w-8 h-8 text-muted-foreground opacity-50 ${groupedItem.item?.imageUrl ? 'hidden' : ''}`} />
                 </div>
 
-                <h3 className="font-pixel text-[10px] truncate mb-1">{groupedItem.item?.name}</h3>
+                <h3 className="font-pixel text-[10px] truncate mb-0.5">{groupedItem.item?.name}</h3>
+                <p className={`text-[8px] capitalize font-semibold mb-1 ${rarityTextColors[groupedItem.item?.rarity] || "text-gray-400"}`}>
+                  {groupedItem.item?.rarity}
+                </p>
                 <p className="text-[9px] text-muted-foreground italic truncate">
                   {groupedItem.item?.quote ? `"${groupedItem.item.quote}"` : "A mysterious item..."}
                 </p>
