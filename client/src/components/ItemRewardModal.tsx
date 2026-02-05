@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles } from "lucide-react";
+import { Sparkles, TrendingUp } from "lucide-react";
 
 interface AwardedItem {
   id: number;
@@ -12,9 +12,15 @@ interface AwardedItem {
   specialRewardCondition: string | null;
 }
 
+interface ProgressionReward {
+  stage: string;
+  medalsAwarded: number;
+}
+
 interface ItemRewardModalProps {
   items: AwardedItem[];
   medalsAwarded?: number;
+  progressionReward?: ProgressionReward | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -43,8 +49,20 @@ const rarityTextColors: Record<string, string> = {
   legendary: "text-yellow-600",
 };
 
-export function ItemRewardModal({ items, medalsAwarded = 0, open, onOpenChange }: ItemRewardModalProps) {
-  if (items.length === 0 && medalsAwarded === 0) return null;
+export function ItemRewardModal({ items, medalsAwarded = 0, progressionReward, open, onOpenChange }: ItemRewardModalProps) {
+  const hasItems = items.length > 0;
+  const hasItemMedals = medalsAwarded > 0;
+  const hasProgression = progressionReward && progressionReward.medalsAwarded > 0;
+  const totalMedals = medalsAwarded + (progressionReward?.medalsAwarded || 0);
+
+  if (!hasItems && !hasItemMedals && !hasProgression) return null;
+
+  // Determine the title based on what we're showing
+  const getTitle = () => {
+    if (hasProgression && hasItems) return "Rewards Earned!";
+    if (hasProgression) return "Stage Evolution!";
+    return "Items Found!";
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,12 +70,33 @@ export function ItemRewardModal({ items, medalsAwarded = 0, open, onOpenChange }
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-center justify-center">
             <Sparkles className="w-6 h-6 text-yellow-500" />
-            <span className="text-xl">Items Found!</span>
+            <span className="text-xl">{getTitle()}</span>
             <Sparkles className="w-6 h-6 text-yellow-500" />
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Stage Progression Section */}
+          {hasProgression && (
+            <div
+              className="flex items-center gap-4 p-4 rounded-xl border-2 bg-violet-50 border-violet-300 animate-in fade-in slide-in-from-bottom-2 duration-300"
+            >
+              <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-violet-400 to-purple-500 p-0.5">
+                <div className="w-full h-full bg-white rounded-md flex items-center justify-center">
+                  <TrendingUp className="w-10 h-10 text-violet-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-violet-700">Esko evolved to {progressionReward.stage}!</h3>
+                <div className="flex items-center gap-1 mt-1">
+                  <img src="/items/medal.png" alt="Medal" className="w-4 h-4" />
+                  <span className="text-sm font-semibold text-violet-600">+{progressionReward.medalsAwarded} Medals</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Items */}
           {items.map((item, index) => (
             <div
               key={`${item.id}-${index}`}
@@ -66,7 +105,7 @@ export function ItemRewardModal({ items, medalsAwarded = 0, open, onOpenChange }
                 ${rarityBgColors[item.rarity] || rarityBgColors.common}
                 animate-in fade-in slide-in-from-bottom-2 duration-300
               `}
-              style={{ animationDelay: `${index * 100}ms` }}
+              style={{ animationDelay: `${(hasProgression ? 1 : 0) * 100 + index * 100}ms` }}
             >
               {/* Item Image */}
               <div className={`
@@ -99,11 +138,11 @@ export function ItemRewardModal({ items, medalsAwarded = 0, open, onOpenChange }
             </div>
           ))}
 
-          {/* Medal Reward Section */}
-          {medalsAwarded > 0 && (
+          {/* Medal Summary Section - shows total from items */}
+          {hasItemMedals && (
             <div
               className="flex items-center gap-4 p-4 rounded-xl border-2 bg-yellow-50 border-yellow-300 animate-in fade-in slide-in-from-bottom-2 duration-300"
-              style={{ animationDelay: `${items.length * 100}ms` }}
+              style={{ animationDelay: `${(hasProgression ? 1 : 0) * 100 + items.length * 100}ms` }}
             >
               <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-yellow-300 to-amber-400 p-0.5">
                 <div className="w-full h-full bg-white rounded-md flex items-center justify-center">
@@ -115,9 +154,18 @@ export function ItemRewardModal({ items, medalsAwarded = 0, open, onOpenChange }
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-yellow-700">+{medalsAwarded} Medals earned!</h3>
-                <p className="text-sm text-yellow-600">From item drops</p>
+                <h3 className="font-bold text-yellow-700">+{medalsAwarded} Medals from items</h3>
+                <p className="text-sm text-yellow-600">Earned from item drops</p>
               </div>
+            </div>
+          )}
+
+          {/* Total Medals Summary */}
+          {totalMedals > 0 && (hasProgression || hasItemMedals) && (hasProgression && hasItemMedals) && (
+            <div className="text-center pt-2 border-t border-muted">
+              <p className="text-lg font-bold text-foreground">
+                Total: +{totalMedals} Medals
+              </p>
             </div>
           )}
         </div>

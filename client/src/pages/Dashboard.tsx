@@ -81,6 +81,7 @@ export default function Dashboard() {
   const [rewardModalOpen, setRewardModalOpen] = useState(false);
   const [awardedItems, setAwardedItems] = useState<any[]>([]);
   const [medalsFromSync, setMedalsFromSync] = useState<number>(0);
+  const [progressionReward, setProgressionReward] = useState<{ stage: string; medalsAwarded: number } | null>(null);
 
   // State to hold previous runs count - used to delay stage progression visually until modal is dismissed
   const [frozenTotalRuns, setFrozenTotalRuns] = useState<number | null>(null);
@@ -107,6 +108,7 @@ export default function Dashboard() {
       }
       setAwardedItems(data.awardedItems);
       setMedalsFromSync(data.medalsAwarded);
+      setProgressionReward(data.progressionReward || null);
       setRewardModalOpen(true);
     }
   }, [character]);
@@ -131,14 +133,8 @@ export default function Dashboard() {
           setFrozenTotalRuns(runsBeforeSync);
           setAwardedItems(data.awardedItems || []);
           setMedalsFromSync(data.medalsAwarded || 0);
+          setProgressionReward(data.progressionReward || null);
           setRewardModalOpen(true);
-        }
-        // Show progression reward toast if applicable
-        if (data.progressionReward) {
-          toast({
-            title: "Stage Reached!",
-            description: `Your companion evolved to ${data.progressionReward.stage}! +${data.progressionReward.medalsAwarded} Medals`,
-          });
         }
       },
       onError: (err) => toast({ title: "Sync Failed", description: err.message, variant: "destructive" })
@@ -204,12 +200,14 @@ export default function Dashboard() {
       <ItemRewardModal
         items={awardedItems}
         medalsAwarded={medalsFromSync}
+        progressionReward={progressionReward}
         open={rewardModalOpen}
         onOpenChange={(open) => {
           setRewardModalOpen(open);
-          // When modal closes, unfreeze the stage to show the new progression
+          // When modal closes, unfreeze the stage and clear progression reward
           if (!open) {
             setFrozenTotalRuns(null);
+            setProgressionReward(null);
           }
         }}
       />

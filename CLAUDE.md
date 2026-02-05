@@ -63,7 +63,6 @@ npm run db:reset         # Clear user data (dev only)
 - Local dev mode uses mock authentication (`/api/login`, `/api/logout`)
 - Character health states range 0-4 (dead to perfect health)
 - Minimum 1km runs count for health updates
-- Sprite types: esko, bear, elk, hare, spirit, troll
 - Item rarities: common, uncommon, rare, epic, legendary, mythic
 - UI uses Nordic forest theme with light/dark modes via CSS variables
 - Press Start 2P font for pixel-art aesthetic, DM Sans for UI text

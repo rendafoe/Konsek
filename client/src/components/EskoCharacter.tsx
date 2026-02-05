@@ -2,7 +2,6 @@
 // Progresses through 8 stages based on total runs synced
 
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
 
 export type EskoStage =
   | "egg"
@@ -128,44 +127,7 @@ export function EskoCharacter({
   size = "md",
 }: EskoCharacterProps) {
   const stageInfo = getEskoStage(totalRuns);
-  const progress = getStageProgress(totalRuns);
   const colors = STAGE_COLORS[stageInfo.stage];
-
-  // Track previous progress for animation
-  const prevProgressRef = useRef(progress);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [displayProgress, setDisplayProgress] = useState(progress);
-
-  useEffect(() => {
-    // Only animate if progress increased
-    if (progress > prevProgressRef.current) {
-      setIsAnimating(true);
-      // Animate from old to new value
-      const startProgress = prevProgressRef.current;
-      const endProgress = progress;
-      const duration = 800; // ms
-      const startTime = Date.now();
-
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const t = Math.min(elapsed / duration, 1);
-        // Ease out cubic for satisfying fill effect
-        const eased = 1 - Math.pow(1 - t, 3);
-        const current = startProgress + (endProgress - startProgress) * eased;
-        setDisplayProgress(Math.round(current));
-
-        if (t < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          setIsAnimating(false);
-        }
-      };
-      requestAnimationFrame(animate);
-    } else {
-      setDisplayProgress(progress);
-    }
-    prevProgressRef.current = progress;
-  }, [progress]);
 
   const sizeClasses = {
     sm: "w-24 h-24 text-xs",
@@ -243,35 +205,6 @@ export function EskoCharacter({
             </div>
             <div className="text-sm font-bold text-center mt-1 text-foreground" data-testid="health-percent">
               {healthPercent}%
-            </div>
-          </div>
-        )}
-
-        {/* Stage Progress */}
-        {stageInfo.nextStageRuns && (
-          <div className="mt-3">
-            <div className="text-xs font-bold text-center mb-2 text-foreground/70">
-              Progress to {STAGE_THRESHOLDS[STAGE_THRESHOLDS.findIndex(s => s.stage === stageInfo.stage) + 1]?.name}
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden relative">
-              <div
-                className={cn(
-                  "h-full transition-all duration-300",
-                  colors.bg.replace('100', '500'),
-                  isAnimating && "progress-bar-glow"
-                )}
-                style={{ width: `${displayProgress}%` }}
-              />
-              {/* Shimmer effect when animating */}
-              {isAnimating && (
-                <div
-                  className="absolute inset-0 progress-bar-shimmer"
-                  style={{ width: `${displayProgress}%` }}
-                />
-              )}
-            </div>
-            <div className="text-[10px] text-center mt-1 text-foreground/60">
-              {displayProgress}%
             </div>
           </div>
         )}

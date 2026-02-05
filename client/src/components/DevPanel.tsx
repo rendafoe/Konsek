@@ -156,20 +156,12 @@ export function DevPanel({ onRunSimulated }: DevPanelProps) {
       });
       invalidateAll();
 
-      // Trigger the reward modal in Dashboard if items/medals were awarded
-      if (onRunSimulated && (data.awardedItems?.length > 0 || data.medalsAwarded > 0)) {
+      // Trigger the reward modal in Dashboard if items/medals/progression were awarded
+      if (onRunSimulated && (data.awardedItems?.length > 0 || data.medalsAwarded > 0 || data.progressionReward)) {
         onRunSimulated({
           awardedItems: data.awardedItems || [],
           medalsAwarded: data.medalsAwarded || 0,
           progressionReward: data.progressionReward,
-        });
-      }
-
-      // Show progression toast if applicable
-      if (data.progressionReward) {
-        toast({
-          title: "Stage Reached!",
-          description: `Evolved to ${data.progressionReward.stage}! +${data.progressionReward.medalsAwarded} Medals`,
         });
       }
 
