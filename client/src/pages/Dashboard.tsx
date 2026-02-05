@@ -7,6 +7,7 @@ import { Navigation } from "@/components/Navigation";
 import { ItemRewardModal } from "@/components/ItemRewardModal";
 import { DailyCheckInBox } from "@/components/DailyCheckInBox";
 import { MiniRouteMap } from "@/components/MiniRouteMap";
+import { DevPanel } from "@/components/DevPanel";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -16,9 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, RefreshCw, AlertTriangle, Activity, Sparkles, Calendar } from "lucide-react";
+import { Loader2, RefreshCw, Activity, Sparkles, Calendar, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
 
 const rarityBadgeStyles: Record<string, string> = {
@@ -81,23 +82,53 @@ export default function Dashboard() {
   const [awardedItems, setAwardedItems] = useState<any[]>([]);
   const [medalsFromSync, setMedalsFromSync] = useState<number>(0);
 
+  // State to hold previous runs count - used to delay stage progression visually until modal is dismissed
+  const [frozenTotalRuns, setFrozenTotalRuns] = useState<number | null>(null);
+
   const activities = activitiesData?.activities || [];
 
-  // Auto-create character named "Esko" when user has none
-  useEffect(() => {
-    if (!isCharLoading && !character && !isCreating) {
-      createCharacter({ name: "Esko" }, {
-        onSuccess: () => toast({ title: "Esko has arrived!", description: "Your companion is ready to run with you." })
-      });
+  // Check if character is dead
+  const isCharacterDead = character?.status === "dead";
+
+  // Auto-create character named "Esko" when user has none (but NOT if we just don't have one yet during loading)
+  // Don't auto-create - let the user click to create
+  // useEffect removed - we'll show a button instead
+
+  // Handler for DevPanel run simulation - shows the same reward modal
+  const handleDevRunSimulated = useCallback((data: {
+    awardedItems: any[];
+    medalsAwarded: number;
+    progressionReward?: { stage: string; medalsAwarded: number } | null;
+  }) => {
+    if (data.awardedItems.length > 0 || data.medalsAwarded > 0 || data.progressionReward) {
+      // Freeze the current stage while showing rewards
+      if (character) {
+        setFrozenTotalRuns(character.totalRuns || 0);
+      }
+      setAwardedItems(data.awardedItems);
+      setMedalsFromSync(data.medalsAwarded);
+      setRewardModalOpen(true);
     }
-  }, [isCharLoading, character, isCreating, createCharacter, toast]);
+  }, [character]);
+
+  // Handler to create a new character
+  const handleCreateCharacter = () => {
+    createCharacter({ name: "Esko" }, {
+      onSuccess: () => toast({ title: "Esko has arrived!", description: "Your companion is ready to run with you." })
+    });
+  };
 
   const handleSync = () => {
+    // Capture current runs before sync for stage freeze
+    const runsBeforeSync = character?.totalRuns || 0;
+
     syncStrava(undefined, {
       onSuccess: (data) => {
         toast({ title: "Sync Complete", description: data.message });
-        // Show item reward modal if items were awarded or medals earned
-        if ((data.awardedItems && data.awardedItems.length > 0) || data.medalsAwarded) {
+        // Show item reward modal if items were awarded, medals earned, or progression happened
+        if ((data.awardedItems && data.awardedItems.length > 0) || data.medalsAwarded || data.progressionReward) {
+          // Freeze the stage at the pre-sync state while showing rewards
+          setFrozenTotalRuns(runsBeforeSync);
           setAwardedItems(data.awardedItems || []);
           setMedalsFromSync(data.medalsAwarded || 0);
           setRewardModalOpen(true);
@@ -114,13 +145,38 @@ export default function Dashboard() {
     });
   };
 
-  if (isCharLoading || isStravaLoading || (!character && isCreating)) {
+  if (isCharLoading || isStravaLoading || isCreating) {
     return (
       <div className="min-h-screen aurora-bg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="animate-spin w-10 h-10 text-white/80" />
           <p className="text-white/60 text-sm">Loading your companion...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show create character screen if no character exists
+  if (!character) {
+    return (
+      <div className="min-h-screen aurora-bg flex flex-col md:flex-row">
+        <Navigation />
+        <main className="flex-1 p-6 md:p-10 flex items-center justify-center">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-lg max-w-md text-center">
+            <img src="/esko/esko-egg.png" alt="Esko Egg" className="w-32 h-32 mx-auto mb-4 animate-esko-egg" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Konsek!</h2>
+            <p className="text-muted-foreground mb-6">
+              Start your running journey with Esko, your virtual companion who grows with every run you complete.
+            </p>
+            <button
+              onClick={handleCreateCharacter}
+              className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:brightness-110 transition-all flex items-center justify-center gap-2 mx-auto"
+            >
+              <Heart size={20} /> Hatch Your Esko
+            </button>
+          </div>
+          {import.meta.env.DEV && <DevPanel onRunSimulated={handleDevRunSimulated} />}
+        </main>
       </div>
     );
   }
@@ -149,7 +205,13 @@ export default function Dashboard() {
         items={awardedItems}
         medalsAwarded={medalsFromSync}
         open={rewardModalOpen}
-        onOpenChange={setRewardModalOpen}
+        onOpenChange={(open) => {
+          setRewardModalOpen(open);
+          // When modal closes, unfreeze the stage to show the new progression
+          if (!open) {
+            setFrozenTotalRuns(null);
+          }
+        }}
       />
 
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
@@ -213,74 +275,85 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Strava Connection Warning */}
-        {!stravaStatus?.isConnected && (
-          <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-8 flex items-center gap-3">
-            <AlertTriangle className="text-amber-600" size={24} />
-            <div>
-              <span className="font-semibold text-amber-800">Connect Strava to get started</span>
-              <p className="text-sm text-amber-700">Link your Strava account to sync your runs and keep Esko healthy.</p>
+        {/* Character Death Banner */}
+        {isCharacterDead && (
+          <div className="bg-slate-100 border-2 border-slate-300 rounded-xl p-6 mb-8">
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <img src="/esko/esko-egg.png" alt="New Esko" className="w-16 h-16 opacity-50" />
+              <div className="flex-1 text-center md:text-left">
+                <span className="font-semibold text-slate-700 text-lg">Your companion has passed into legend</span>
+                <p className="text-sm text-slate-600 mt-1">
+                  Esko lived for {character?.daysAlive || 0} days and completed {character?.totalRuns || 0} runs.
+                  Start a new journey with a fresh companion.
+                </p>
+              </div>
+              <button
+                onClick={handleCreateCharacter}
+                disabled={isCreating}
+                className="px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:brightness-110 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                <Heart size={18} /> Start New Companion
+              </button>
             </div>
           </div>
         )}
 
+
         {/* Main Content Grid */}
         <div className="max-w-6xl mx-auto grid gap-8">
-          {/* Daily Check-In Box */}
-          {stravaStatus?.isConnected && <DailyCheckInBox />}
+          {/* Daily Check-In Box - Only show if alive */}
+          {stravaStatus?.isConnected && !isCharacterDead && <DailyCheckInBox />}
 
-          {/* Character Card with Stats on the Right */}
+          {/* Character Card - Esko as Hero */}
           <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
-            <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-stretch">
-              {/* Esko Character Display - Larger */}
-              <div className="flex-shrink-0">
-                <EskoCharacter
-                  totalRuns={character?.totalRuns || 0}
-                  name="Esko"
-                  healthPercent={Math.max(0, 100 - (character?.healthState ?? 0) * 25)}
-                  isDead={character?.status === "dead"}
-                  size="lg"
-                />
+            {/* Esko Character Display - Prominent Hero */}
+            <div className="flex justify-center mb-6">
+              <EskoCharacter
+                totalRuns={frozenTotalRuns !== null ? frozenTotalRuns : (character?.totalRuns || 0)}
+                name="Esko"
+                healthPercent={Math.max(0, 100 - (character?.healthState ?? 0) * 25)}
+                isDead={character?.status === "dead"}
+                size="xl"
+              />
+            </div>
+
+            {/* Stats in Horizontal Row Below */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="stat-card">
+                <div className="stat-icon bg-primary/20 text-primary">
+                  <Activity size={24} />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{character?.totalRuns || 0}</div>
+                  <div className="text-sm text-muted-foreground">Total Runs</div>
+                </div>
               </div>
 
-              {/* Stats Stacked Vertically */}
-              <div className="flex flex-col gap-4 flex-1 justify-center min-w-[200px]">
-                <div className="stat-card">
-                  <div className="stat-icon bg-primary/20 text-primary">
-                    <Activity size={24} />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{character?.totalRuns || 0}</div>
-                    <div className="text-sm text-muted-foreground">Total Runs</div>
-                  </div>
+              <div className="stat-card">
+                <div className="stat-icon bg-secondary/20 text-secondary">
+                  <Calendar size={24} />
                 </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon bg-secondary/20 text-secondary">
-                    <Calendar size={24} />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{getAge()} days</div>
-                    <div className="text-sm text-muted-foreground">Age</div>
-                  </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{getAge()} days</div>
+                  <div className="text-sm text-muted-foreground">Age</div>
                 </div>
+              </div>
 
-                {/* Clickable Distance Card - Toggles miles/km */}
-                <div
-                  className="stat-card cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => setUseMiles(!useMiles)}
-                  title="Click to toggle miles/km"
-                >
-                  <div className="stat-icon bg-primary/20 text-primary">
-                    <Sparkles size={24} />
+              {/* Clickable Distance Card - Toggles miles/km */}
+              <div
+                className="stat-card cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setUseMiles(!useMiles)}
+                title="Click to toggle miles/km"
+              >
+                <div className="stat-icon bg-primary/20 text-primary">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {getTotalDistance()}
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">
-                      {getTotalDistance()}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Total Distance <span className="text-xs">(click to toggle)</span>
-                    </div>
+                  <div className="text-sm text-muted-foreground">
+                    Total Distance <span className="text-xs">(click to toggle)</span>
                   </div>
                 </div>
               </div>
@@ -363,6 +436,9 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Dev Panel - Only in development mode */}
+        {import.meta.env.DEV && <DevPanel onRunSimulated={handleDevRunSimulated} />}
       </main>
     </div>
   );

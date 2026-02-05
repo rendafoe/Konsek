@@ -1,6 +1,9 @@
 // Esko - The app mascot character
 // Progresses through 8 stages based on total runs synced
 
+import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
+
 export type EskoStage =
   | "egg"
   | "hatchling-v1"
@@ -83,13 +86,37 @@ const STAGE_COLORS: Record<EskoStage, { bg: string; text: string; border: string
   "maxed": { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-400" },
 };
 
+// Image paths for each stage
+const STAGE_IMAGES: Record<EskoStage, string> = {
+  "egg": "/esko/esko-egg.png",
+  "hatchling-v1": "/esko/esko-hatchling-v1.png",
+  "hatchling-v2": "/esko/esko-hatchling-v2.png",
+  "child": "/esko/esko-child.png",
+  "adolescent": "/esko/esko-adolescent.png",
+  "young-adult": "/esko/esko-young-adult.png",
+  "mature": "/esko/esko-mature.png",
+  "maxed": "/esko/esko-maxed.png",
+};
+
+// Animation classes for each stage
+const STAGE_ANIMATIONS: Record<EskoStage, string> = {
+  "egg": "animate-esko-egg",
+  "hatchling-v1": "animate-esko-hatchling-v1",
+  "hatchling-v2": "animate-esko-hatchling-v2",
+  "child": "animate-esko-child",
+  "adolescent": "animate-esko-adolescent",
+  "young-adult": "animate-esko-young-adult",
+  "mature": "animate-esko-mature",
+  "maxed": "animate-esko-maxed",
+};
+
 interface EskoCharacterProps {
   totalRuns: number;
   name?: string;
   showHealthBar?: boolean;
   healthPercent?: number;
   isDead?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
 }
 
 export function EskoCharacter({
@@ -104,10 +131,56 @@ export function EskoCharacter({
   const progress = getStageProgress(totalRuns);
   const colors = STAGE_COLORS[stageInfo.stage];
 
+  // Track previous progress for animation
+  const prevProgressRef = useRef(progress);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [displayProgress, setDisplayProgress] = useState(progress);
+
+  useEffect(() => {
+    // Only animate if progress increased
+    if (progress > prevProgressRef.current) {
+      setIsAnimating(true);
+      // Animate from old to new value
+      const startProgress = prevProgressRef.current;
+      const endProgress = progress;
+      const duration = 800; // ms
+      const startTime = Date.now();
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        // Ease out cubic for satisfying fill effect
+        const eased = 1 - Math.pow(1 - t, 3);
+        const current = startProgress + (endProgress - startProgress) * eased;
+        setDisplayProgress(Math.round(current));
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          setIsAnimating(false);
+        }
+      };
+      requestAnimationFrame(animate);
+    } else {
+      setDisplayProgress(progress);
+    }
+    prevProgressRef.current = progress;
+  }, [progress]);
+
   const sizeClasses = {
     sm: "w-24 h-24 text-xs",
     md: "w-40 h-40 text-sm",
     lg: "w-56 h-56 text-base",
+    xl: "w-72 h-72 text-lg",
+    "2xl": "w-96 h-96 text-xl",
+  };
+
+  // Determine health state class for animation modifiers
+  const getHealthStateClass = () => {
+    if (isDead) return "";
+    if (healthPercent <= 25) return "health-critical";
+    if (healthPercent <= 50) return "health-low";
+    return "";
   };
 
   const healthBarColor = healthPercent > 70
@@ -132,28 +205,27 @@ export function EskoCharacter({
           </span>
         </div>
 
-        {/* Placeholder Image Area */}
-        <div className="flex justify-center items-center min-h-[180px] mb-4">
-          <div
-            className={`
-              ${sizeClasses[size]}
-              ${colors.bg} ${colors.text} ${colors.border}
-              border-4 rounded-2xl
-              flex flex-col items-center justify-center
-              font-bold text-center p-4
-              ${isDead ? 'grayscale opacity-50' : ''}
-            `}
-            data-testid="esko-placeholder"
-          >
-            <div className="text-3xl mb-2">
-              {stageInfo.stage === "egg" ? "🥚" :
-               stageInfo.stage === "maxed" ? "⭐" : "🐣"}
-            </div>
-            <div className="font-pixel text-lg">{stageInfo.name}</div>
-            <div className="text-[10px] mt-1 opacity-70">
-              {stageInfo.nextStageRuns
-                ? `${stageInfo.nextStageRuns - totalRuns} runs to next stage`
-                : "Max stage reached!"}
+        {/* Esko Character Image */}
+        <div className={cn("flex justify-center items-center min-h-[180px] mb-4", getHealthStateClass())}>
+          <div className="flex flex-col items-center">
+            <img
+              src={STAGE_IMAGES[stageInfo.stage]}
+              alt={`Esko - ${stageInfo.name}`}
+              className={cn(
+                sizeClasses[size],
+                "object-contain",
+                !isDead && STAGE_ANIMATIONS[stageInfo.stage],
+                isDead && "esko-dead"
+              )}
+              data-testid="esko-character-image"
+            />
+            <div className="mt-2 text-center">
+              <div className="font-pixel text-sm text-foreground/80">{stageInfo.name}</div>
+              <div className="text-[10px] text-foreground/60">
+                {stageInfo.nextStageRuns
+                  ? `${stageInfo.nextStageRuns - totalRuns} runs to next stage`
+                  : "Max stage reached!"}
+              </div>
             </div>
           </div>
         </div>
@@ -181,11 +253,25 @@ export function EskoCharacter({
             <div className="text-xs font-bold text-center mb-2 text-foreground/70">
               Progress to {STAGE_THRESHOLDS[STAGE_THRESHOLDS.findIndex(s => s.stage === stageInfo.stage) + 1]?.name}
             </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-2 bg-muted rounded-full overflow-hidden relative">
               <div
-                className={`h-full ${colors.bg.replace('100', '500')} transition-all`}
-                style={{ width: `${progress}%` }}
+                className={cn(
+                  "h-full transition-all duration-300",
+                  colors.bg.replace('100', '500'),
+                  isAnimating && "progress-bar-glow"
+                )}
+                style={{ width: `${displayProgress}%` }}
               />
+              {/* Shimmer effect when animating */}
+              {isAnimating && (
+                <div
+                  className="absolute inset-0 progress-bar-shimmer"
+                  style={{ width: `${displayProgress}%` }}
+                />
+              )}
+            </div>
+            <div className="text-[10px] text-center mt-1 text-foreground/60">
+              {displayProgress}%
             </div>
           </div>
         )}
@@ -212,28 +298,25 @@ export function EskoPreview({
   size?: "sm" | "md" | "lg";
 }) {
   const stageInfo = STAGE_THRESHOLDS.find(s => s.stage === stage) || STAGE_THRESHOLDS[0];
-  const colors = STAGE_COLORS[stage];
 
   const sizeClasses = {
-    sm: "w-16 h-16 text-[10px]",
-    md: "w-24 h-24 text-xs",
-    lg: "w-32 h-32 text-sm",
+    sm: "w-16 h-16",
+    md: "w-24 h-24",
+    lg: "w-32 h-32",
   };
 
   return (
-    <div
-      className={`
-        ${sizeClasses[size]}
-        ${colors.bg} ${colors.text} ${colors.border}
-        border-3 rounded-xl
-        flex flex-col items-center justify-center
-        font-bold text-center
-      `}
-    >
-      <div className="text-2xl mb-1">
-        {stage === "egg" ? "🥚" : stage === "maxed" ? "⭐" : "🐣"}
-      </div>
-      <div className="font-pixel">{stageInfo.name}</div>
+    <div className="flex flex-col items-center">
+      <img
+        src={STAGE_IMAGES[stage]}
+        alt={`Esko - ${stageInfo.name}`}
+        className={cn(
+          sizeClasses[size],
+          "object-contain",
+          STAGE_ANIMATIONS[stage]
+        )}
+      />
+      <div className="font-pixel text-xs mt-1">{stageInfo.name}</div>
     </div>
   );
 }

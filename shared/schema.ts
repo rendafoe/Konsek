@@ -43,6 +43,9 @@ export const characters = pgTable("characters", {
   totalDistance: integer("total_distance").default(0).notNull(), // in meters
   totalRuns: integer("total_runs").default(0).notNull(),
 
+  // Consecutive days without a run - health decays after 2 days
+  consecutiveRestDays: integer("consecutive_rest_days").default(0).notNull(),
+
   // Medal balance (integer only)
   medalBalance: integer("medal_balance").default(0).notNull(),
 

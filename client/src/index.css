@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Press+Start+2P&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -58,8 +58,8 @@
   --chart-4: 5 70% 55%;             /* Red */
   --chart-5: 145 20% 75%;           /* Light sage */
   
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
   --font-mono: 'Courier New', monospace;
   --font-pixel: 'Press Start 2P', cursive;
   
@@ -324,7 +324,7 @@
     position: relative;
     overflow: hidden;
   }
-  
+
   .aurora-bg::before {
     content: '';
     position: absolute;
@@ -334,6 +334,59 @@
     bottom: 0;
     background: radial-gradient(ellipse at top, rgba(116, 165, 127, 0.2), transparent 60%);
     pointer-events: none;
+  }
+
+  /* Nordic landing page styles */
+  .nordic-landing {
+    --nordic-deep: #1a2f23;
+    --nordic-forest: #243d2e;
+    --nordic-sage: #40916c;
+    --nordic-mint: #7cb98b;
+    --nordic-cream: #e8efe5;
+    --nordic-muted: #8a9f87;
+    --nordic-warm: #d4a574;
+    font-feature-settings: 'ss01' on, 'ss02' on;
+    letter-spacing: -0.01em;
+  }
+
+  .nordic-glow {
+    box-shadow:
+      0 0 60px rgba(64, 145, 108, 0.15),
+      0 0 120px rgba(64, 145, 108, 0.08);
+  }
+
+  .nordic-card {
+    background: rgba(36, 61, 46, 0.5);
+    border: 1px solid rgba(64, 145, 108, 0.1);
+    border-radius: 1rem;
+    backdrop-filter: blur(8px);
+  }
+
+  .nordic-card:hover {
+    border-color: rgba(64, 145, 108, 0.25);
+  }
+
+  /* Cozy warm glow for Esko */
+  .esko-hero-glow {
+    position: relative;
+  }
+
+  .esko-hero-glow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(212, 165, 116, 0.2) 0%,
+      rgba(212, 165, 116, 0.08) 30%,
+      transparent 60%
+    );
+    pointer-events: none;
+    z-index: -1;
   }
   
   /* Stat card styling */
@@ -380,6 +433,203 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.8);
   }
+}
+
+/* ==========================================================================
+   ESKO CHARACTER ANIMATIONS
+   ========================================================================== */
+
+/* Stage 1: Egg - gentle rock */
+@keyframes esko-egg {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+/* Stage 2: Hatchling V1 - active wobble */
+@keyframes esko-hatchling-v1 {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  15% { transform: rotate(10deg) scale(1.02); }
+  30% { transform: rotate(-8deg) scale(1); }
+  45% { transform: rotate(6deg) scale(1.01); }
+  60% { transform: rotate(-10deg) scale(1.02); }
+  85% { transform: rotate(4deg) scale(1); }
+}
+
+/* Stage 3: Hatchling V2 - subtle bounce */
+@keyframes esko-hatchling-v2 {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.02); }
+}
+
+/* Stage 4: Child - playful hop */
+@keyframes esko-child {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+/* Stage 5: Adolescent - energetic bounce */
+@keyframes esko-adolescent {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-12px) rotate(5deg); }
+  75% { transform: translateY(-6px) rotate(-3deg); }
+}
+
+/* Stage 6: Young Adult - dynamic hover */
+@keyframes esko-young-adult {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(3px, -15px) rotate(2deg); }
+  66% { transform: translate(-3px, -10px) rotate(-2deg); }
+}
+
+/* Stage 7: Mature - graceful float with glow */
+@keyframes esko-mature {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    filter: drop-shadow(0 0 8px rgba(255, 150, 50, 0.4));
+  }
+  50% {
+    transform: translateY(-20px) rotate(3deg);
+    filter: drop-shadow(0 0 15px rgba(255, 150, 50, 0.7));
+  }
+}
+
+/* Stage 8: Maxed - majestic soar with strong glow */
+@keyframes esko-maxed {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    filter: drop-shadow(0 0 12px rgba(255, 180, 50, 0.5));
+  }
+  25% {
+    transform: translate(5px, -20px) scale(1.02);
+    filter: drop-shadow(0 0 20px rgba(255, 180, 50, 0.8));
+  }
+  50% {
+    transform: translate(0, -25px) scale(1.03);
+    filter: drop-shadow(0 0 25px rgba(255, 200, 80, 0.9));
+  }
+  75% {
+    transform: translate(-5px, -18px) scale(1.02);
+    filter: drop-shadow(0 0 18px rgba(255, 180, 50, 0.7));
+  }
+}
+
+/* Animation utility classes */
+.animate-esko-egg {
+  animation: esko-egg 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-hatchling-v1 {
+  animation: esko-hatchling-v1 1.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-hatchling-v2 {
+  animation: esko-hatchling-v2 1.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-child {
+  animation: esko-child 1.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-adolescent {
+  animation: esko-adolescent 1s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-young-adult {
+  animation: esko-young-adult 0.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-mature {
+  animation: esko-mature 2.5s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+.animate-esko-maxed {
+  animation: esko-maxed 3s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+/* Health state animation modifiers - slowed when health is low */
+.health-low .animate-esko-egg { animation-duration: 4.5s; }
+.health-low .animate-esko-hatchling-v1 { animation-duration: 2.25s; }
+.health-low .animate-esko-hatchling-v2 { animation-duration: 2.25s; }
+.health-low .animate-esko-child { animation-duration: 1.8s; }
+.health-low .animate-esko-adolescent { animation-duration: 1.5s; }
+.health-low .animate-esko-young-adult { animation-duration: 1.2s; }
+.health-low .animate-esko-mature { animation-duration: 3.75s; }
+.health-low .animate-esko-maxed { animation-duration: 4.5s; }
+
+/* Critical health - nearly stopped */
+.health-critical .animate-esko-egg { animation-duration: 6s; opacity: 0.7; }
+.health-critical .animate-esko-hatchling-v1 { animation-duration: 3s; opacity: 0.7; }
+.health-critical .animate-esko-hatchling-v2 { animation-duration: 3s; opacity: 0.7; }
+.health-critical .animate-esko-child { animation-duration: 2.4s; opacity: 0.7; }
+.health-critical .animate-esko-adolescent { animation-duration: 2s; opacity: 0.7; }
+.health-critical .animate-esko-young-adult { animation-duration: 1.6s; opacity: 0.7; }
+.health-critical .animate-esko-mature { animation-duration: 5s; opacity: 0.7; }
+.health-critical .animate-esko-maxed { animation-duration: 6s; opacity: 0.7; }
+
+/* Dead state - no animation */
+.esko-dead {
+  animation: none !important;
+  filter: grayscale(100%);
+  opacity: 0.5;
+}
+
+/* Mystery stage bounce for locked evolutions */
+@keyframes mystery-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-mystery-bounce {
+  animation: mystery-bounce 2s ease-in-out infinite;
+}
+
+/* Progress bar fill animation */
+@keyframes progress-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
+  }
+}
+
+@keyframes progress-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-bar-glow {
+  animation: progress-glow 0.6s ease-out;
+  position: relative;
+}
+
+.progress-bar-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 0.8s ease-out;
+  overflow: hidden;
+  border-radius: inherit;
 }
 
 @layer utilities {

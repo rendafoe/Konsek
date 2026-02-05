@@ -30,6 +30,7 @@ export interface IStorage {
 
   // Characters
   getActiveCharacter(userId: string): Promise<Character | undefined>;
+  getMostRecentCharacter(userId: string): Promise<Character | undefined>;
   getCharacterArchive(userId: string): Promise<Character[]>;
   createCharacter(data: InsertCharacter & { userId: string }): Promise<Character>;
   updateCharacter(id: number, updates: Partial<Character>): Promise<Character>;
@@ -82,6 +83,16 @@ export class DatabaseStorage implements IStorage {
     const [character] = await db.select()
       .from(characters)
       .where(and(eq(characters.userId, userId), eq(characters.status, "alive")));
+    return character;
+  }
+
+  // Get most recent character regardless of status (for displaying dead character info)
+  async getMostRecentCharacter(userId: string): Promise<Character | undefined> {
+    const [character] = await db.select()
+      .from(characters)
+      .where(eq(characters.userId, userId))
+      .orderBy(desc(characters.createdAt))
+      .limit(1);
     return character;
   }
 

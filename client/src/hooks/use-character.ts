@@ -33,7 +33,9 @@ export function useCreateCharacter() {
       return api.character.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
+      // Invalidate both character query and archive to keep UI in sync
       queryClient.invalidateQueries({ queryKey: [api.character.get.path] });
+      queryClient.invalidateQueries({ queryKey: [api.character.archive.path] });
     },
   });
 }

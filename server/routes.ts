@@ -181,8 +181,9 @@ export async function registerRoutes(
 
       try {
         const { db } = await import("./db");
-        const { runs, runItems, inventory } = await import("@shared/schema");
+        const { runs, runItems, inventory, userUnlocks, dailyCheckIns, medalTransactions } = await import("@shared/schema");
         const { like, inArray, eq } = await import("drizzle-orm");
+        const userId = 'dev-user-1';
 
         // First get all test run IDs
         const testRuns = await db.select({ id: runs.id })
@@ -199,19 +200,31 @@ export async function registerRoutes(
         // Delete the runs themselves
         await db.delete(runs).where(like(runs.stravaActivityId, 'test-run-%'));
 
-        // Also clear inventory items for test user
-        await db.delete(inventory).where(eq(inventory.userId, 'dev-user-1'));
+        // Clear inventory items for test user
+        await db.delete(inventory).where(eq(inventory.userId, userId));
+
+        // Clear user unlocks (achievements)
+        await db.delete(userUnlocks).where(eq(userUnlocks.userId, userId));
+
+        // Clear daily check-ins
+        await db.delete(dailyCheckIns).where(eq(dailyCheckIns.userId, userId));
+
+        // Clear medal transactions
+        await db.delete(medalTransactions).where(eq(medalTransactions.userId, userId));
 
         // Reset character stats
-        const character = await storage.getActiveCharacter('dev-user-1');
+        const character = await storage.getActiveCharacter(userId);
         if (character) {
           await storage.updateCharacter(character.id, {
             totalRuns: 0,
             totalDistance: 0,
+            daysAlive: 0,
+            healthState: 0,
+            medalBalance: 0,
           });
         }
 
-        res.json({ message: "Cleared all test runs, run items, inventory, and reset character stats" });
+        res.json({ message: "Cleared all test data: runs, items, inventory, achievements, check-ins, medals" });
       } catch (error) {
         console.error('Clear runs error:', error);
         res.status(500).json({ message: "Failed to clear runs" });
@@ -249,6 +262,388 @@ export async function registerRoutes(
       } catch (error) {
         console.error('Reset user error:', error);
         res.status(500).json({ message: "Failed to reset user" });
+      }
+    });
+
+    // DEV ONLY: Set character state directly for testing specific scenarios
+    // Usage: POST /api/dev/set-character-state
+    // Body: { totalRuns?: number, healthState?: number, daysAlive?: number, medalBalance?: number }
+    app.post("/api/dev/set-character-state", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const userId = 'dev-user-1';
+        const { totalRuns, healthState, daysAlive, medalBalance } = req.body;
+
+        const character = await storage.getActiveCharacter(userId);
+        if (!character) {
+          return res.status(400).json({ message: "Create a character first" });
+        }
+
+        // Build update object with only provided fields
+        const updates: Partial<typeof character> = {};
+        if (totalRuns !== undefined) updates.totalRuns = totalRuns;
+        if (healthState !== undefined) updates.healthState = healthState;
+        if (daysAlive !== undefined) updates.daysAlive = daysAlive;
+        if (medalBalance !== undefined) updates.medalBalance = medalBalance;
+
+        const updated = await storage.updateCharacter(character.id, updates);
+        res.json({ success: true, character: updated });
+      } catch (error) {
+        console.error('Set character state error:', error);
+        res.status(500).json({ message: "Failed to set character state" });
+      }
+    });
+
+    // DEV ONLY: Simulate a single run with specific distance
+    // Usage: POST /api/dev/simulate-run
+    // Body: { distanceKm: number, triggerRewards?: boolean }
+    // Note: Only the first run of each day affects health AND stage progression
+    app.post("/api/dev/simulate-run", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const { db } = await import("./db");
+        const { runs } = await import("@shared/schema");
+        const { eq, and, gte, lt } = await import("drizzle-orm");
+        const userId = 'dev-user-1';
+        const { distanceKm = 5, triggerRewards = true } = req.body;
+
+        const character = await storage.getActiveCharacter(userId);
+        if (!character) {
+          return res.status(400).json({ message: "Create a character first" });
+        }
+
+        // Don't allow runs if character is dead
+        if (character.status === "dead" || character.healthState >= 4) {
+          return res.status(400).json({ message: "Character is dead. Create a new one first." });
+        }
+
+        const distanceMeters = Math.round(distanceKm * 1000);
+        const paceMinPerKm = 5 + Math.random() * 2; // 5-7 min/km
+
+        const runNames = [
+          "Dev Test Run", "Quick Test", "Simulated Run", "Test Activity"
+        ];
+
+        // Check if today already has a run that counted for health/stage
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        const todaysCountedRuns = await db
+          .select()
+          .from(runs)
+          .where(
+            and(
+              eq(runs.userId, userId),
+              eq(runs.healthUpdated, true),
+              gte(runs.date, startOfDay),
+              lt(runs.date, endOfDay)
+            )
+          );
+
+        const isFirstRunOfDay = todaysCountedRuns.length === 0;
+
+        const run = await storage.createRun({
+          userId,
+          characterId: character.id,
+          stravaActivityId: `test-run-${Date.now()}`,
+          distance: distanceMeters,
+          duration: Math.round(distanceKm * paceMinPerKm * 60),
+          date: new Date(),
+          processed: true,
+          name: runNames[Math.floor(Math.random() * runNames.length)],
+          elevationGain: Math.round(Math.random() * 100 + 10),
+          healthUpdated: isFirstRunOfDay, // Only first run of day counts
+        });
+
+        let rewardResult = { items: [] as any[], rarities: [] as string[], medalsAwarded: 0 };
+        let progressionReward = null;
+
+        // Only process stage progression if this is the first run of the day
+        const previousRuns = character.totalRuns || 0;
+        const newTotalRuns = isFirstRunOfDay ? previousRuns + 1 : previousRuns;
+
+        if (triggerRewards && distanceMeters >= 1000) {
+          const { processRunRewards } = await import("./services/itemRewards");
+          const { checkProgressionReward } = await import("./services/medalService");
+
+          rewardResult = await processRunRewards(userId, run.id, distanceMeters, null, new Date());
+
+          // Check for progression ONLY if first run of day
+          if (isFirstRunOfDay) {
+            const progression = await checkProgressionReward(userId, previousRuns, newTotalRuns);
+            if (progression) {
+              progressionReward = {
+                stage: progression.transitionKey.split('_to_')[1].replace(/_/g, ' '),
+                medalsAwarded: progression.medalsAwarded,
+              };
+            }
+          }
+        }
+
+        // Health regeneration: Only the FIRST run of each day improves health
+        const currentHealth = character.healthState || 0;
+        const newHealthState = isFirstRunOfDay
+          ? Math.max(0, currentHealth - 1)
+          : currentHealth;
+        const healthImproved = isFirstRunOfDay && currentHealth > 0;
+
+        // Update character stats
+        // - totalRuns only increments on first run of day
+        // - Always add distance
+        // - Reset consecutiveRestDays on any run
+        // - Health only improves on first run of day
+        await storage.updateCharacter(character.id, {
+          totalRuns: newTotalRuns,
+          totalDistance: (character.totalDistance || 0) + distanceMeters,
+          healthState: newHealthState,
+          consecutiveRestDays: 0, // Reset rest days on any run
+        });
+
+        res.json({
+          success: true,
+          run,
+          awardedItems: rewardResult.items,
+          rarities: rewardResult.rarities,
+          medalsAwarded: rewardResult.medalsAwarded,
+          progressionReward,
+          healthImproved,
+          newHealthState,
+          isFirstRunOfDay,
+          stageProgressed: isFirstRunOfDay,
+          healthPercent: Math.max(0, 100 - newHealthState * 25),
+          newTotalRuns,
+        });
+      } catch (error) {
+        console.error('Simulate run error:', error);
+        res.status(500).json({ message: "Failed to simulate run" });
+      }
+    });
+
+    // DEV ONLY: Award test items of specific rarity
+    // Usage: POST /api/dev/award-items
+    // Body: { rarity: "common"|"uncommon"|"rare"|"epic"|"legendary", count: number }
+    app.post("/api/dev/award-items", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const userId = 'dev-user-1';
+        const { rarity = "common", count = 1 } = req.body;
+
+        const validRarities = ["common", "uncommon", "rare", "epic", "legendary"];
+        if (!validRarities.includes(rarity)) {
+          return res.status(400).json({ message: "Invalid rarity. Must be: " + validRarities.join(", ") });
+        }
+
+        const { db } = await import("./db");
+        const { items, inventory, userUnlocks } = await import("@shared/schema");
+        const { eq, and } = await import("drizzle-orm");
+
+        // Get items of the specified rarity
+        const matchingItems = await db
+          .select()
+          .from(items)
+          .where(and(
+            eq(items.rarity, rarity),
+            eq(items.isSpecialReward, false)
+          ));
+
+        if (matchingItems.length === 0) {
+          return res.status(400).json({ message: `No ${rarity} items found in database` });
+        }
+
+        const awardedItems = [];
+        for (let i = 0; i < count; i++) {
+          const randomItem = matchingItems[Math.floor(Math.random() * matchingItems.length)];
+
+          // Add to inventory
+          await db.insert(inventory).values({
+            userId,
+            itemId: randomItem.id,
+            equipped: false,
+          });
+
+          // Track unlock (ignore if already unlocked)
+          try {
+            await db.insert(userUnlocks).values({
+              userId,
+              itemId: randomItem.id,
+            });
+          } catch {
+            // Already unlocked
+          }
+
+          awardedItems.push(randomItem);
+        }
+
+        res.json({
+          success: true,
+          awardedItems,
+          message: `Awarded ${count} ${rarity} item(s)`,
+        });
+      } catch (error) {
+        console.error('Award items error:', error);
+        res.status(500).json({ message: "Failed to award items" });
+      }
+    });
+
+    // DEV ONLY: Max everything - maxed stage, full health, high medals
+    // Usage: POST /api/dev/max-everything
+    app.post("/api/dev/max-everything", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const userId = 'dev-user-1';
+
+        const character = await storage.getActiveCharacter(userId);
+        if (!character) {
+          return res.status(400).json({ message: "Create a character first" });
+        }
+
+        // Max everything: 30+ runs for maxed stage, health 0, high medals
+        const updated = await storage.updateCharacter(character.id, {
+          totalRuns: 35,
+          healthState: 0,
+          daysAlive: 100,
+          medalBalance: 500,
+          totalDistance: 500000, // 500km
+        });
+
+        res.json({ success: true, character: updated });
+      } catch (error) {
+        console.error('Max everything error:', error);
+        res.status(500).json({ message: "Failed to max everything" });
+      }
+    });
+
+    // DEV ONLY: Simulate a day passing for testing check-in streaks
+    // Usage: POST /api/dev/simulate-day
+    // This shifts all check-in dates back by 1 day, making "today" a new day
+    // Health only decays after 2 CONSECUTIVE days without running
+    app.post("/api/dev/simulate-day", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const { db } = await import("./db");
+        const { dailyCheckIns, runs } = await import("@shared/schema");
+        const { eq, sql, and, gte, lt } = await import("drizzle-orm");
+        const userId = 'dev-user-1';
+
+        // Shift all check-in dates back by 1 day
+        await db.execute(sql`
+          UPDATE daily_check_ins
+          SET check_in_date = check_in_date - INTERVAL '1 day'
+          WHERE user_id = ${userId}
+        `);
+
+        // Also shift all run dates back by 1 day so "today" has no runs
+        await db.execute(sql`
+          UPDATE runs
+          SET date = date - INTERVAL '1 day'
+          WHERE user_id = ${userId}
+        `);
+
+        // Reset health_updated and stage_updated flags for the new "today"
+        await db.execute(sql`
+          UPDATE runs
+          SET health_updated = false
+          WHERE user_id = ${userId}
+        `);
+
+        const character = await storage.getActiveCharacter(userId);
+        if (character && character.status !== "dead") {
+          // Increment consecutive rest days (days without running)
+          const currentRestDays = (character as any).consecutiveRestDays || 0;
+          const newRestDays = currentRestDays + 1;
+
+          // Health only decays after 2 consecutive days without running
+          const shouldDecayHealth = newRestDays >= 2;
+          const currentHealth = character.healthState || 0;
+          const newHealthState = shouldDecayHealth
+            ? Math.min(4, currentHealth + 1)
+            : currentHealth;
+          const isDead = newHealthState >= 4;
+
+          await storage.updateCharacter(character.id, {
+            daysAlive: (character.daysAlive || 0) + 1,
+            consecutiveRestDays: newRestDays,
+            healthState: newHealthState,
+            ...(isDead ? { status: "dead", deathDate: new Date() } : {}),
+          });
+
+          const healthPercent = Math.max(0, 100 - newHealthState * 25);
+
+          res.json({
+            success: true,
+            message: isDead
+              ? "Your Esko has died from neglect (2+ days without running)."
+              : shouldDecayHealth
+                ? `Day ${newRestDays} without running. Health decayed to ${healthPercent}%.`
+                : `Day ${newRestDays} without running. Health stable (decays after 2 days).`,
+            daysAlive: (character.daysAlive || 0) + 1,
+            consecutiveRestDays: newRestDays,
+            healthState: newHealthState,
+            healthPercent,
+            healthDecayed: shouldDecayHealth,
+            isDead,
+          });
+        } else {
+          res.json({
+            success: true,
+            message: character?.status === "dead"
+              ? "Character is already dead. Create a new one."
+              : "No active character found.",
+            daysAlive: 0,
+          });
+        }
+      } catch (error) {
+        console.error('Simulate day error:', error);
+        res.status(500).json({ message: "Failed to simulate day passing" });
+      }
+    });
+
+    // DEV ONLY: Set character as dead and archive it
+    // Usage: POST /api/dev/kill-character
+    app.post("/api/dev/kill-character", async (req: any, res) => {
+      if (!req.session.isLoggedIn) {
+        return res.status(401).json({ message: "Must be logged in" });
+      }
+
+      try {
+        const userId = 'dev-user-1';
+
+        const character = await storage.getActiveCharacter(userId);
+        if (!character) {
+          return res.status(400).json({ message: "No active character to kill" });
+        }
+
+        // Archive the character
+        const updated = await storage.updateCharacter(character.id, {
+          status: "dead",
+          healthState: 4,
+          deathDate: new Date(),
+        });
+
+        res.json({
+          success: true,
+          message: "Character has been archived. You can now create a new one.",
+          character: updated,
+        });
+      } catch (error) {
+        console.error('Kill character error:', error);
+        res.status(500).json({ message: "Failed to kill character" });
       }
     });
 
@@ -642,10 +1037,11 @@ export async function registerRoutes(
   });
 
   // === CHARACTER ROUTES ===
+  // Returns most recent character (alive or dead) for displaying stats
   app.get(api.character.get.path, isAuthenticated, async (req: any, res) => {
-    const character = await storage.getActiveCharacter(req.user.claims.sub);
+    const character = await storage.getMostRecentCharacter(req.user.claims.sub);
     if (!character) {
-      return res.status(404).json({ message: "No active character" });
+      return res.status(404).json({ message: "No character found" });
     }
     res.json(character);
   });
