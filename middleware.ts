@@ -5,8 +5,8 @@ export const runtime = "nodejs";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow public routes
-  const publicPaths = ["/landing", "/api/auth", "/_next", "/favicon", "/esko", "/items"];
+  // Allow public routes and all API routes (API routes handle their own auth)
+  const publicPaths = ["/landing", "/api/", "/_next", "/favicon", "/esko", "/items"];
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
   // Allow static files
