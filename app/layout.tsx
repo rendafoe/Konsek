@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Press_Start_2P, Instrument_Serif } from "next/font/google";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -40,7 +41,7 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${pressStart2P.variable} ${instrumentSerif.variable} font-sans antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
