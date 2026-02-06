@@ -1,0 +1,710 @@
+/* Fonts loaded via next/font/google in layout.tsx */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* LIGHT MODE - Nordic Forest Theme */
+:root {
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+  --opaque-button-border-intensity: -8;
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .08);
+
+  /* Nordic Forest Palette */
+  --background: 145 18% 94%;        /* Light sage cream */
+  --foreground: 150 30% 15%;        /* Dark forest green */
+
+  --primary: 150 30% 35%;           /* Forest green #40916C */
+  --primary-foreground: 145 20% 98%;
+
+  --secondary: 150 20% 45%;         /* Sage green #52796F */
+  --secondary-foreground: 145 20% 98%;
+
+  --muted: 145 15% 88%;             /* Light sage */
+  --muted-foreground: 150 15% 40%;
+
+  --accent: 30 55% 60%;             /* Warm gold/bronze #D4A574 */
+  --accent-foreground: 150 30% 15%;
+
+  --destructive: 5 70% 55%;         /* Critical red #E63946 */
+  --destructive-foreground: 145 20% 98%;
+
+  --card: 145 20% 97%;              /* Soft white */
+  --card-foreground: 150 30% 15%;
+  --card-border: 150 20% 85%;
+
+  --popover: 145 20% 97%;
+  --popover-foreground: 150 30% 15%;
+  --popover-border: 150 20% 85%;
+
+  --sidebar: 150 35% 18%;           /* Deep forest #1B4332 */
+  --sidebar-foreground: 145 15% 92%;
+  --sidebar-border: 150 30% 25%;
+  --sidebar-primary: 150 30% 35%;
+  --sidebar-primary-foreground: 145 20% 98%;
+  --sidebar-accent: 150 25% 28%;
+  --sidebar-accent-foreground: 145 15% 92%;
+  --sidebar-ring: 150 30% 35%;
+
+  --border: 150 20% 82%;
+  --input: 150 20% 80%;
+  --ring: 150 30% 35%;
+
+  --chart-1: 150 30% 35%;           /* Forest green */
+  --chart-2: 150 25% 45%;           /* Sage */
+  --chart-3: 30 55% 60%;            /* Gold */
+  --chart-4: 5 70% 55%;             /* Red */
+  --chart-5: 145 20% 75%;           /* Light sage */
+
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-mono: 'Courier New', monospace;
+  --font-pixel: 'Press Start 2P', cursive;
+
+  --radius: 0.375rem;
+  --shadow-2xs: 0 1px 2px 0 rgba(27, 67, 50, 0.05);
+  --shadow-xs: 0 1px 3px 0 rgba(27, 67, 50, 0.1);
+  --shadow-sm: 0 2px 4px 0 rgba(27, 67, 50, 0.1);
+  --shadow: 0 4px 6px -1px rgba(27, 67, 50, 0.1);
+  --shadow-md: 0 4px 15px rgba(27, 67, 50, 0.1);
+  --shadow-lg: 0 10px 25px -5px rgba(27, 67, 50, 0.15);
+  --shadow-xl: 0 20px 40px -10px rgba(27, 67, 50, 0.2);
+  --shadow-2xl: 0 25px 50px -12px rgba(27, 67, 50, 0.25);
+
+  /* Automatically computed borders */
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+/* DARK MODE - Nordic Night Theme */
+.dark {
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
+
+  --background: 150 35% 12%;        /* Deep forest night */
+  --foreground: 145 15% 92%;        /* Light sage */
+
+  --primary: 150 35% 45%;           /* Brighter forest green */
+  --primary-foreground: 150 35% 12%;
+
+  --secondary: 150 25% 35%;         /* Muted sage */
+  --secondary-foreground: 145 15% 92%;
+
+  --muted: 150 25% 18%;
+  --muted-foreground: 145 15% 60%;
+
+  --accent: 30 55% 55%;             /* Warm gold */
+  --accent-foreground: 150 35% 12%;
+
+  --destructive: 5 70% 50%;
+  --destructive-foreground: 145 15% 92%;
+
+  --card: 150 30% 15%;
+  --card-foreground: 145 15% 92%;
+  --card-border: 150 25% 22%;
+
+  --popover: 150 30% 15%;
+  --popover-foreground: 145 15% 92%;
+  --popover-border: 150 25% 22%;
+
+  --sidebar: 150 40% 8%;
+  --sidebar-foreground: 145 15% 90%;
+  --sidebar-border: 150 30% 15%;
+  --sidebar-primary: 150 35% 45%;
+  --sidebar-primary-foreground: 150 35% 12%;
+  --sidebar-accent: 150 25% 18%;
+  --sidebar-accent-foreground: 145 15% 90%;
+  --sidebar-ring: 150 35% 45%;
+
+  --border: 150 25% 22%;
+  --input: 150 25% 25%;
+  --ring: 150 35% 45%;
+
+  --chart-1: 150 35% 50%;
+  --chart-2: 150 25% 40%;
+  --chart-3: 30 55% 55%;
+  --chart-4: 5 70% 50%;
+  --chart-5: 145 20% 30%;
+
+  --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-xs: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  /* Tamagotchi-style Device Screen */
+  .device-screen {
+    background: linear-gradient(145deg, hsl(150 30% 35%), hsl(150 35% 18%));
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow:
+      0 15px 40px rgba(0,0,0,0.3),
+      inset 0 2px 4px rgba(255,255,255,0.1);
+  }
+
+  .device-screen-inner {
+    background: hsl(145 25% 80%);
+    padding: 24px;
+    border-radius: 16px;
+    border: 4px solid hsl(150 35% 18%);
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.15);
+    min-width: 280px;
+  }
+
+  .dark .device-screen-inner {
+    background: hsl(150 20% 25%);
+    border-color: hsl(150 25% 35%);
+  }
+
+  /* Pixel Art Borders */
+  .pixel-border {
+    box-shadow:
+      -4px 0 0 0 hsl(var(--border)),
+      4px 0 0 0 hsl(var(--border)),
+      0 -4px 0 0 hsl(var(--border)),
+      0 4px 0 0 hsl(var(--border));
+    margin: 4px;
+  }
+
+  .pixel-card {
+    @apply bg-card p-6;
+    box-shadow:
+      -3px 0 0 0 hsl(var(--border)),
+      3px 0 0 0 hsl(var(--border)),
+      0 -3px 0 0 hsl(var(--border)),
+      0 3px 0 0 hsl(var(--border));
+  }
+
+  .pixel-btn {
+    @apply px-4 py-2 font-bold text-sm uppercase transition-transform active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+    font-family: var(--font-pixel);
+    font-size: 10px;
+    box-shadow:
+      inset -3px -3px 0px 0px rgba(0,0,0,0.2),
+      3px 3px 0px 0px rgba(0,0,0,0.15);
+  }
+
+  .pixel-btn-primary {
+    @apply bg-primary text-primary-foreground pixel-btn;
+  }
+
+  .pixel-btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .pixel-btn-secondary {
+    @apply bg-secondary text-secondary-foreground pixel-btn;
+  }
+
+  .pixel-btn-outline {
+    @apply bg-background border-2 border-border text-foreground pixel-btn;
+    box-shadow: 3px 3px 0px 0px hsl(var(--border));
+  }
+
+  .pixel-btn-outline:hover {
+    @apply bg-muted;
+  }
+
+  /* Strava Orange Button */
+  .strava-btn {
+    background: #FC4C02;
+    color: white;
+    box-shadow: 0 4px 15px rgba(252, 76, 2, 0.4);
+  }
+
+  .strava-btn:hover {
+    background: #E04402;
+  }
+
+  /* Health bar segments */
+  .health-bar {
+    height: 16px;
+    background: hsl(145 15% 75%);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid hsl(150 35% 18%);
+  }
+
+  .health-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease, background-color 0.5s ease;
+  }
+
+  .health-good {
+    background: hsl(150 30% 35%);
+  }
+
+  .health-warning {
+    background: hsl(30 70% 55%);
+  }
+
+  .health-critical {
+    background: hsl(5 70% 55%);
+  }
+
+  /* Status indicator pulse */
+  .status-pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Connected dot */
+  .connected-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: hsl(150 30% 35%);
+    display: inline-block;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* Nordic item rarity colors */
+  .rarity-common {
+    border-color: hsl(150 25% 55%);
+    color: hsl(150 25% 55%);
+  }
+
+  .rarity-uncommon {
+    border-color: hsl(150 30% 40%);
+    color: hsl(150 30% 40%);
+  }
+
+  .rarity-rare {
+    border-color: hsl(200 50% 50%);
+    color: hsl(200 50% 50%);
+  }
+
+  .rarity-epic {
+    border-color: hsl(270 50% 55%);
+    color: hsl(270 50% 55%);
+  }
+
+  .rarity-legendary {
+    border-color: hsl(40 80% 55%);
+    color: hsl(40 80% 55%);
+  }
+
+  /* Northern lights gradient background */
+  .aurora-bg {
+    background: linear-gradient(135deg, hsl(150 35% 18%) 0%, hsl(150 30% 28%) 50%, hsl(150 20% 35%) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .aurora-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at top, rgba(116, 165, 127, 0.2), transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Nordic landing page styles */
+  .nordic-landing {
+    --nordic-deep: #1a2f23;
+    --nordic-forest: #243d2e;
+    --nordic-sage: #40916c;
+    --nordic-mint: #7cb98b;
+    --nordic-cream: #e8efe5;
+    --nordic-muted: #8a9f87;
+    --nordic-warm: #d4a574;
+    font-feature-settings: 'ss01' on, 'ss02' on;
+    letter-spacing: -0.01em;
+  }
+
+  .nordic-glow {
+    box-shadow:
+      0 0 60px rgba(64, 145, 108, 0.15),
+      0 0 120px rgba(64, 145, 108, 0.08);
+  }
+
+  .nordic-card {
+    background: rgba(36, 61, 46, 0.5);
+    border: 1px solid rgba(64, 145, 108, 0.1);
+    border-radius: 1rem;
+    backdrop-filter: blur(8px);
+  }
+
+  .nordic-card:hover {
+    border-color: rgba(64, 145, 108, 0.25);
+  }
+
+  /* Cozy warm glow for Esko */
+  .esko-hero-glow {
+    position: relative;
+  }
+
+  .esko-hero-glow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(212, 165, 116, 0.2) 0%,
+      rgba(212, 165, 116, 0.08) 30%,
+      transparent 60%
+    );
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Stat card styling */
+  .stat-card {
+    @apply bg-card p-5 flex items-center gap-4;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Section panel */
+  .section-panel {
+    @apply bg-card p-6;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border: 2px solid hsl(var(--background));
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.8);
+  }
+}
+
+/* ==========================================================================
+   ESKO CHARACTER ANIMATIONS
+   ========================================================================== */
+
+/* Stage 1: Egg - gentle rock */
+@keyframes esko-egg {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+/* Stage 2: Hatchling V1 - active wobble */
+@keyframes esko-hatchling-v1 {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  15% { transform: rotate(10deg) scale(1.02); }
+  30% { transform: rotate(-8deg) scale(1); }
+  45% { transform: rotate(6deg) scale(1.01); }
+  60% { transform: rotate(-10deg) scale(1.02); }
+  85% { transform: rotate(4deg) scale(1); }
+}
+
+/* Stage 3: Hatchling V2 - subtle bounce */
+@keyframes esko-hatchling-v2 {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.02); }
+}
+
+/* Stage 4: Child - playful hop */
+@keyframes esko-child {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+/* Stage 5: Adolescent - energetic bounce */
+@keyframes esko-adolescent {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-12px) rotate(5deg); }
+  75% { transform: translateY(-6px) rotate(-3deg); }
+}
+
+/* Stage 6: Young Adult - dynamic hover */
+@keyframes esko-young-adult {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(3px, -15px) rotate(2deg); }
+  66% { transform: translate(-3px, -10px) rotate(-2deg); }
+}
+
+/* Stage 7: Mature - graceful float with glow */
+@keyframes esko-mature {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    filter: drop-shadow(0 0 8px rgba(255, 150, 50, 0.4));
+  }
+  50% {
+    transform: translateY(-20px) rotate(3deg);
+    filter: drop-shadow(0 0 15px rgba(255, 150, 50, 0.7));
+  }
+}
+
+/* Stage 8: Maxed - majestic soar with strong glow */
+@keyframes esko-maxed {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    filter: drop-shadow(0 0 12px rgba(255, 180, 50, 0.5));
+  }
+  25% {
+    transform: translate(5px, -20px) scale(1.02);
+    filter: drop-shadow(0 0 20px rgba(255, 180, 50, 0.8));
+  }
+  50% {
+    transform: translate(0, -25px) scale(1.03);
+    filter: drop-shadow(0 0 25px rgba(255, 200, 80, 0.9));
+  }
+  75% {
+    transform: translate(-5px, -18px) scale(1.02);
+    filter: drop-shadow(0 0 18px rgba(255, 180, 50, 0.7));
+  }
+}
+
+/* Animation utility classes */
+.animate-esko-egg {
+  animation: esko-egg 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-hatchling-v1 {
+  animation: esko-hatchling-v1 1.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-hatchling-v2 {
+  animation: esko-hatchling-v2 1.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-child {
+  animation: esko-child 1.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-adolescent {
+  animation: esko-adolescent 1s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-young-adult {
+  animation: esko-young-adult 0.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-esko-mature {
+  animation: esko-mature 2.5s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+.animate-esko-maxed {
+  animation: esko-maxed 3s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+/* Health state animation modifiers - slowed when health is low */
+.health-low .animate-esko-egg { animation-duration: 4.5s; }
+.health-low .animate-esko-hatchling-v1 { animation-duration: 2.25s; }
+.health-low .animate-esko-hatchling-v2 { animation-duration: 2.25s; }
+.health-low .animate-esko-child { animation-duration: 1.8s; }
+.health-low .animate-esko-adolescent { animation-duration: 1.5s; }
+.health-low .animate-esko-young-adult { animation-duration: 1.2s; }
+.health-low .animate-esko-mature { animation-duration: 3.75s; }
+.health-low .animate-esko-maxed { animation-duration: 4.5s; }
+
+/* Critical health - nearly stopped */
+.health-critical .animate-esko-egg { animation-duration: 6s; opacity: 0.7; }
+.health-critical .animate-esko-hatchling-v1 { animation-duration: 3s; opacity: 0.7; }
+.health-critical .animate-esko-hatchling-v2 { animation-duration: 3s; opacity: 0.7; }
+.health-critical .animate-esko-child { animation-duration: 2.4s; opacity: 0.7; }
+.health-critical .animate-esko-adolescent { animation-duration: 2s; opacity: 0.7; }
+.health-critical .animate-esko-young-adult { animation-duration: 1.6s; opacity: 0.7; }
+.health-critical .animate-esko-mature { animation-duration: 5s; opacity: 0.7; }
+.health-critical .animate-esko-maxed { animation-duration: 6s; opacity: 0.7; }
+
+/* Dead state - no animation */
+.esko-dead {
+  animation: none !important;
+  filter: grayscale(100%);
+  opacity: 0.5;
+}
+
+/* Mystery stage bounce for locked evolutions */
+@keyframes mystery-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-mystery-bounce {
+  animation: mystery-bounce 2s ease-in-out infinite;
+}
+
+/* Progress bar fill animation */
+@keyframes progress-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
+  }
+}
+
+@keyframes progress-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-bar-glow {
+  animation: progress-glow 0.6s ease-out;
+  position: relative;
+}
+
+.progress-bar-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 0.8s ease-out;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+@layer utilities {
+  /* Font pixel utility */
+  .font-pixel {
+    font-family: var(--font-pixel);
+  }
+
+  /* Hide ugly search cancel button in Chrome */
+  input[type="search"]::-webkit-search-cancel-button {
+    @apply hidden;
+  }
+
+  /* Placeholder styling for contentEditable div */
+  [contenteditable][data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+  }
+
+  .no-default-hover-elevate {}
+  .no-default-active-elevate {}
+
+  .toggle-elevate::before,
+  .toggle-elevate-2::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    z-index: -1;
+  }
+
+  .toggle-elevate.toggle-elevated::before {
+    background-color: var(--elevate-2);
+  }
+
+  .border.toggle-elevate::before {
+    inset: -1px;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate),
+  .active-elevate:not(.no-default-active-elevate),
+  .hover-elevate-2:not(.no-default-hover-elevate),
+  .active-elevate-2:not(.no-default-active-elevate) {
+    position: relative;
+    z-index: 0;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate)::after,
+  .active-elevate:not(.no-default-active-elevate)::after,
+  .hover-elevate-2:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:not(.no-default-active-elevate)::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    z-index: 999;
+  }
+
+  .hover-elevate:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-1);
+  }
+
+  .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-2);
+  }
+
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after {
+    inset: -1px;
+  }
+}
