@@ -26,8 +26,8 @@ export interface EskoStageInfo {
 // Stage progression thresholds
 const STAGE_THRESHOLDS: { stage: EskoStage; name: string; runs: number }[] = [
   { stage: "egg", name: "Egg", runs: 0 },
-  { stage: "hatchling-v1", name: "Hatchling V1", runs: 1 },
-  { stage: "hatchling-v2", name: "Hatchling V2", runs: 2 },
+  { stage: "hatchling-v1", name: "Hatchling", runs: 1 },
+  { stage: "hatchling-v2", name: "Baby", runs: 2 },
   { stage: "child", name: "Child", runs: 3 },
   { stage: "adolescent", name: "Adolescent", runs: 7 },
   { stage: "young-adult", name: "Young Adult", runs: 11 },

@@ -132,7 +132,7 @@ export function ItemRewardModal({ items, medalsAwarded = 0, progressionReward, o
                   {item.isSpecialReward && " ★"}
                 </p>
                 {item.quote && (
-                  <p className="text-xs text-muted-foreground italic mt-1 truncate">
+                  <p className="text-xs text-muted-foreground italic mt-1 line-clamp-2">
                     "{item.quote}"
                   </p>
                 )}

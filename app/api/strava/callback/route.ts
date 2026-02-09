@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       athleteProfilePicture: data.athlete.profile || null,
     });
 
-    return NextResponse.redirect(new URL("/settings", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   } catch (error) {
     console.error("Strava callback error:", error);
     return new NextResponse("Authentication failed", { status: 500 });

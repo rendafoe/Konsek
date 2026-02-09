@@ -361,17 +361,30 @@ const PROGRESSION_REWARDS: Record<string, number> = {
   "mature_to_maxed": 10,
 };
 
+// Display names for stages (internal IDs use underscores, display names are user-facing)
+export const STAGE_DISPLAY_NAMES: Record<string, string> = {
+  egg: "Egg",
+  hatchling_v1: "Hatchling",
+  hatchling_v2: "Baby",
+  child: "Child",
+  adolescent: "Adolescent",
+  young_adult: "Young Adult",
+  mature: "Mature",
+  maxed: "Maxed",
+};
+
 /**
  * Get the character stage based on total runs
+ * Thresholds match frontend STAGE_THRESHOLDS in EskoCharacter.tsx
  */
 export function getCharacterStage(totalRuns: number): string {
   if (totalRuns === 0) return "egg";
-  if (totalRuns < 3) return "hatchling_v1";
-  if (totalRuns < 7) return "hatchling_v2";
-  if (totalRuns < 15) return "child";
-  if (totalRuns < 30) return "adolescent";
-  if (totalRuns < 60) return "young_adult";
-  if (totalRuns < 100) return "mature";
+  if (totalRuns < 2) return "hatchling_v1";
+  if (totalRuns < 3) return "hatchling_v2";
+  if (totalRuns < 7) return "child";
+  if (totalRuns < 11) return "adolescent";
+  if (totalRuns < 20) return "young_adult";
+  if (totalRuns < 30) return "mature";
   return "maxed";
 }
 
@@ -382,7 +395,7 @@ export async function checkProgressionReward(
   userId: string,
   previousTotalRuns: number,
   newTotalRuns: number
-): Promise<{ transitionKey: string; medalsAwarded: number } | null> {
+): Promise<{ transitionKey: string; medalsAwarded: number; displayName: string } | null> {
   const previousStage = getCharacterStage(previousTotalRuns);
   const newStage = getCharacterStage(newTotalRuns);
 
@@ -397,13 +410,15 @@ export async function checkProgressionReward(
     return null; // No reward defined for this transition
   }
 
+  const displayName = STAGE_DISPLAY_NAMES[newStage] || newStage.replace(/_/g, ' ');
+
   await awardMedals(
     userId,
     medalsAwarded,
     "progression",
     undefined,
-    `Stage reached: ${newStage.replace(/_/g, ' ')}`
+    `Stage reached: ${displayName}`
   );
 
-  return { transitionKey, medalsAwarded };
+  return { transitionKey, medalsAwarded, displayName };
 }

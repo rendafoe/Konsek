@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, RefreshCw, Activity, Sparkles, Calendar, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { format } from "date-fns";
 
 const rarityBadgeStyles: Record<string, string> = {
@@ -77,6 +77,8 @@ export default function Dashboard() {
   const [medalsFromSync, setMedalsFromSync] = useState<number>(0);
   const [progressionReward, setProgressionReward] = useState<{ stage: string; medalsAwarded: number } | null>(null);
   const [frozenTotalRuns, setFrozenTotalRuns] = useState<number | null>(null);
+  const [showEvolutionAnimation, setShowEvolutionAnimation] = useState(false);
+  const hadProgressionRef = useRef(false);
 
   const activities = activitiesData?.activities || [];
   const isCharacterDead = character?.status === "dead";
@@ -94,6 +96,7 @@ export default function Dashboard() {
       setAwardedItems(data.awardedItems);
       setMedalsFromSync(data.medalsAwarded);
       setProgressionReward(data.progressionReward || null);
+      hadProgressionRef.current = !!data.progressionReward;
       setRewardModalOpen(true);
     }
   }, [character]);
@@ -114,6 +117,7 @@ export default function Dashboard() {
           setAwardedItems(data.awardedItems || []);
           setMedalsFromSync(data.medalsAwarded || 0);
           setProgressionReward(data.progressionReward || null);
+          hadProgressionRef.current = !!data.progressionReward;
           setRewardModalOpen(true);
         }
       },
@@ -170,8 +174,14 @@ export default function Dashboard() {
         onOpenChange={(open) => {
           setRewardModalOpen(open);
           if (!open) {
+            const hadProgression = hadProgressionRef.current;
             setFrozenTotalRuns(null);
             setProgressionReward(null);
+            hadProgressionRef.current = false;
+            if (hadProgression) {
+              setShowEvolutionAnimation(true);
+              setTimeout(() => setShowEvolutionAnimation(false), 1500);
+            }
           }
         }}
       />
@@ -259,7 +269,12 @@ export default function Dashboard() {
           {stravaStatus?.isConnected && !isCharacterDead && <DailyCheckInBox />}
 
           <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
-            <div className="flex justify-center mb-6">
+            <div className={`relative flex justify-center mb-6 transition-all duration-700 ${showEvolutionAnimation ? "scale-110" : ""}`}>
+              {showEvolutionAnimation && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                  <div className="w-64 h-64 rounded-full bg-yellow-300/30 animate-ping" />
+                </div>
+              )}
               <EskoCharacter
                 totalRuns={frozenTotalRuns !== null ? frozenTotalRuns : (character?.totalRuns || 0)}
                 name="Esko"

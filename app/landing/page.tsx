@@ -46,7 +46,11 @@ export default function Landing() {
   if (isLoading || isAuthenticated) return null;
 
   const handleSignIn = () => {
-    signIn(undefined, { callbackUrl: "/" });
+    if (process.env.NODE_ENV === "development") {
+      signIn("credentials", { userId: "dev-user-1", callbackUrl: "/" });
+    } else {
+      signIn("google", { callbackUrl: "/" });
+    }
   };
 
   const evolutionStages = [

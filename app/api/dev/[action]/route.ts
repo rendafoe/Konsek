@@ -269,7 +269,7 @@ async function handleSimulateRun(userId: string, body: any) {
         const progression = await checkProgressionReward(userId, previousRuns, newTotalRuns);
         if (progression) {
           progressionReward = {
-            stage: progression.transitionKey.split("_to_")[1].replace(/_/g, " "),
+            stage: progression.displayName,
             medalsAwarded: progression.medalsAwarded,
           };
         }

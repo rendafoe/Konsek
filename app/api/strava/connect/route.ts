@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const isDevMode = process.env.NODE_ENV === "development";
   const redirectUri = isDevMode
-    ? `http://localhost:3000/api/strava/callback`
+    ? `http://localhost:3001/api/strava/callback`
     : `https://${req.headers.get("host")}/api/strava/callback`;
   const scope = "activity:read_all";
 

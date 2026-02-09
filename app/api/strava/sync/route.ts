@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
       const progression = await checkProgressionReward(userId, previousTotalRuns, newTotalRuns);
       if (progression) {
         progressionReward = {
-          stage: progression.transitionKey.split("_to_")[1].replace(/_/g, " "),
+          stage: progression.displayName,
           medalsAwarded: progression.medalsAwarded,
         };
         totalMedalsAwarded += progression.medalsAwarded;

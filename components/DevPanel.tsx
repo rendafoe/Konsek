@@ -23,8 +23,8 @@ import {
 // Stage thresholds matching EskoCharacter.tsx
 const STAGES = [
   { name: "Egg", runs: 0, key: "egg" },
-  { name: "Hatchling V1", runs: 1, key: "hatchling-v1" },
-  { name: "Hatchling V2", runs: 2, key: "hatchling-v2" },
+  { name: "Hatchling", runs: 1, key: "hatchling-v1" },
+  { name: "Baby", runs: 2, key: "hatchling-v2" },
   { name: "Child", runs: 3, key: "child" },
   { name: "Adolescent", runs: 7, key: "adolescent" },
   { name: "Young Adult", runs: 11, key: "young-adult" },
