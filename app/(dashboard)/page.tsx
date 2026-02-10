@@ -1,28 +1,22 @@
 "use client";
 
 import { useCharacter, useCreateCharacter } from "@/hooks/use-character";
-import { useStravaStatus, useStravaSync } from "@/hooks/use-strava";
+import { useStravaStatus } from "@/hooks/use-strava";
 import { useActivities } from "@/hooks/use-activities";
 import { useMedalStatus } from "@/hooks/use-medals";
 import { useClaimReferral } from "@/hooks/use-referrals";
+import { useSyncContext } from "@/lib/sync-context";
 import { EskoCharacter } from "@/components/EskoCharacter";
 import { ItemRewardModal } from "@/components/ItemRewardModal";
 import { DailyCheckInBox } from "@/components/DailyCheckInBox";
 import { MiniRouteMap } from "@/components/MiniRouteMap";
 import { DevPanel } from "@/components/DevPanel";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, RefreshCw, Activity, Sparkles, Calendar, Heart } from "lucide-react";
+import { Loader2, Activity, Sparkles, Calendar, Heart, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { format } from "date-fns";
+import Link from "next/link";
 
 const rarityBadgeStyles: Record<string, string> = {
   common: "bg-gray-100 text-gray-700 border-gray-300",
@@ -66,11 +60,10 @@ function formatDistance(meters: number): string {
 export default function Dashboard() {
   const { data: character, isLoading: isCharLoading } = useCharacter();
   const { data: stravaStatus, isLoading: isStravaLoading } = useStravaStatus();
-  const { data: activitiesData } = useActivities({ page: 1, limit: 5 });
-  const { data: medalStatus } = useMedalStatus();
+  const { data: activitiesData } = useActivities({ page: 1, limit: 2 });
   const { mutate: createCharacter, isPending: isCreating } = useCreateCharacter();
-  const { mutate: syncStrava, isPending: isSyncing } = useStravaSync();
   const { mutate: claimReferral } = useClaimReferral();
+  const { registerSyncHandler } = useSyncContext();
   const { toast } = useToast();
 
   const [useMiles, setUseMiles] = useState(false);
@@ -85,6 +78,23 @@ export default function Dashboard() {
   const activities = activitiesData?.activities || [];
   const isCharacterDead = character?.status === "dead";
   const isDev = process.env.NODE_ENV === "development";
+
+  // Register sync handler for reward modals
+  useEffect(() => {
+    const runsBeforeSync = character?.totalRuns || 0;
+    const unregister = registerSyncHandler((data) => {
+      toast({ title: "Sync Complete", description: data.message });
+      if ((data.awardedItems && data.awardedItems.length > 0) || data.medalsAwarded || data.progressionReward) {
+        setFrozenTotalRuns(runsBeforeSync);
+        setAwardedItems(data.awardedItems || []);
+        setMedalsFromSync(data.medalsAwarded || 0);
+        setProgressionReward(data.progressionReward || null);
+        hadProgressionRef.current = !!data.progressionReward;
+        setRewardModalOpen(true);
+      }
+    });
+    return unregister;
+  }, [registerSyncHandler, character?.totalRuns, toast]);
 
   // Auto-claim referral from localStorage
   useEffect(() => {
@@ -128,24 +138,6 @@ export default function Dashboard() {
     });
   };
 
-  const handleSync = () => {
-    const runsBeforeSync = character?.totalRuns || 0;
-    syncStrava(undefined, {
-      onSuccess: (data) => {
-        toast({ title: "Sync Complete", description: data.message });
-        if ((data.awardedItems && data.awardedItems.length > 0) || data.medalsAwarded || data.progressionReward) {
-          setFrozenTotalRuns(runsBeforeSync);
-          setAwardedItems(data.awardedItems || []);
-          setMedalsFromSync(data.medalsAwarded || 0);
-          setProgressionReward(data.progressionReward || null);
-          hadProgressionRef.current = !!data.progressionReward;
-          setRewardModalOpen(true);
-        }
-      },
-      onError: (err) => toast({ title: "Sync Failed", description: err.message, variant: "destructive" })
-    });
-  };
-
   if (isCharLoading || isStravaLoading || isCreating) {
     return (
       <main className="flex-1 flex items-center justify-center">
@@ -160,7 +152,7 @@ export default function Dashboard() {
   if (!character) {
     return (
       <main className="flex-1 p-6 md:p-10 flex items-center justify-center">
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-lg max-w-md text-center">
+        <div className="bg-white/95 dark:bg-card backdrop-blur-sm rounded-2xl p-8 shadow-lg max-w-md text-center">
           <img src="/esko/esko-egg.png" alt="Esko Egg" className="w-32 h-32 mx-auto mb-4 animate-esko-egg" />
           <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Konsek!</h2>
           <p className="text-muted-foreground mb-6">
@@ -207,93 +199,42 @@ export default function Dashboard() {
         }}
       />
 
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
-        <header className="bg-white/95 backdrop-blur-sm rounded-xl p-5 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg border-b-4 border-primary/20">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Konsek</h1>
-              <p className="text-sm text-muted-foreground">Running Companion</p>
-            </div>
-          </div>
-
-          <div className="flex gap-4 items-center">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <img src="/items/medal.png" alt="Medals" className="w-5 h-5" />
-              <span className="font-bold text-yellow-700">{medalStatus?.balance ?? 0}</span>
-            </div>
-
-            {stravaStatus?.isConnected && stravaStatus.athleteName && (
-              <div className="flex items-center gap-3">
-                {stravaStatus.athleteProfilePicture && (
-                  <img
-                    src={stravaStatus.athleteProfilePicture}
-                    alt={stravaStatus.athleteName}
-                    className="w-10 h-10 rounded-full border-2 border-primary/30"
-                  />
-                )}
-                <div className="text-right hidden sm:block">
-                  <div className="text-sm font-semibold text-foreground">{stravaStatus.athleteName}</div>
-                  {stravaStatus.lastSync && (
-                    <div className="text-xs text-muted-foreground">
-                      Synced {format(new Date(stravaStatus.lastSync), "MMM d, h:mm a")}
-                    </div>
-                  )}
+      <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+        <div className="max-w-3xl mx-auto space-y-3">
+          {/* Dead State Banner */}
+          {isCharacterDead && (
+            <div className="cozy-card p-4">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <img src="/esko/esko-egg.png" alt="New Esko" className="w-12 h-12 opacity-50" />
+                <div className="flex-1 text-center sm:text-left">
+                  <span className="font-semibold text-foreground">Your companion has passed into legend</span>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Esko lived for {character?.daysAlive || 0} days and completed {character?.totalRuns || 0} runs.
+                  </p>
                 </div>
+                <button
+                  onClick={handleCreateCharacter}
+                  disabled={isCreating}
+                  className="px-4 py-2 bg-primary text-white rounded-xl font-semibold text-sm hover:brightness-110 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Heart size={16} /> New Companion
+                </button>
               </div>
-            )}
-
-            {stravaStatus?.isConnected ? (
-              <button
-                onClick={handleSync}
-                disabled={isSyncing}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
-                data-testid="button-sync-strava"
-              >
-                <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} />
-                {isSyncing ? "Syncing..." : "Sync"}
-              </button>
-            ) : (
-              <a
-                href="/api/strava/connect"
-                className="flex items-center gap-2 px-4 py-2 strava-btn rounded-xl font-semibold text-sm"
-                data-testid="link-connect-strava"
-              >
-                <Activity size={16} /> Connect Strava
-              </a>
-            )}
-          </div>
-        </header>
-
-        {isCharacterDead && (
-          <div className="bg-slate-100 border-2 border-slate-300 rounded-xl p-6 mb-8">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <img src="/esko/esko-egg.png" alt="New Esko" className="w-16 h-16 opacity-50" />
-              <div className="flex-1 text-center md:text-left">
-                <span className="font-semibold text-slate-700 text-lg">Your companion has passed into legend</span>
-                <p className="text-sm text-slate-600 mt-1">
-                  Esko lived for {character?.daysAlive || 0} days and completed {character?.totalRuns || 0} runs.
-                  Start a new journey with a fresh companion.
-                </p>
-              </div>
-              <button
-                onClick={handleCreateCharacter}
-                disabled={isCreating}
-                className="px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:brightness-110 transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                <Heart size={18} /> Start New Companion
-              </button>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="max-w-6xl mx-auto grid gap-8">
-          {stravaStatus?.isConnected && !isCharacterDead && <DailyCheckInBox />}
+          {/* Daily Check-In (outside hero zone) */}
+          {stravaStatus?.isConnected && !isCharacterDead && (
+            <DailyCheckInBox variant="cozy" />
+          )}
 
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
-            <div className={`relative flex justify-center mb-6 transition-all duration-700 ${showEvolutionAnimation ? "scale-110" : ""}`}>
+          {/* Hero Zone */}
+          <div className="esko-hero-zone esko-forest-backdrop p-5 md:p-6">
+            {/* Esko Character */}
+            <div className={`relative flex justify-center py-2 transition-all duration-700 ${showEvolutionAnimation ? "scale-110" : ""}`}>
               {showEvolutionAnimation && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                  <div className="w-64 h-64 rounded-full bg-yellow-300/30 animate-ping" />
+                  <div className="w-48 h-48 rounded-full bg-yellow-300/30 animate-ping" />
                 </div>
               )}
               <EskoCharacter
@@ -301,109 +242,93 @@ export default function Dashboard() {
                 name="Esko"
                 healthPercent={Math.max(0, 100 - (character?.healthState ?? 0) * 25)}
                 isDead={character?.status === "dead"}
-                size="xl"
+                size="lg"
+                variant="hero"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="stat-card">
-                <div className="stat-icon bg-primary/20 text-primary">
-                  <Activity size={24} />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-foreground">{character?.totalRuns || 0}</div>
-                  <div className="text-sm text-muted-foreground">Total Runs</div>
-                </div>
+            {/* Stat Pills */}
+            <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 dark:bg-white/10 rounded-full text-sm">
+                <Activity size={14} className="text-primary" />
+                <span className="font-semibold">{character?.totalRuns || 0}</span>
+                <span className="text-muted-foreground text-xs">runs</span>
               </div>
 
-              <div className="stat-card">
-                <div className="stat-icon bg-secondary/20 text-secondary">
-                  <Calendar size={24} />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-foreground">{getAge()} days</div>
-                  <div className="text-sm text-muted-foreground">Age</div>
-                </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 dark:bg-white/10 rounded-full text-sm">
+                <Calendar size={14} className="text-secondary" />
+                <span className="font-semibold">{getAge()}</span>
+                <span className="text-muted-foreground text-xs">days</span>
               </div>
 
               <div
-                className="stat-card cursor-pointer hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 dark:bg-white/10 rounded-full text-sm cursor-pointer hover:bg-white/80 dark:hover:bg-white/15 transition-colors"
                 onClick={() => setUseMiles(!useMiles)}
-                title="Click to toggle miles/km"
+                title="Click to toggle"
               >
-                <div className="stat-icon bg-primary/20 text-primary">
-                  <Sparkles size={24} />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-foreground">{getTotalDistance()}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Total Distance <span className="text-xs">(click to toggle)</span>
-                  </div>
-                </div>
+                <Sparkles size={14} className="text-primary" />
+                <span className="font-semibold">{getTotalDistance()}</span>
               </div>
             </div>
           </div>
 
-          <div className="section-panel">
-            <h3 className="text-lg font-bold text-foreground mb-4">Recent Activities</h3>
+          {/* Recent Runs */}
+          <div className="cozy-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground">Recent Runs</h3>
+              {activities.length > 0 && (
+                <Link
+                  href="/activities"
+                  className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"
+                >
+                  View all <ArrowRight size={12} />
+                </Link>
+              )}
+            </div>
 
             {activities.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[100px]">Date</TableHead>
-                      <TableHead className="min-w-[120px]">Title</TableHead>
-                      <TableHead className="min-w-[80px]">Duration</TableHead>
-                      <TableHead className="min-w-[80px]">Distance</TableHead>
-                      <TableHead className="min-w-[70px]">Route</TableHead>
-                      <TableHead className="min-w-[120px]">Rewards</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {activities.map((activity) => (
-                      <TableRow key={activity.id}>
-                        <TableCell className="font-medium">
-                          {format(new Date(activity.date), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell className="max-w-[150px] truncate">
-                          {activity.name || "Run"}
-                        </TableCell>
-                        <TableCell>{formatDuration(activity.duration)}</TableCell>
-                        <TableCell>{formatDistance(activity.distance)}</TableCell>
-                        <TableCell>
-                          <MiniRouteMap polyline={activity.polyline} width={60} height={40} />
-                        </TableCell>
-                        <TableCell>
-                          {activity.awardedItems && activity.awardedItems.length > 0 ? (
-                            <div className="flex flex-col gap-1">
-                              <div className="flex flex-wrap gap-1">
-                                {activity.awardedItems.map((ri: any, idx: number) => (
-                                  <Badge
-                                    key={idx}
-                                    variant="outline"
-                                    className={`text-[10px] px-1.5 py-0.5 ${ri.item ? rarityBadgeStyles[ri.item.rarity] : ""}`}
-                                  >
-                                    <Sparkles className="w-3 h-3 mr-1" />
-                                    {ri.item?.name || "Item"}
-                                  </Badge>
-                                ))}
-                              </div>
-                              {calculateMedalsFromItems(activity.awardedItems) > 0 && (
-                                <div className="flex items-center gap-1 text-[10px] text-yellow-700">
-                                  <img src="/items/medal.png" alt="" className="w-3 h-3" />
-                                  +{calculateMedalsFromItems(activity.awardedItems)}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="space-y-2">
+                {activities.slice(0, 2).map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    {/* Route Map */}
+                    <div className="shrink-0">
+                      <MiniRouteMap polyline={activity.polyline} width={44} height={32} />
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm text-foreground truncate">
+                        {activity.name || "Run"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(activity.date), "MMM d")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
+                      </div>
+                    </div>
+
+                    {/* Rewards */}
+                    {activity.awardedItems && activity.awardedItems.length > 0 && (
+                      <div className="flex flex-wrap gap-1 shrink-0">
+                        {activity.awardedItems.slice(0, 2).map((ri: any, idx: number) => (
+                          <Badge
+                            key={idx}
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 ${ri.item ? rarityBadgeStyles[ri.item.rarity] : ""}`}
+                          >
+                            {ri.item?.name || "Item"}
+                          </Badge>
+                        ))}
+                        {activity.awardedItems.length > 2 && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            +{activity.awardedItems.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-muted-foreground text-sm italic">

@@ -118,6 +118,7 @@ interface EskoCharacterProps {
   healthPercent?: number;
   isDead?: boolean;
   size?: "sm" | "md" | "lg" | "xl" | "2xl";
+  variant?: "device" | "hero";
 }
 
 export function EskoCharacter({
@@ -127,6 +128,7 @@ export function EskoCharacter({
   healthPercent = 100,
   isDead = false,
   size = "md",
+  variant = "device",
 }: EskoCharacterProps) {
   const stageInfo = getEskoStage(totalRuns);
   const colors = STAGE_COLORS[stageInfo.stage];
@@ -153,6 +155,58 @@ export function EskoCharacter({
       ? "bg-amber-500"
       : "bg-red-500";
 
+  // Hero variant - no device shell, atmospheric glow
+  if (variant === "hero") {
+    return (
+      <div className="flex flex-col items-center" data-testid="esko-hero">
+        <div className={cn("esko-hero-glow flex justify-center items-center", getHealthStateClass())}>
+          <img
+            src={STAGE_IMAGES[stageInfo.stage]}
+            alt={`Esko - ${stageInfo.name}`}
+            className={cn(
+              sizeClasses[size],
+              "object-contain",
+              !isDead && STAGE_ANIMATIONS[stageInfo.stage],
+              isDead && "esko-dead"
+            )}
+            data-testid="esko-character-image"
+          />
+        </div>
+
+        {/* Stage + Health below character */}
+        <div className="mt-3 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-pixel text-xs text-foreground/70">{stageInfo.name}</span>
+            <span
+              className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", colors.bg, colors.text)}
+              data-testid="character-stage"
+            >
+              {stageInfo.nextStageRuns
+                ? `${stageInfo.nextStageRuns - totalRuns} runs to evolve`
+                : "Max stage!"}
+            </span>
+          </div>
+
+          {showHealthBar && !isDead && (
+            <div className="w-32">
+              <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
+                <div
+                  className={cn("h-full rounded-full transition-all", healthBarColor)}
+                  style={{ width: `${healthPercent}%` }}
+                  data-testid="health-bar-fill"
+                />
+              </div>
+              <div className="text-[10px] text-center mt-0.5 text-muted-foreground" data-testid="health-percent">
+                {healthPercent}% health
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Device variant (default) - original Tamagotchi shell
   return (
     <div className="device-screen mx-auto" data-testid="esko-device-screen">
       <div className="device-screen-inner">

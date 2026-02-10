@@ -12,16 +12,16 @@ export default function Settings() {
   const { data: referralStats } = useReferralStats();
 
   return (
-    <main className="flex-1 p-6 md:p-12 mb-20 md:mb-0">
+    <main className="flex-1 p-4 md:p-8">
       <PageHeader title="Settings" />
 
       <div className="max-w-xl space-y-8">
         {/* Account Section */}
-        <section className="bg-card p-6 pixel-border">
+        <section className="cozy-card p-5">
           <h2 className="font-pixel text-sm uppercase mb-4 text-muted-foreground">Account</h2>
           <div className="flex items-center gap-4 mb-6">
             {user?.image && (
-              <img src={user.image} alt="Profile" className="w-12 h-12 rounded border-2 border-black" />
+              <img src={user.image} alt="Profile" className="w-12 h-12 rounded-lg border border-border" />
             )}
             <div>
               <p className="font-bold">{user?.name}</p>
@@ -31,10 +31,10 @@ export default function Settings() {
         </section>
 
         {/* Integrations Section */}
-        <section className="bg-card p-6 pixel-border">
+        <section className="cozy-card p-5">
           <h2 className="font-pixel text-sm uppercase mb-4 text-muted-foreground">Integrations</h2>
 
-          <div className="flex items-center justify-between p-4 bg-white border-2 border-border">
+          <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
             <div>
               <h3 className="font-bold text-sm">Strava</h3>
               <p className="text-xs text-muted-foreground">Sync your runs automatically</p>
@@ -53,9 +53,9 @@ export default function Settings() {
         </section>
 
         {/* Referral Section */}
-        <section className="bg-card p-6 pixel-border">
+        <section className="cozy-card p-5">
           <h2 className="font-pixel text-sm uppercase mb-4 text-muted-foreground">Referral</h2>
-          <div className="p-4 bg-white border-2 border-border">
+          <div className="p-4 bg-muted/30 rounded-lg">
             {referralStats?.referredBy ? (
               <div>
                 <p className="text-sm font-semibold text-foreground">

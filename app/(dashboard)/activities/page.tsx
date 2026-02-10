@@ -117,15 +117,15 @@ export default function ActivityLog() {
   };
 
   return (
-    <main className="flex-1 p-6 md:p-10 overflow-y-auto mb-20 md:mb-0">
+    <main className="flex-1 p-4 md:p-8 overflow-y-auto">
       <PageHeader title="Activity Log" subtitle="Your complete running history with items found" />
 
-      <div className="section-panel relative">
+      <div className="cozy-card relative">
         {activities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <ClipboardList className="w-16 h-16 text-muted-foreground mb-4 opacity-50" />
+          <div className="flex flex-col items-center justify-center h-64">
+            <ClipboardList className="w-10 h-10 text-muted-foreground mb-3 opacity-40" />
             <p className="font-pixel text-sm text-muted-foreground">No Activities Yet</p>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground mt-1">
               Go for a run to start building your log!
             </p>
           </div>

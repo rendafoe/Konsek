@@ -14,15 +14,15 @@ export default function Archive() {
   }
 
   return (
-    <main className="flex-1 p-6 md:p-12 mb-20 md:mb-0 overflow-y-auto">
+    <main className="flex-1 p-4 md:p-8 overflow-y-auto">
       <PageHeader title="The Graveyard" subtitle="Past companions who have completed their journey" />
 
       <div className="grid gap-6">
         {graveyard?.map((char) => {
           const stageInfo = getEskoStage(char.totalRuns);
           return (
-            <div key={char.id} className="bg-card pixel-border p-6 flex flex-col md:flex-row items-center gap-8 opacity-80 hover:opacity-100 transition-opacity">
-              <div className="w-24 h-24 bg-stone-200 border-4 border-stone-400 rounded-xl flex flex-col items-center justify-center grayscale">
+            <div key={char.id} className="cozy-card p-5 flex flex-col md:flex-row items-center gap-6 opacity-80 hover:opacity-100 transition-opacity">
+              <div className="w-20 h-20 bg-muted/50 rounded-xl flex flex-col items-center justify-center grayscale">
                 <div className="text-2xl mb-1">🪦</div>
                 <div className="font-pixel text-xs text-stone-600">{stageInfo.name}</div>
               </div>
@@ -61,8 +61,9 @@ export default function Archive() {
         })}
 
         {graveyard?.length === 0 && (
-          <div className="text-center py-20 bg-card/30 rounded-lg">
-            <p className="font-pixel text-muted-foreground">No souls rest here yet.</p>
+          <div className="cozy-card flex flex-col items-center justify-center h-64">
+            <Skull className="w-10 h-10 text-muted-foreground mb-3 opacity-40" />
+            <p className="font-pixel text-sm text-muted-foreground">No souls rest here yet.</p>
           </div>
         )}
       </div>

@@ -389,6 +389,106 @@
     z-index: -1;
   }
 
+  /* Hero zone - warm gradient background for the main dashboard area */
+  .esko-hero-zone {
+    background: linear-gradient(
+      180deg,
+      hsl(145 18% 94%) 0%,
+      hsl(140 20% 90%) 40%,
+      hsl(35 30% 92%) 100%
+    );
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dark .esko-hero-zone {
+    background: linear-gradient(
+      180deg,
+      hsl(150 30% 14%) 0%,
+      hsl(150 25% 16%) 40%,
+      hsl(30 15% 16%) 100%
+    );
+  }
+
+  /* Ambient forest backdrop radial glows */
+  .esko-forest-backdrop::before,
+  .esko-forest-backdrop::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .esko-forest-backdrop::before {
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(
+      ellipse,
+      rgba(212, 165, 116, 0.12) 0%,
+      transparent 70%
+    );
+  }
+
+  .esko-forest-backdrop::after {
+    bottom: -10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 50%;
+    background: radial-gradient(
+      ellipse,
+      rgba(64, 145, 108, 0.08) 0%,
+      transparent 70%
+    );
+  }
+
+  .dark .esko-forest-backdrop::before {
+    background: radial-gradient(
+      ellipse,
+      rgba(212, 165, 116, 0.08) 0%,
+      transparent 70%
+    );
+  }
+
+  .dark .esko-forest-backdrop::after {
+    background: radial-gradient(
+      ellipse,
+      rgba(64, 145, 108, 0.05) 0%,
+      transparent 70%
+    );
+  }
+
+  /* Check-in warm glow pulse animation */
+  @keyframes checkin-glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3), 0 0 30px rgba(245, 158, 11, 0.1);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.5), 0 0 50px rgba(245, 158, 11, 0.2);
+    }
+  }
+
+  .checkin-glow {
+    animation: checkin-glow-pulse 2s ease-in-out infinite;
+  }
+
+  /* Softer card treatment for cozy sections */
+  .cozy-card {
+    @apply bg-card/80 backdrop-blur-sm;
+    border-radius: 16px;
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: 0 2px 12px rgba(27, 67, 50, 0.06);
+  }
+
+  .dark .cozy-card {
+    border-color: hsl(var(--border) / 0.3);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  }
+
   /* Stat card styling */
   .stat-card {
     @apply bg-card p-5 flex items-center gap-4;

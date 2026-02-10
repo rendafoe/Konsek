@@ -300,7 +300,7 @@ const LoginScreen = ({ onStravaLogin, onGoogleLogin }) => {
       <div style={styles.loginContent}>
         <div style={styles.loginHeader}>
           <Mountain size={64} style={{ color: '#2C3E50' }} />
-          <h1 style={styles.loginTitle}>Konsekvens</h1>
+          <h1 style={styles.loginTitle}>Konsek</h1>
           <p style={styles.loginSubtitle}>
             Your running companion that grows with each activity. Consistent running. Consistent rewards.
           </p>
@@ -331,7 +331,7 @@ const Header = ({ user, onLogout, onSettings }) => {
     <header style={styles.header}>
       <div style={styles.headerLeft}>
         <Mountain size={32} style={{ color: '#1B4332' }} />
-        <h1 style={styles.headerTitle}>Konsekvens</h1>
+        <h1 style={styles.headerTitle}>Konsek</h1>
       </div>
       
       <div style={styles.headerRight}>

@@ -156,7 +156,7 @@ export default function Friends() {
   }
 
   return (
-    <main className="flex-1 p-6 md:p-12 mb-20 md:mb-0 overflow-y-auto">
+    <main className="flex-1 p-4 md:p-8 overflow-y-auto">
       <PageHeader
         title="Friends"
         subtitle={`${friends.length} friend${friends.length !== 1 ? "s" : ""} connected`}
@@ -187,9 +187,9 @@ export default function Friends() {
       {tab === "friends" && (
         <>
           {/* Action Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {/* Your Friend Code */}
-            <div className="bg-card p-4 rounded-xl border-2 border-border shadow-sm">
+            <div className="cozy-card p-4">
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Your Friend Code</h3>
               {codeData?.friendCode ? (
                 <div className="flex items-center gap-3">
@@ -210,7 +210,7 @@ export default function Friends() {
             </div>
 
             {/* Add a Friend */}
-            <div className="bg-card p-4 rounded-xl border-2 border-border shadow-sm">
+            <div className="cozy-card p-4">
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Add a Friend</h3>
               <div className="flex items-center gap-2">
                 <input
@@ -232,7 +232,7 @@ export default function Friends() {
             </div>
 
             {/* Invite a Friend */}
-            <div className="bg-card p-4 rounded-xl border-2 border-border shadow-sm">
+            <div className="cozy-card p-4">
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Invite a Friend</h3>
               <button
                 onClick={handleCopyInviteLink}
@@ -246,7 +246,7 @@ export default function Friends() {
             {/* Referrals Count */}
             <button
               onClick={() => setReferralModalOpen(true)}
-              className="bg-card p-4 rounded-xl border-2 border-border shadow-sm text-left hover:border-primary/30 transition-all"
+              className="cozy-card p-4 text-left hover:border-primary/30 transition-all"
             >
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">Referrals</h3>
               <div className="flex items-center gap-2">
@@ -315,17 +315,17 @@ export default function Friends() {
 
           {/* Friends Grid */}
           {friends.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 border-4 border-dashed border-border rounded-lg bg-card/50">
-              <Users className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+            <div className="cozy-card flex flex-col items-center justify-center h-64">
+              <Users className="w-10 h-10 text-muted-foreground mb-3 opacity-40" />
               <p className="font-pixel text-sm text-muted-foreground">No Friends Yet</p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-1">
                 Browse the Discover tab or share your friend code to get started
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {friends.map((friend) => (
-                <div key={friend.stravaAthleteId} className="bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden relative group">
+                <div key={friend.stravaAthleteId} className="cozy-card overflow-hidden relative group">
                   {/* Remove button */}
                   <button
                     onClick={() => handleRemoveFriend(friend.stravaAthleteId, friend.displayName)}
@@ -486,12 +486,12 @@ export default function Friends() {
               <Loader2 className="animate-spin text-primary" />
             </div>
           ) : !discoverData?.users || discoverData.users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 border-4 border-dashed border-border rounded-lg bg-card/50">
-              <Users className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+            <div className="cozy-card flex flex-col items-center justify-center h-64">
+              <Users className="w-10 h-10 text-muted-foreground mb-3 opacity-40" />
               <p className="font-pixel text-sm text-muted-foreground">
                 {debouncedSearch ? "No Users Found" : "No Users to Discover"}
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-1">
                 {debouncedSearch
                   ? "Try a different search term"
                   : "All Konsek users are already your friends!"}
@@ -499,7 +499,7 @@ export default function Friends() {
             </div>
           ) : (
             <>
-              <div className="bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden">
+              <div className="cozy-card overflow-hidden">
                 <div className="divide-y divide-border">
                   {discoverData.users.map((user) => (
                     <div key={user.userId} className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-all">

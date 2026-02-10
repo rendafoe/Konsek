@@ -4,8 +4,22 @@ import { useMedalStatus, useCheckIn } from "@/hooks/use-medals";
 import { MedalRewardModal } from "./MedalRewardModal";
 import { useState } from "react";
 import { Flame, Check, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
-export function DailyCheckInBox() {
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 6) return "Up late?";
+  if (hour < 12) return "Good morning!";
+  if (hour < 17) return "Good afternoon!";
+  if (hour < 21) return "Good evening!";
+  return "Night owl!";
+}
+
+interface DailyCheckInBoxProps {
+  variant?: "default" | "cozy";
+}
+
+export function DailyCheckInBox({ variant = "default" }: DailyCheckInBoxProps) {
   const { data: status, isLoading, isError } = useMedalStatus();
   const { mutate: checkIn, isPending } = useCheckIn();
 
@@ -34,7 +48,7 @@ export function DailyCheckInBox() {
 
   if (isLoading) {
     return (
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border-b-4 border-yellow-400/30">
+      <div className={variant === "cozy" ? "cozy-card p-6" : "bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border-b-4 border-yellow-400/30"}>
         <div className="flex items-center justify-center h-20">
           <Loader2 className="animate-spin text-yellow-500" />
         </div>
@@ -44,7 +58,7 @@ export function DailyCheckInBox() {
 
   if (isError || !status) {
     return (
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border-b-4 border-yellow-400/30">
+      <div className={variant === "cozy" ? "cozy-card p-6" : "bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border-b-4 border-yellow-400/30"}>
         <div className="flex items-center justify-center h-20 text-muted-foreground">
           <span className="text-sm">Daily check-in unavailable</span>
         </div>
@@ -53,23 +67,100 @@ export function DailyCheckInBox() {
   }
 
   const { canCheckIn, currentStreak, daysUntilBonus } = status;
-
-  // Calculate streak progress (0-3)
   const streakProgress = currentStreak % 3;
-  const progressBoxes = [
-    streakProgress >= 1,
-    streakProgress >= 2,
-    streakProgress === 0 && currentStreak > 0, // Third box is filled right before bonus
-  ];
 
-  // If we just checked in today and haven't hit a bonus, show progress correctly
-  // When streakProgress is 0 and we can't check in, we either just got bonus or streak is 0
-  const displayProgress = canCheckIn
-    ? [streakProgress >= 1, streakProgress >= 2, false]
-    : streakProgress === 0
-      ? [true, true, true] // Just got bonus or starting fresh
-      : [streakProgress >= 1, streakProgress >= 2, false];
+  // Cozy variant
+  if (variant === "cozy") {
+    return (
+      <>
+        {modalData && (
+          <MedalRewardModal
+            open={modalOpen}
+            onOpenChange={setModalOpen}
+            {...modalData}
+          />
+        )}
 
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="cozy-card overflow-hidden"
+        >
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/15 p-5">
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: Greeting + Check-in */}
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  {getGreeting()}
+                </span>
+
+                {canCheckIn ? (
+                  <button
+                    onClick={handleCheckIn}
+                    disabled={isPending}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-xl font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50 shadow-lg checkin-glow"
+                  >
+                    {isPending ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <img src="/items/medal.png" alt="" className="w-5 h-5" />
+                    )}
+                    Check In for Medals
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400">
+                    <Check size={16} />
+                    See you tomorrow!
+                  </div>
+                )}
+              </div>
+
+              {/* Right: Streak + Progress */}
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-2">
+                  <Flame className={`w-5 h-5 ${currentStreak > 0 ? "text-orange-500" : "text-gray-300"}`} />
+                  <span className="font-bold text-lg text-foreground">{currentStreak}</span>
+                  <span className="text-xs text-muted-foreground">day streak</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {[0, 1, 2].map((i) => {
+                    const filled = !canCheckIn && currentStreak > 0
+                      ? (currentStreak % 3 === 0 ? true : i < (currentStreak % 3))
+                      : i < streakProgress;
+
+                    return (
+                      <div
+                        key={i}
+                        className={`
+                          w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all
+                          ${filled
+                            ? "bg-orange-500 border-orange-600"
+                            : "bg-white/60 dark:bg-white/10 border-orange-200 dark:border-orange-800/40"
+                          }
+                        `}
+                      >
+                        {filled && <Flame className="w-2.5 h-2.5 text-white" />}
+                      </div>
+                    );
+                  })}
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    {daysUntilBonus === 0 || (currentStreak % 3 === 0 && currentStreak > 0 && !canCheckIn)
+                      ? "Bonus!"
+                      : `${daysUntilBonus} to bonus`
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </>
+    );
+  }
+
+  // Default variant (original)
   return (
     <>
       {/* Medal Reward Modal */}

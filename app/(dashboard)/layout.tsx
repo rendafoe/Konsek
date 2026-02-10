@@ -1,12 +1,19 @@
 "use client";
 
-import { Navigation } from "@/components/Navigation";
+import { TopNav } from "@/components/TopNav";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { SyncProvider } from "@/lib/sync-context";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen aurora-bg flex flex-col md:flex-row">
-      <Navigation />
-      {children}
-    </div>
+    <SyncProvider>
+      <div className="min-h-screen aurora-bg flex flex-col">
+        <TopNav />
+        <div className="flex-1 pb-20 md:pb-0">
+          {children}
+        </div>
+        <MobileBottomNav />
+      </div>
+    </SyncProvider>
   );
 }
