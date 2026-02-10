@@ -145,7 +145,7 @@ export default function Friends() {
       return;
     }
     const code = formatCode(codeData.friendCode);
-    navigator.clipboard.writeText(`https://konsek.io?ref=${code}`);
+    navigator.clipboard.writeText(`https://konsek.vercel.app?ref=${code}`);
     setInviteCopied(true);
     toast({ title: "Invite Link Copied!", description: "Share it with friends to earn medals." });
     setTimeout(() => setInviteCopied(false), 2000);
