@@ -10,15 +10,18 @@ import {
   Trophy,
   Users,
   Settings,
+  Skull,
+  Backpack,
+  FlameKindling,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/activities", icon: ClipboardList, label: "Log" },
-  { href: "/inventory", icon: Sparkles, label: "Gear" },
-  { href: "/achievements", icon: Trophy, label: "Achieve" },
+  { href: "/", icon: FlameKindling, label: "Esko" },
+  { href: "/activities", icon: ClipboardList, label: "Activity Log" },
+  { href: "/inventory", icon: Backpack, label: "Gear" },
+  { href: "/achievements", icon: Trophy, label: "Achievements" },
   { href: "/friends", icon: Users, label: "Friends" },
-  { href: "/archive", icon: Archive, label: "Archive" },
+  { href: "/archive", icon: Skull, label: "Graveyard" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
