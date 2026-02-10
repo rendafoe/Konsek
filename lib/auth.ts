@@ -79,18 +79,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       : []),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === "strava" && user.id && account.access_token && account.refresh_token) {
+    async jwt({ token, user, account, profile }) {
+      if (user) {
+        token.id = user.id;
+      }
+
+      // On initial Strava sign-in, populate strava_accounts and update user profile.
+      // This runs in jwt (not signIn) because the adapter has already created the
+      // user row by this point, so the foreign key on strava_accounts is satisfied.
+      if (account?.provider === "strava" && token.id && account.access_token && account.refresh_token) {
         try {
           const stravaProfile = profile as any;
           const athleteId = account.providerAccountId;
           const firstName = stravaProfile?.firstname || stravaProfile?.first_name || null;
           const lastName = stravaProfile?.lastname || stravaProfile?.last_name || null;
           const profilePicture = stravaProfile?.profile || stravaProfile?.profile_medium || null;
+          const userId = token.id as string;
 
-          // Populate strava_accounts table (mirrors old /api/strava/callback logic)
           await storage.upsertStravaAccount({
-            userId: user.id,
+            userId,
             athleteId,
             accessToken: account.access_token,
             refreshToken: account.refresh_token,
@@ -102,7 +109,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             stravaScopes: "activity:read_all",
           });
 
-          // Update user profile with Strava info
           await db
             .update(users)
             .set({
@@ -112,17 +118,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               name: [firstName, lastName].filter(Boolean).join(" ") || null,
               image: profilePicture,
             })
-            .where(eq(users.id, user.id));
+            .where(eq(users.id, userId));
         } catch (error) {
           console.error("Error populating Strava account on sign-in:", error);
         }
       }
-      return true;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
+
       return token;
     },
     async session({ session, token }) {
