@@ -3,11 +3,15 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
-import { users } from "@/shared/models/auth";
+import { users, authAccounts, authVerificationTokens } from "@/shared/models/auth";
 import { eq } from "drizzle-orm";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db, {
+    usersTable: users,
+    accountsTable: authAccounts,
+    verificationTokensTable: authVerificationTokens,
+  }),
   session: {
     strategy: "jwt",
   },
