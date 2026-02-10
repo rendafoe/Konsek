@@ -45,7 +45,7 @@ npm run db:reset         # Clear user data (dev only)
 **Key Files:**
 - `shared/schema.ts` - All database tables (Drizzle) and Zod validation schemas
 - `lib/storage.ts` - Database abstraction layer (DatabaseStorage class)
-- `lib/auth.ts` - NextAuth.js configuration (credentials dev auth + Google OAuth)
+- `lib/auth.ts` - NextAuth.js configuration (credentials dev auth + Strava OAuth)
 - `lib/api-auth.ts` - API route auth helper (`getAuthenticatedUser()`)
 - `lib/services/` - Business logic (medalService, itemRewards, weatherService)
 - `app/(dashboard)/page.tsx` - Main dashboard page
@@ -75,7 +75,7 @@ npm run db:reset         # Clear user data (dev only)
 - **Framework:** Next.js 16 (App Router, Turbopack)
 - **Frontend:** React 18, TypeScript, TanStack React Query, Tailwind CSS, shadcn/ui, Framer Motion
 - **Backend:** Next.js API Route Handlers, Drizzle ORM, PostgreSQL (Supabase)
-- **Auth:** NextAuth.js (Auth.js v5) with Drizzle adapter — CredentialsProvider (dev), Google OAuth (prod)
+- **Auth:** NextAuth.js (Auth.js v5) with Drizzle adapter — CredentialsProvider (dev), Strava OAuth (prod)
 - **Deployment:** Vercel
 - **External APIs:** Strava OAuth, OpenWeatherMap
 
@@ -88,4 +88,4 @@ npm run db:reset         # Clear user data (dev only)
 - Item rarities: common, uncommon, rare, epic, legendary, mythic
 - UI uses Nordic forest theme with light/dark modes via CSS variables
 - Press Start 2P font for pixel-art aesthetic, DM Sans for UI text
-- Environment variables: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `OPENWEATHER_API_KEY`
+- Environment variables: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `OPENWEATHER_API_KEY`

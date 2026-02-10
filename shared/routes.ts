@@ -18,15 +18,8 @@ export const errorSchemas = {
 };
 
 export const api = {
-  // === STRAVA AUTH ===
+  // === STRAVA ===
   strava: {
-    connect: {
-      method: 'GET' as const,
-      path: '/api/strava/connect', // Redirects to Strava OAuth
-      responses: {
-        302: z.void(), // Redirect
-      },
-    },
     status: {
         method: 'GET' as const,
         path: '/api/strava/status',

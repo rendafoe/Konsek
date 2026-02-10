@@ -16,7 +16,6 @@ import {
   Trophy,
   Users,
   RefreshCw,
-  Activity,
   LogOut,
   Skull,
   Backpack,
@@ -102,26 +101,15 @@ export function TopNav() {
         )}
 
         {/* Sync Button */}
-        {stravaStatus?.isConnected ? (
-          <button
-            onClick={sync}
-            disabled={isSyncing}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
-            data-testid="button-sync-strava"
-          >
-            <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
-            <span className="hidden sm:inline">{isSyncing ? "Syncing..." : "Sync"}</span>
-          </button>
-        ) : (
-          <a
-            href="/api/strava/connect"
-            className="flex items-center gap-1.5 px-3 py-1.5 strava-btn rounded-lg font-semibold text-sm"
-            data-testid="link-connect-strava"
-          >
-            <Activity size={14} />
-            <span className="hidden sm:inline">Connect</span>
-          </a>
-        )}
+        <button
+          onClick={sync}
+          disabled={isSyncing}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
+          data-testid="button-sync-strava"
+        >
+          <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
+          <span className="hidden sm:inline">{isSyncing ? "Syncing..." : "Sync"}</span>
+        </button>
 
         {/* Settings - Desktop */}
         <Link

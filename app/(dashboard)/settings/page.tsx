@@ -7,7 +7,7 @@ import { useReferralStats } from "@/hooks/use-referrals";
 import { Loader2 } from "lucide-react";
 
 export default function Settings() {
-  const { data: stravaStatus, isLoading } = useStravaStatus();
+  const { isLoading } = useStravaStatus();
   const { user } = useAuth();
   const { data: referralStats } = useReferralStats();
 
@@ -42,12 +42,8 @@ export default function Settings() {
 
             {isLoading ? (
               <Loader2 className="animate-spin text-muted-foreground" size={16} />
-            ) : stravaStatus?.isConnected ? (
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-green-600 font-bold uppercase">Connected</span>
-              </div>
             ) : (
-              <a href="/api/strava/connect" className="pixel-btn-secondary text-xs">Connect</a>
+              <span className="text-xs text-green-600 font-bold uppercase">Connected</span>
             )}
           </div>
         </section>

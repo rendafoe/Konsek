@@ -141,7 +141,7 @@ export default function Friends() {
 
   const handleCopyInviteLink = () => {
     if (!codeData?.friendCode) {
-      toast({ title: "Connect Strava First", description: "You need a friend code to share invite links.", variant: "destructive" });
+      toast({ title: "No Friend Code", description: "Sync your runs first to generate a friend code.", variant: "destructive" });
       return;
     }
     const code = formatCode(codeData.friendCode);
@@ -205,7 +205,7 @@ export default function Friends() {
                   </button>
                 </div>
               ) : (
-                <span className="text-sm text-muted-foreground">Connect Strava to get a code</span>
+                <span className="text-sm text-muted-foreground">Sync your runs to get a code</span>
               )}
             </div>
 

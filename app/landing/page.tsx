@@ -58,7 +58,7 @@ export default function Landing() {
     if (process.env.NODE_ENV === "development") {
       signIn("credentials", { userId: "dev-user-1", callbackUrl: "/" });
     } else {
-      signIn("google", { callbackUrl: "/" });
+      signIn("strava", { callbackUrl: "/" });
     }
   };
 

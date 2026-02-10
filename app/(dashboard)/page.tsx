@@ -224,7 +224,7 @@ export default function Dashboard() {
           )}
 
           {/* Daily Check-In (outside hero zone) */}
-          {stravaStatus?.isConnected && !isCharacterDead && (
+          {!isCharacterDead && (
             <DailyCheckInBox variant="cozy" />
           )}
 
@@ -332,7 +332,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <p className="text-muted-foreground text-sm italic">
-                No activities logged yet. Connect Strava and sync your runs to keep Esko healthy!
+                No activities logged yet. Sync your runs to keep Esko healthy!
               </p>
             )}
           </div>
