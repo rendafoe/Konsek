@@ -10,7 +10,7 @@ Konsek is a running companion web app that gamifies fitness consistency via Stra
 
 ```bash
 # Development
-npm run dev              # Start Next.js dev server (port 3000)
+npm run dev              # Start Next.js dev server (port 3001)
 
 # Build & Production
 npm run build            # Build for production (Next.js)

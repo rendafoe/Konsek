@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorized } from "@/lib/api-auth";
 import { storage } from "@/lib/storage";
 import { processRunRewards } from "@/lib/services/itemRewards";
 import { checkProgressionReward } from "@/lib/services/medalService";
+import { processReferralRunMedals } from "@/lib/services/referralService";
 
 export async function POST(req: NextRequest) {
   const userId = await getAuthenticatedUser();
@@ -230,6 +231,9 @@ export async function POST(req: NextRequest) {
         };
         totalMedalsAwarded += progression.medalsAwarded;
       }
+
+      // Award progressive referral medals to the referrer (if this user was referred)
+      await processReferralRunMedals(userId, previousTotalRuns, newTotalRuns);
     }
 
     // Update last fetch time

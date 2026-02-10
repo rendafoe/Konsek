@@ -4,6 +4,7 @@ import { useCharacter, useCreateCharacter } from "@/hooks/use-character";
 import { useStravaStatus, useStravaSync } from "@/hooks/use-strava";
 import { useActivities } from "@/hooks/use-activities";
 import { useMedalStatus } from "@/hooks/use-medals";
+import { useClaimReferral } from "@/hooks/use-referrals";
 import { EskoCharacter } from "@/components/EskoCharacter";
 import { ItemRewardModal } from "@/components/ItemRewardModal";
 import { DailyCheckInBox } from "@/components/DailyCheckInBox";
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const { data: medalStatus } = useMedalStatus();
   const { mutate: createCharacter, isPending: isCreating } = useCreateCharacter();
   const { mutate: syncStrava, isPending: isSyncing } = useStravaSync();
+  const { mutate: claimReferral } = useClaimReferral();
   const { toast } = useToast();
 
   const [useMiles, setUseMiles] = useState(false);
@@ -83,6 +85,25 @@ export default function Dashboard() {
   const activities = activitiesData?.activities || [];
   const isCharacterDead = character?.status === "dead";
   const isDev = process.env.NODE_ENV === "development";
+
+  // Auto-claim referral from localStorage
+  useEffect(() => {
+    if (!character || character.status !== "alive") return;
+    const code = localStorage.getItem("konsek_referral_code");
+    if (!code) return;
+    localStorage.removeItem("konsek_referral_code");
+    claimReferral(code, {
+      onSuccess: (data) => {
+        toast({
+          title: "Welcome Bonus!",
+          description: `You were referred by ${data.referrerName}! You earned ${data.welcomeBonus} medals.`,
+        });
+      },
+      onError: () => {
+        // Silently ignore — already claimed or invalid
+      },
+    });
+  }, [character, claimReferral, toast]);
 
   const handleDevRunSimulated = useCallback((data: {
     awardedItems: any[];

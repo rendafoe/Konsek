@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Home, Sparkles, Archive, LogOut, Settings, Mountain, ClipboardList, Trophy } from "lucide-react";
+import { Home, Sparkles, Archive, LogOut, Settings, Mountain, ClipboardList, Trophy, Users } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -14,6 +14,7 @@ export function Navigation() {
     { href: "/activities", icon: ClipboardList, label: "Log" },
     { href: "/inventory", icon: Sparkles, label: "Gear" },
     { href: "/achievements", icon: Trophy, label: "Achieve" },
+    { href: "/friends", icon: Users, label: "Friends" },
     { href: "/archive", icon: Archive, label: "Archive" },
   ];
 

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, date, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, date, varchar, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -21,6 +21,9 @@ export const stravaAccounts = pgTable("strava_accounts", {
   athleteFirstName: varchar("athlete_first_name"),
   athleteLastName: varchar("athlete_last_name"),
   athleteProfilePicture: varchar("athlete_profile_picture"),
+  // Friends feature
+  friendCode: varchar("friend_code", { length: 8 }).unique(), // 8-char code, displayed as XXXX-XXXX
+  stravaScopes: varchar("strava_scopes"), // tracks granted OAuth scopes
 });
 
 // Character type - now only "esko" for the app mascot
@@ -141,10 +144,27 @@ export const medalTransactions = pgTable("medal_transactions", {
 export const referrals = pgTable("referrals", {
   id: serial("id").primaryKey(),
   referrerId: varchar("referrer_id").notNull().references(() => users.id),
-  referredUserId: varchar("referred_user_id").notNull().references(() => users.id),
+  referredUserId: varchar("referred_user_id").notNull().unique().references(() => users.id),
   medalsEarnedFromReferral: integer("medals_earned_from_referral").default(0).notNull(), // Max 25
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Friend source types
+export const FRIEND_SOURCES = ["club", "code", "discover"] as const;
+export type FriendSource = typeof FRIEND_SOURCES[number];
+
+// Accepted friends (one row per direction for friend-code adds, one row for club-discovered)
+export const friends = pgTable("friends", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  stravaAthleteId: varchar("strava_athlete_id").notNull(),
+  displayName: varchar("display_name").notNull(),
+  profilePicture: varchar("profile_picture"),
+  source: text("source", { enum: FRIEND_SOURCES }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("friends_user_athlete_idx").on(table.userId, table.stravaAthleteId),
+]);
 
 // === RELATIONS ===
 export const stravaAccountsRelations = relations(stravaAccounts, ({ one }) => ({
@@ -240,6 +260,13 @@ export const referralsRelations = relations(referrals, ({ one }) => ({
   }),
 }));
 
+export const friendsRelations = relations(friends, ({ one }) => ({
+  user: one(users, {
+    fields: [friends.userId],
+    references: [users.id],
+  }),
+}));
+
 // === ZOD SCHEMAS ===
 export const insertCharacterSchema = createInsertSchema(characters).omit({ 
   id: true, 
@@ -267,6 +294,7 @@ export const insertUserUnlockSchema = createInsertSchema(userUnlocks).omit({ id:
 export const insertDailyCheckInSchema = createInsertSchema(dailyCheckIns).omit({ id: true, createdAt: true });
 export const insertMedalTransactionSchema = createInsertSchema(medalTransactions).omit({ id: true, createdAt: true });
 export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
+export const insertFriendSchema = createInsertSchema(friends).omit({ id: true, createdAt: true });
 
 // === TYPES ===
 export type Character = typeof characters.$inferSelect;
@@ -282,3 +310,33 @@ export type UserUnlock = typeof userUnlocks.$inferSelect;
 export type DailyCheckIn = typeof dailyCheckIns.$inferSelect;
 export type MedalTransaction = typeof medalTransactions.$inferSelect;
 export type Referral = typeof referrals.$inferSelect;
+export type Friend = typeof friends.$inferSelect;
+// Friend profile type returned by getFriendsWithProfiles
+export interface FriendProfile {
+  displayName: string;
+  profilePicture: string | null;
+  isKonsekUser: boolean;
+  stravaAthleteId: string;
+  totalRuns: number | null;
+  totalDistance: number | null;
+  eskoStage: string | null;
+  eskoHealthState: number | null;
+  totalMedals: number | null;
+  totalItemsUnlocked: number | null;
+  lastItemReceived: { name: string; imageUrl: string; rarity: string; receivedAt: string } | null;
+  source: "club" | "code" | "discover";
+  friendSince: string;
+}
+
+export interface DiscoverableUser {
+  userId: string;
+  stravaAthleteId: string;
+  displayName: string;
+  profilePicture: string | null;
+  friendCode: string | null;
+  totalRuns: number;
+  totalDistance: number;
+  medalBalance: number;
+  eskoStage: string | null;
+  eskoCreatedAt: string | null;
+}
