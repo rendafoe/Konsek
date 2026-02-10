@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertCharacterSchema, characters, items, inventory, runs, stravaAccounts, runItems, dailyCheckIns, medalTransactions } from './schema';
+import { insertCharacterSchema, characters, items, inventory, runs, stravaAccounts, runItems, dailyCheckIns, medalTransactions, type FriendProfile, type DiscoverableUser } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -237,6 +237,133 @@ export const api = {
     },
   },
 
+  // === FRIENDS ===
+  friends: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/friends',
+      responses: {
+        200: z.object({
+          friends: z.array(z.object({
+            displayName: z.string(),
+            profilePicture: z.string().nullable(),
+            isKonsekUser: z.boolean(),
+            stravaAthleteId: z.string(),
+            totalRuns: z.number().nullable(),
+            totalDistance: z.number().nullable(),
+            eskoStage: z.string().nullable(),
+            eskoHealthState: z.number().nullable(),
+            totalMedals: z.number().nullable(),
+            totalItemsUnlocked: z.number().nullable(),
+            lastItemReceived: z.object({
+              name: z.string(),
+              imageUrl: z.string(),
+              rarity: z.string(),
+              receivedAt: z.string(),
+            }).nullable(),
+            source: z.enum(["club", "code", "discover"]),
+            friendSince: z.string(),
+          })),
+        }),
+      },
+    },
+    discover: {
+      method: 'GET' as const,
+      path: '/api/friends/discover',
+      query: z.object({
+        page: z.coerce.number().min(1).default(1),
+        limit: z.coerce.number().min(1).max(100).default(50),
+        search: z.string().optional(),
+        sort: z.enum(["name", "distance", "medals", "runs", "esko_age"]).default("name"),
+      }),
+      responses: {
+        200: z.object({
+          users: z.array(z.custom<DiscoverableUser>()),
+          pagination: z.object({
+            page: z.number(),
+            limit: z.number(),
+            total: z.number(),
+            totalPages: z.number(),
+          }),
+        }),
+      },
+    },
+    add: {
+      method: 'POST' as const,
+      path: '/api/friends/add',
+      input: z.object({
+        targetUserId: z.string().optional(),
+        friendCode: z.string().optional(),
+      }),
+      responses: {
+        200: z.object({ success: z.boolean() }),
+        400: errorSchemas.validation,
+      },
+    },
+    remove: {
+      method: 'DELETE' as const,
+      path: '/api/friends/:stravaAthleteId',
+      responses: {
+        200: z.object({ success: z.boolean() }),
+      },
+    },
+    code: {
+      method: 'GET' as const,
+      path: '/api/friends/code',
+      responses: {
+        200: z.object({ friendCode: z.string() }),
+      },
+    },
+  },
+
+  // === REFERRALS ===
+  referrals: {
+    claim: {
+      method: 'POST' as const,
+      path: '/api/referrals/claim',
+      input: z.object({
+        referralCode: z.string(),
+      }),
+      responses: {
+        200: z.object({
+          success: z.boolean(),
+          referrerName: z.string(),
+          welcomeBonus: z.number(),
+        }),
+        400: errorSchemas.validation,
+      },
+    },
+    stats: {
+      method: 'GET' as const,
+      path: '/api/referrals/stats',
+      responses: {
+        200: z.object({
+          totalReferrals: z.number(),
+          totalMedalsEarned: z.number(),
+          referredBy: z.object({
+            name: z.string(),
+            date: z.string(),
+          }).nullable(),
+        }),
+      },
+    },
+    list: {
+      method: 'GET' as const,
+      path: '/api/referrals/list',
+      responses: {
+        200: z.object({
+          referrals: z.array(z.object({
+            referredUserName: z.string(),
+            referredUserProfilePicture: z.string().nullable(),
+            medalsEarned: z.number(),
+            maxMedals: z.number(),
+            createdAt: z.string(),
+          })),
+        }),
+      },
+    },
+  },
+
   // === SHOP ===
   shop: {
     purchase: {
@@ -278,3 +405,5 @@ export type CharacterResponse = z.infer<typeof api.character.get.responses[200]>
 export type InventoryResponse = z.infer<typeof api.inventory.list.responses[200]>;
 export type ActivitiesResponse = z.infer<typeof api.activities.list.responses[200]>;
 export type AchievementsResponse = z.infer<typeof api.achievements.list.responses[200]>;
+export type FriendsResponse = z.infer<typeof api.friends.list.responses[200]>;
+export type DiscoverResponse = z.infer<typeof api.friends.discover.responses[200]>;

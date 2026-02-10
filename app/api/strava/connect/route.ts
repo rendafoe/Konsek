@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     : `https://${req.headers.get("host")}/api/strava/callback`;
   const scope = "activity:read_all";
 
-  const url = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${scope}`;
+  const approvalPrompt = isDevMode ? "&approval_prompt=force" : "";
+  const url = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${scope}${approvalPrompt}`;
   return NextResponse.redirect(url);
 }

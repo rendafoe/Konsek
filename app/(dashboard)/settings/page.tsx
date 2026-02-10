@@ -3,11 +3,13 @@
 import { PageHeader } from "@/components/PageHeader";
 import { useStravaStatus } from "@/hooks/use-strava";
 import { useAuth } from "@/hooks/use-auth";
+import { useReferralStats } from "@/hooks/use-referrals";
 import { Loader2 } from "lucide-react";
 
 export default function Settings() {
   const { data: stravaStatus, isLoading } = useStravaStatus();
   const { user } = useAuth();
+  const { data: referralStats } = useReferralStats();
 
   return (
     <main className="flex-1 p-6 md:p-12 mb-20 md:mb-0">
@@ -46,6 +48,25 @@ export default function Settings() {
               </div>
             ) : (
               <a href="/api/strava/connect" className="pixel-btn-secondary text-xs">Connect</a>
+            )}
+          </div>
+        </section>
+
+        {/* Referral Section */}
+        <section className="bg-card p-6 pixel-border">
+          <h2 className="font-pixel text-sm uppercase mb-4 text-muted-foreground">Referral</h2>
+          <div className="p-4 bg-white border-2 border-border">
+            {referralStats?.referredBy ? (
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Referred by {referralStats.referredBy.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {new Date(referralStats.referredBy.date).toLocaleDateString()}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Not referred by anyone</p>
             )}
           </div>
         </section>

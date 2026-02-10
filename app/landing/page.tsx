@@ -37,6 +37,15 @@ export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
+  // Capture referral code from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("konsek_referral_code", ref);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       router.replace("/");

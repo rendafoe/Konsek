@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
       athleteFirstName: data.athlete.firstname || null,
       athleteLastName: data.athlete.lastname || null,
       athleteProfilePicture: data.athlete.profile || null,
+      stravaScopes: "activity:read_all",
     });
 
     return NextResponse.redirect(new URL("/", req.url));
