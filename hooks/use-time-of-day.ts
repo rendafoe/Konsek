@@ -7,7 +7,7 @@ type TimeOfDay = "day" | "night";
 export function useTimeOfDay(): TimeOfDay {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => {
     const hour = new Date().getHours();
-    return hour >= 18 ? "night" : "day";
+    return (hour >= 18 || hour < 6) ? "night" : "day";
   });
 
   useEffect(() => {

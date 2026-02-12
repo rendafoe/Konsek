@@ -12,7 +12,7 @@ import { DailyCheckInBox } from "@/components/DailyCheckInBox";
 import { MiniRouteMap } from "@/components/MiniRouteMap";
 import { DevPanel } from "@/components/DevPanel";
 import { PageBackground } from "@/components/PageBackground";
-import { useTimeOfDay } from "@/hooks/use-time-of-day";
+import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Activity, Sparkles, Calendar, Heart, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -67,10 +67,9 @@ export default function Dashboard() {
   const { mutate: claimReferral } = useClaimReferral();
   const { registerSyncHandler } = useSyncContext();
   const { toast } = useToast();
-  const timeOfDay = useTimeOfDay();
+  const { isNight, toggleNight } = useNightMode();
 
   const [useMiles, setUseMiles] = useState(false);
-  const [isNight, setIsNight] = useState(timeOfDay === "night");
   const [rewardModalOpen, setRewardModalOpen] = useState(false);
   const [awardedItems, setAwardedItems] = useState<any[]>([]);
   const [medalsFromSync, setMedalsFromSync] = useState<number>(0);
@@ -82,11 +81,6 @@ export default function Dashboard() {
   const activities = activitiesData?.activities || [];
   const isCharacterDead = character?.status === "dead";
   const isDev = process.env.NODE_ENV === "development";
-
-  // Sync manual toggle with auto time-of-day
-  useEffect(() => {
-    setIsNight(timeOfDay === "night");
-  }, [timeOfDay]);
 
   // Register sync handler for reward modals
   useEffect(() => {
@@ -214,14 +208,14 @@ export default function Dashboard() {
 
       {/* Lamp hotspots */}
       <button
-        onClick={() => setIsNight((n) => !n)}
+        onClick={toggleNight}
         className="fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
         style={{ left: "13%", top: "35%" }}
         title="Click to toggle lights"
         aria-label="Toggle day/night"
       />
       <button
-        onClick={() => setIsNight((n) => !n)}
+        onClick={toggleNight}
         className="fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
         style={{ left: "78%", top: "35%" }}
         title="Click to toggle lights"

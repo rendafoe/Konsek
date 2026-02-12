@@ -6,7 +6,7 @@ import {
   useAddFriend, useRemoveFriend,
 } from "@/hooks/use-friends";
 import { PageBackground } from "@/components/PageBackground";
-import { useTimeOfDay } from "@/hooks/use-time-of-day";
+import { useNightMode } from "@/lib/night-mode-context";
 import { useReferralStats, useReferralList } from "@/hooks/use-referrals";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
@@ -65,7 +65,7 @@ const SORT_OPTIONS = [
 ] as const;
 
 export default function Friends() {
-  const timeOfDay = useTimeOfDay();
+  const { isNight } = useNightMode();
   const [tab, setTab] = useState<"friends" | "discover">("friends");
   const [codeInput, setCodeInput] = useState("");
   const [copied, setCopied] = useState(false);
@@ -159,7 +159,7 @@ export default function Friends() {
   }
 
   return (
-    <PageBackground src={timeOfDay === "night" ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
+    <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
     <main className="flex-1 p-4 md:p-8 overflow-y-auto">
       <PageHeader
         title="Friends"

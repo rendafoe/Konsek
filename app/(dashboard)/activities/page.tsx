@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useActivities } from "@/hooks/use-activities";
 import { PageHeader } from "@/components/PageHeader";
 import { PageBackground } from "@/components/PageBackground";
-import { useTimeOfDay } from "@/hooks/use-time-of-day";
+import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
@@ -57,14 +57,14 @@ function formatDistance(meters: number): string {
 export default function ActivityLog() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isFetching } = useActivities({ page, limit: ITEMS_PER_PAGE });
-  const timeOfDay = useTimeOfDay();
+  const { isNight } = useNightMode();
 
   const activities = data?.activities || [];
   const pagination = data?.pagination;
 
   if (isLoading) {
     return (
-      <PageBackground src={timeOfDay === "night" ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
+      <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
         <div className="flex-1 flex items-center justify-center min-h-[80vh]">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="animate-spin w-10 h-10 text-white/80" />
@@ -82,7 +82,7 @@ export default function ActivityLog() {
   };
 
   return (
-    <PageBackground src={timeOfDay === "night" ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.15}>
+    <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.15}>
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
         <PageHeader title="Activity Log" subtitle="Your complete running history with items found" />
 
