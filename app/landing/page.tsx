@@ -13,16 +13,6 @@ const STAGE_IMAGES: Record<string, string> = {
   "child": "/esko/esko-child.png",
 };
 
-function EskoHero({ stage, className }: { stage: string; className?: string }) {
-  return (
-    <img
-      src={STAGE_IMAGES[stage]}
-      alt={`Esko - ${stage}`}
-      className={`object-contain ${className || ''}`}
-    />
-  );
-}
-
 function MysteryStage({ className }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center ${className || ''}`}>
@@ -77,41 +67,38 @@ export default function Landing() {
   ];
 
   return (
-    <div className="h-screen overflow-y-auto snap-y snap-mandatory bg-[#1a2f23] text-[#e8efe5]">
-      {/* Subtle grain texture overlay */}
+    <div
+      className="h-screen overflow-y-auto snap-y snap-mandatory text-[#e8efe5]"
+    >
       <div
-        className="fixed inset-0 pointer-events-none opacity-[0.025] z-50"
+        className="relative"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          backgroundImage: "url(/backgrounds/landing.webp)",
+          backgroundSize: "cover",
+          backgroundPosition: "center calc(100% + 30vh)",
+          backgroundRepeat: "no-repeat",
         }}
-      />
-
-      {/* ========== PAGE 1: Hero with Esko ========== */}
+      >
+        {/* Overlay covering entire landing page */}
+        <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+      {/* ========== PAGE 1: Hero ========== */}
       <section className="h-screen snap-start snap-always relative flex flex-col">
-        {/* Soft northern glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[500px] pointer-events-none">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(64,145,108,0.12) 0%, rgba(45,90,61,0.06) 50%, transparent 80%)'
-            }}
-          />
-        </div>
-
-        {/* Ambient side glows */}
-        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-[#40916c]/8 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/3 -right-32 w-72 h-72 bg-[#52796f]/6 rounded-full blur-[120px] pointer-events-none" />
-
         {/* Navigation */}
         <nav className="relative z-10 w-full max-w-5xl mx-auto px-6 py-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2.5">
               <Flame size={20} className="text-[#d4a574]" />
-              <span className="text-base font-light tracking-wide text-[#e8efe5]">Konsek</span>
+              <span
+                className="text-base font-light tracking-wide text-[#e8efe5]"
+                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+              >
+                Konsek
+              </span>
             </div>
             <button
               onClick={handleSignIn}
-              className="text-sm text-[#8a9f87] hover:text-[#e8efe5] transition-colors duration-300"
+              className="text-sm text-[#c5d4c2] hover:text-[#e8efe5] transition-colors duration-300"
+              style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
               data-testid="link-login"
             >
               Sign in
@@ -121,23 +108,6 @@ export default function Landing() {
 
         {/* Hero Content */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-8">
-          {/* Esko - LARGE and prominent */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
-            className="relative mb-8"
-          >
-            {/* Warm ambient glow behind Esko */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#d4a574]/15 rounded-full blur-[80px]" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-[#e8a862]/10 rounded-full blur-[50px]" />
-
-            {/* The character - no label */}
-            <div className="relative">
-              <EskoHero stage="child" className="w-56 h-56 md:w-72 md:h-72 lg:w-80 lg:h-80 animate-esko-child" />
-            </div>
-          </motion.div>
-
           {/* Headline */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -145,7 +115,10 @@ export default function Landing() {
             transition={{ delay: 0.3, duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
             className="text-center mb-10"
           >
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-[#e8efe5] leading-tight">
+            <h1
+              className="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-[#e8efe5] leading-tight"
+              style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}
+            >
               Your running companion for{' '}
               <span className="text-[#7cb98b]">consistency</span>
             </h1>
@@ -182,9 +155,6 @@ export default function Landing() {
 
       {/* ========== PAGE 2: Evolution + Features ========== */}
       <section className="min-h-screen snap-start snap-always relative flex flex-col items-center justify-center px-6 py-16">
-        {/* Subtle background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#40916c]/5 rounded-full blur-[150px] pointer-events-none" />
-
         {/* Evolution Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -193,7 +163,10 @@ export default function Landing() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16 relative z-10"
         >
-          <p className="text-sm text-[#6b7d68] tracking-[0.2em] uppercase mb-12 font-light">
+          <p
+            className="text-sm text-[#c5d4c2] tracking-[0.2em] uppercase mb-12 font-light"
+            style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+          >
             Watch Esko grow with every run
           </p>
 
@@ -223,7 +196,10 @@ export default function Landing() {
                     <MysteryStage className="w-full h-full" />
                   )}
                 </div>
-                <span className="text-xs md:text-sm text-[#8a9f87] font-light tracking-wide">
+                <span
+                  className="text-xs md:text-sm text-[#c5d4c2] font-light tracking-wide"
+                  style={{ textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
+                >
                   {stage.label}
                 </span>
               </motion.div>
@@ -232,7 +208,7 @@ export default function Landing() {
 
           {/* Connecting line */}
           <div className="max-w-md mx-auto mt-8">
-            <div className="h-px bg-gradient-to-r from-transparent via-[#40916c]/20 to-transparent" />
+            <div className="h-px bg-gradient-to-r from-transparent via-[#40916c]/30 to-transparent" />
           </div>
         </motion.div>
 
@@ -252,13 +228,16 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-                className="flex items-center gap-3 px-5 py-4 rounded-xl bg-[#243d2e]/40 border border-[#40916c]/10 hover:border-[#40916c]/20 transition-colors duration-300"
+                className="flex items-center gap-3 px-5 py-4 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-colors duration-300"
               >
                 <feature.icon
                   size={20}
                   className="text-[#7cb98b] flex-shrink-0"
                 />
-                <span className="text-base md:text-lg font-light text-[#e8efe5] tracking-wide">
+                <span
+                  className="text-base md:text-lg font-light text-[#e8efe5] tracking-wide"
+                  style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}
+                >
                   {feature.title}
                 </span>
               </motion.div>
@@ -267,12 +246,8 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ========== PAGE 3: Final CTA with Egg ========== */}
+      {/* ========== PAGE 3: Final CTA ========== */}
       <section className="min-h-screen snap-start snap-always relative flex flex-col items-center justify-center px-6">
-        {/* Ambient glows */}
-        <div className="absolute top-1/3 -left-32 w-64 h-64 bg-[#d4a574]/8 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 -right-32 w-72 h-72 bg-[#40916c]/8 rounded-full blur-[120px] pointer-events-none" />
-
         {/* Content */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -281,18 +256,11 @@ export default function Landing() {
           transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
           className="flex flex-col items-center relative z-10"
         >
-          {/* Egg - Large like hero */}
-          <div className="relative mb-10">
-            {/* Warm ambient glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-[#d4a574]/12 rounded-full blur-[70px]" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#e8a862]/8 rounded-full blur-[40px]" />
-
-            {/* The egg */}
-            <EskoHero stage="egg" className="relative w-56 h-56 md:w-72 md:h-72 lg:w-80 lg:h-80 animate-esko-egg" />
-          </div>
-
           {/* Headline */}
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-[#e8efe5] mb-10 tracking-tight">
+          <h2
+            className="text-2xl md:text-3xl lg:text-4xl font-light text-[#e8efe5] mb-10 tracking-tight"
+            style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}
+          >
             Your Esko is waiting
           </h2>
 
@@ -306,6 +274,7 @@ export default function Landing() {
           </button>
         </motion.div>
       </section>
+      </div>
     </div>
   );
 }

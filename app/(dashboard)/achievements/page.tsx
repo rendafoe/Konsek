@@ -5,6 +5,7 @@ import { useMedalStatus, usePurchaseItem } from "@/hooks/use-medals";
 import { PageHeader } from "@/components/PageHeader";
 import { Loader2, Trophy, Lock, Star, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageBackground } from "@/components/PageBackground";
 import { useState } from "react";
 
 const rarityTextColors: Record<string, string> = {
@@ -54,6 +55,7 @@ export default function Achievements() {
   const totalCount = allItems.length;
 
   return (
+    <PageBackground src="/backgrounds/achievements.webp" overlay={0.25}>
     <main className="flex-1 p-4 md:p-8 overflow-y-auto">
       <PageHeader title="Achievements" subtitle={`Collect all items from your running adventures. ${unlockedCount} / ${totalCount} unlocked`} />
 
@@ -118,5 +120,6 @@ export default function Achievements() {
         </div>
       )}
     </main>
+    </PageBackground>
   );
 }

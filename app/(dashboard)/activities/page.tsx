@@ -3,36 +3,21 @@
 import { useState } from "react";
 import { useActivities } from "@/hooks/use-activities";
 import { PageHeader } from "@/components/PageHeader";
-import { MiniRouteMap } from "@/components/MiniRouteMap";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { PageBackground } from "@/components/PageBackground";
+import { useTimeOfDay } from "@/hooks/use-time-of-day";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ClipboardList, Sparkles } from "lucide-react";
+import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
-const ITEMS_PER_PAGE = 25;
+const ITEMS_PER_PAGE = 6;
 
 const rarityBadgeStyles: Record<string, string> = {
-  common: "bg-gray-100 text-gray-700 border-gray-300",
-  uncommon: "bg-green-100 text-green-700 border-green-300",
-  rare: "bg-blue-100 text-blue-700 border-blue-300",
-  epic: "bg-purple-100 text-purple-700 border-purple-300",
-  legendary: "bg-yellow-100 text-yellow-800 border-yellow-400",
-  mythic: "bg-gradient-to-r from-yellow-100 via-pink-100 to-purple-100 text-purple-700 border-purple-300",
+  common: "bg-amber-100 text-amber-800 border-amber-400",
+  uncommon: "bg-green-100 text-green-800 border-green-400",
+  rare: "bg-blue-100 text-blue-800 border-blue-400",
+  epic: "bg-purple-100 text-purple-800 border-purple-400",
+  legendary: "bg-yellow-100 text-yellow-900 border-yellow-500",
+  mythic: "bg-gradient-to-r from-yellow-100 via-pink-100 to-purple-100 text-purple-800 border-purple-400",
 };
 
 const rarityMedalRewards: Record<string, number> = {
@@ -72,18 +57,21 @@ function formatDistance(meters: number): string {
 export default function ActivityLog() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isFetching } = useActivities({ page, limit: ITEMS_PER_PAGE });
+  const timeOfDay = useTimeOfDay();
 
   const activities = data?.activities || [];
   const pagination = data?.pagination;
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="animate-spin w-10 h-10 text-white/80" />
-          <p className="text-white/60 text-sm">Loading activity log...</p>
+      <PageBackground src={timeOfDay === "night" ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
+        <div className="flex-1 flex items-center justify-center min-h-[80vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="animate-spin w-10 h-10 text-white/80" />
+            <p className="text-white/60 text-sm">Loading activity log...</p>
+          </div>
         </div>
-      </div>
+      </PageBackground>
     );
   }
 
@@ -93,166 +81,127 @@ export default function ActivityLog() {
     }
   };
 
-  const getVisiblePages = () => {
-    if (!pagination) return [];
-    const { totalPages } = pagination;
-    const pages: (number | "ellipsis")[] = [];
-
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (page > 3) pages.push("ellipsis");
-
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-
-      for (let i = start; i <= end; i++) pages.push(i);
-
-      if (page < totalPages - 2) pages.push("ellipsis");
-      pages.push(totalPages);
-    }
-
-    return pages;
-  };
-
   return (
-    <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-      <PageHeader title="Activity Log" subtitle="Your complete running history with items found" />
+    <PageBackground src={timeOfDay === "night" ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.15}>
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <PageHeader title="Activity Log" subtitle="Your complete running history with items found" />
 
-      <div className="cozy-card relative">
-        {activities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64">
-            <ClipboardList className="w-10 h-10 text-muted-foreground mb-3 opacity-40" />
-            <p className="font-pixel text-sm text-muted-foreground">No Activities Yet</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Go for a run to start building your log!
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[100px]">Date</TableHead>
-                    <TableHead className="min-w-[120px]">Title</TableHead>
-                    <TableHead className="min-w-[80px]">Duration</TableHead>
-                    <TableHead className="min-w-[80px]">Distance</TableHead>
-                    <TableHead className="min-w-[70px]">Route</TableHead>
-                    <TableHead className="min-w-[120px]">Rewards</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+        {/* Parchment scroll container */}
+        <div className="max-w-2xl mx-auto relative">
+          <div
+            className="relative min-h-[500px] flex flex-col"
+            style={{
+              backgroundImage: "url(/backgrounds/scroll.webp)",
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center top",
+            }}
+          >
+            {/* Content area inside the scroll */}
+            <div className="px-[14%] pt-[14%] pb-[16%] flex-1 relative">
+              {isFetching && !isLoading && (
+                <div className="absolute inset-0 bg-amber-50/50 flex items-center justify-center z-10 rounded-lg">
+                  <Loader2 className="animate-spin w-6 h-6 text-amber-700" />
+                </div>
+              )}
+
+              {activities.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64">
+                  <ClipboardList className="w-10 h-10 text-amber-700/40 mb-3" />
+                  <p className="font-pixel text-sm text-amber-900">No Activities Yet</p>
+                  <p className="text-xs text-amber-800/70 mt-1">
+                    Go for a run to start building your log!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
                   {activities.map((activity) => (
-                    <TableRow key={activity.id}>
-                      <TableCell className="font-medium">
-                        {format(new Date(activity.date), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell className="max-w-[150px] truncate">
-                        {activity.name || "Run"}
-                      </TableCell>
-                      <TableCell>{formatDuration(activity.duration)}</TableCell>
-                      <TableCell>{formatDistance(activity.distance)}</TableCell>
-                      <TableCell>
-                        <MiniRouteMap
-                          polyline={activity.polyline}
-                          width={60}
-                          height={40}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {activity.awardedItems && activity.awardedItems.length > 0 ? (
-                          <div className="flex flex-col gap-1">
-                            <div className="flex flex-wrap gap-1">
-                              {activity.awardedItems.map((ri: any, idx: number) => (
-                                <Badge
-                                  key={idx}
-                                  variant="outline"
-                                  className={`text-[10px] px-1.5 py-0.5 ${
-                                    ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
-                                  }`}
-                                >
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  {ri.item?.name || "Item"}
-                                </Badge>
-                              ))}
-                            </div>
-                            {calculateMedalsFromItems(activity.awardedItems) > 0 && (
-                              <div className="flex items-center gap-1 text-[10px] text-yellow-700">
-                                <img src="/items/medal.png" alt="" className="w-3 h-3" />
-                                +{calculateMedalsFromItems(activity.awardedItems)}
-                              </div>
+                    <div
+                      key={activity.id}
+                      className="flex items-center gap-3 p-2.5 rounded-lg bg-amber-900/5 hover:bg-amber-900/10 transition-colors border border-amber-900/10"
+                    >
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-pixel text-[11px] text-amber-900 truncate">
+                          {activity.name || "Run"}
+                        </div>
+                        <div className="text-[10px] text-amber-800/70 mt-0.5">
+                          {format(new Date(activity.date), "MMM d, yyyy")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
+                        </div>
+                      </div>
+
+                      {/* Rewards */}
+                      {activity.awardedItems && activity.awardedItems.length > 0 && (
+                        <div className="flex flex-col items-end gap-0.5 shrink-0">
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {activity.awardedItems.slice(0, 2).map((ri: any, idx: number) => (
+                              <Badge
+                                key={idx}
+                                variant="outline"
+                                className={`text-[9px] px-1.5 py-0 ${
+                                  ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
+                                }`}
+                              >
+                                <Sparkles className="w-2.5 h-2.5 mr-0.5" />
+                                {ri.item?.name || "Item"}
+                              </Badge>
+                            ))}
+                            {activity.awardedItems.length > 2 && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-800">
+                                +{activity.awardedItems.length - 2}
+                              </Badge>
                             )}
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                          {calculateMedalsFromItems(activity.awardedItems) > 0 && (
+                            <div className="flex items-center gap-1 text-[9px] text-amber-800">
+                              <img src="/items/medal.png" alt="" className="w-3 h-3" />
+                              +{calculateMedalsFromItems(activity.awardedItems)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              )}
             </div>
+          </div>
 
-            {pagination && pagination.totalPages > 1 && (
-              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  Showing {(pagination.page - 1) * pagination.limit + 1}-
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                  {pagination.total} activities
-                </p>
+          {/* Pagination controls below scroll */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 px-2">
+              <p className="text-xs text-white/70" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                Showing {(pagination.page - 1) * pagination.limit + 1}-
+                {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+                {pagination.total}
+              </p>
 
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => handlePageChange(page - 1)}
-                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-
-                    {getVisiblePages().map((p, idx) =>
-                      p === "ellipsis" ? (
-                        <PaginationItem key={`ellipsis-${idx}`}>
-                          <span className="px-2">...</span>
-                        </PaginationItem>
-                      ) : (
-                        <PaginationItem key={p}>
-                          <PaginationLink
-                            onClick={() => handlePageChange(p)}
-                            isActive={p === page}
-                            className="cursor-pointer"
-                          >
-                            {p}
-                          </PaginationLink>
-                        </PaginationItem>
-                      )
-                    )}
-
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => handlePageChange(page + 1)}
-                        className={
-                          page === pagination.totalPages
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  className="p-2 rounded-lg bg-amber-900/20 backdrop-blur-sm border border-amber-700/30 text-amber-100 hover:bg-amber-900/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span
+                  className="text-sm font-pixel text-amber-100 px-2"
+                  style={{ textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
+                >
+                  {page} / {pagination.totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === pagination.totalPages}
+                  className="p-2 rounded-lg bg-amber-900/20 backdrop-blur-sm border border-amber-700/30 text-amber-100 hover:bg-amber-900/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
-            )}
-
-            {isFetching && !isLoading && (
-              <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-                <Loader2 className="animate-spin w-6 h-6 text-primary" />
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </main>
+            </div>
+          )}
+        </div>
+      </main>
+    </PageBackground>
   );
 }

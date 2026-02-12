@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Loader2, Skull } from "lucide-react";
 import { format } from "date-fns";
 import { getEskoStage } from "@/components/EskoCharacter";
+import { PageBackground } from "@/components/PageBackground";
 
 export default function Archive() {
   const { data: graveyard, isLoading } = useCharacterArchive();
@@ -14,6 +15,7 @@ export default function Archive() {
   }
 
   return (
+    <PageBackground src="/backgrounds/graveyard.webp" overlay={0.3}>
     <main className="flex-1 p-4 md:p-8 overflow-y-auto">
       <PageHeader title="The Graveyard" subtitle="Past companions who have completed their journey" />
 
@@ -68,5 +70,6 @@ export default function Archive() {
         )}
       </div>
     </main>
+    </PageBackground>
   );
 }

@@ -11,6 +11,8 @@ import { ItemRewardModal } from "@/components/ItemRewardModal";
 import { DailyCheckInBox } from "@/components/DailyCheckInBox";
 import { MiniRouteMap } from "@/components/MiniRouteMap";
 import { DevPanel } from "@/components/DevPanel";
+import { PageBackground } from "@/components/PageBackground";
+import { useTimeOfDay } from "@/hooks/use-time-of-day";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Activity, Sparkles, Calendar, Heart, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -65,8 +67,10 @@ export default function Dashboard() {
   const { mutate: claimReferral } = useClaimReferral();
   const { registerSyncHandler } = useSyncContext();
   const { toast } = useToast();
+  const timeOfDay = useTimeOfDay();
 
   const [useMiles, setUseMiles] = useState(false);
+  const [isNight, setIsNight] = useState(timeOfDay === "night");
   const [rewardModalOpen, setRewardModalOpen] = useState(false);
   const [awardedItems, setAwardedItems] = useState<any[]>([]);
   const [medalsFromSync, setMedalsFromSync] = useState<number>(0);
@@ -78,6 +82,11 @@ export default function Dashboard() {
   const activities = activitiesData?.activities || [];
   const isCharacterDead = character?.status === "dead";
   const isDev = process.env.NODE_ENV === "development";
+
+  // Sync manual toggle with auto time-of-day
+  useEffect(() => {
+    setIsNight(timeOfDay === "night");
+  }, [timeOfDay]);
 
   // Register sync handler for reward modals
   useEffect(() => {
@@ -140,33 +149,37 @@ export default function Dashboard() {
 
   if (isCharLoading || isStravaLoading || isCreating) {
     return (
-      <main className="flex-1 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="animate-spin w-10 h-10 text-white/80" />
-          <p className="text-white/60 text-sm">Loading your companion...</p>
-        </div>
-      </main>
+      <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
+        <main className="flex-1 flex items-center justify-center min-h-[80vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="animate-spin w-10 h-10 text-white/80" />
+            <p className="text-white/60 text-sm">Loading your companion...</p>
+          </div>
+        </main>
+      </PageBackground>
     );
   }
 
   if (!character) {
     return (
-      <main className="flex-1 p-6 md:p-10 flex items-center justify-center">
-        <div className="bg-white/95 dark:bg-card backdrop-blur-sm rounded-2xl p-8 shadow-lg max-w-md text-center">
-          <img src="/esko/esko-egg.png" alt="Esko Egg" className="w-32 h-32 mx-auto mb-4 animate-esko-egg" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Konsek!</h2>
-          <p className="text-muted-foreground mb-6">
-            Start your running journey with Esko, your virtual companion who grows with every run you complete.
-          </p>
-          <button
-            onClick={handleCreateCharacter}
-            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:brightness-110 transition-all flex items-center justify-center gap-2 mx-auto"
-          >
-            <Heart size={20} /> Hatch Your Esko
-          </button>
-        </div>
-        {isDev && <DevPanel onRunSimulated={handleDevRunSimulated} />}
-      </main>
+      <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
+        <main className="flex-1 p-6 md:p-10 flex items-center justify-center min-h-[80vh]">
+          <div className="bg-white/95 dark:bg-card backdrop-blur-sm rounded-2xl p-8 shadow-lg max-w-md text-center">
+            <img src="/esko/esko-egg.png" alt="Esko Egg" className="w-32 h-32 mx-auto mb-4 animate-esko-egg" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Konsek!</h2>
+            <p className="text-muted-foreground mb-6">
+              Start your running journey with Esko, your virtual companion who grows with every run you complete.
+            </p>
+            <button
+              onClick={handleCreateCharacter}
+              className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:brightness-110 transition-all flex items-center justify-center gap-2 mx-auto"
+            >
+              <Heart size={20} /> Hatch Your Esko
+            </button>
+          </div>
+          {isDev && <DevPanel onRunSimulated={handleDevRunSimulated} />}
+        </main>
+      </PageBackground>
     );
   }
 
@@ -178,7 +191,7 @@ export default function Dashboard() {
   };
 
   return (
-    <>
+    <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.15}>
       <ItemRewardModal
         items={awardedItems}
         medalsAwarded={medalsFromSync}
@@ -197,6 +210,22 @@ export default function Dashboard() {
             }
           }
         }}
+      />
+
+      {/* Lamp hotspots */}
+      <button
+        onClick={() => setIsNight((n) => !n)}
+        className="fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
+        style={{ left: "13%", top: "35%" }}
+        title="Click to toggle lights"
+        aria-label="Toggle day/night"
+      />
+      <button
+        onClick={() => setIsNight((n) => !n)}
+        className="fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
+        style={{ left: "78%", top: "35%" }}
+        title="Click to toggle lights"
+        aria-label="Toggle day/night"
       />
 
       <main className="flex-1 p-4 md:p-6 overflow-y-auto">
@@ -340,6 +369,6 @@ export default function Dashboard() {
 
         {isDev && <DevPanel onRunSimulated={handleDevRunSimulated} />}
       </main>
-    </>
+    </PageBackground>
   );
 }

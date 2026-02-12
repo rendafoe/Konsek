@@ -7,7 +7,7 @@ import { SyncProvider } from "@/lib/sync-context";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <SyncProvider>
-      <div className="min-h-screen aurora-bg flex flex-col">
+      <div className="min-h-screen flex flex-col">
         <TopNav />
         <div className="flex-1 pb-20 md:pb-0">
           {children}

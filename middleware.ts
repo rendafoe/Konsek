@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
   // Allow static files
-  const isStatic = pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf)$/);
+  const isStatic = pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|webp)$/);
 
   if (isPublic || isStatic) {
     return NextResponse.next();

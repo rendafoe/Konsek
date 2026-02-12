@@ -5,6 +5,7 @@ import { useStravaStatus } from "@/hooks/use-strava";
 import { useAuth } from "@/hooks/use-auth";
 import { useReferralStats } from "@/hooks/use-referrals";
 import { Loader2 } from "lucide-react";
+import { PageBackground } from "@/components/PageBackground";
 
 export default function Settings() {
   const { isLoading } = useStravaStatus();
@@ -12,6 +13,7 @@ export default function Settings() {
   const { data: referralStats } = useReferralStats();
 
   return (
+    <PageBackground src="/backgrounds/settings.webp" overlay={0.25}>
     <main className="flex-1 p-4 md:p-8">
       <PageHeader title="Settings" />
 
@@ -72,5 +74,6 @@ export default function Settings() {
         </div>
       </div>
     </main>
+    </PageBackground>
   );
 }
