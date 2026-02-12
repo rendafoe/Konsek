@@ -78,7 +78,7 @@ export default function Inventory() {
             <p className="text-xs text-muted-foreground mt-1">Go for a run to find loot!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {groupedItems.map((groupedItem) => (
               <div
                 key={groupedItem.itemId}

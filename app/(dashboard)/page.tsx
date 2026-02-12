@@ -6,7 +6,8 @@ import { useActivities } from "@/hooks/use-activities";
 import { useMedalStatus } from "@/hooks/use-medals";
 import { useClaimReferral } from "@/hooks/use-referrals";
 import { useSyncContext } from "@/lib/sync-context";
-import { EskoCharacter } from "@/components/EskoCharacter";
+import { useTutorial } from "@/lib/tutorial-context";
+import { getEskoStage } from "@/components/EskoCharacter";
 import { ItemRewardModal } from "@/components/ItemRewardModal";
 import { DailyCheckInBox } from "@/components/DailyCheckInBox";
 import { MiniRouteMap } from "@/components/MiniRouteMap";
@@ -14,9 +15,10 @@ import { DevPanel } from "@/components/DevPanel";
 import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Activity, Sparkles, Calendar, Heart, ArrowRight } from "lucide-react";
+import { Loader2, Activity, Sparkles, Heart, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -68,6 +70,8 @@ export default function Dashboard() {
   const { registerSyncHandler } = useSyncContext();
   const { toast } = useToast();
   const { isNight, toggleNight } = useNightMode();
+  const { hasCompletedTutorial, openTutorial } = useTutorial();
+  const isMobile = useIsMobile();
 
   const [useMiles, setUseMiles] = useState(false);
   const [rewardModalOpen, setRewardModalOpen] = useState(false);
@@ -135,6 +139,13 @@ export default function Dashboard() {
     }
   }, [character]);
 
+  // Auto-trigger tutorial for first-time users
+  useEffect(() => {
+    if (!isCharLoading && !character && !hasCompletedTutorial) {
+      openTutorial();
+    }
+  }, [isCharLoading, character, hasCompletedTutorial, openTutorial]);
+
   const handleCreateCharacter = () => {
     createCharacter({ name: "Esko" }, {
       onSuccess: () => toast({ title: "Esko has arrived!", description: "Your companion is ready to run with you." })
@@ -177,7 +188,17 @@ export default function Dashboard() {
     );
   }
 
-  const getAge = () => character?.daysAlive || 0;
+  const currentRuns = frozenTotalRuns !== null ? frozenTotalRuns : (character?.totalRuns || 0);
+  const stageInfo = getEskoStage(currentRuns);
+  const healthPercent = Math.max(0, 100 - (character?.healthState ?? 0) * 25);
+
+  const STAGE_ANIMATIONS: Record<string, string> = {
+    "egg": "animate-esko-egg", "hatchling-v1": "animate-esko-hatchling-v1",
+    "hatchling-v2": "animate-esko-hatchling-v2", "child": "animate-esko-child",
+    "adolescent": "animate-esko-adolescent", "young-adult": "animate-esko-young-adult",
+    "mature": "animate-esko-mature", "maxed": "animate-esko-maxed",
+  };
+
   const getTotalDistance = () => {
     const meters = character?.totalDistance || 0;
     if (useMiles) return `${(meters / 1609.344).toFixed(1)} mi`;
@@ -206,17 +227,17 @@ export default function Dashboard() {
         }}
       />
 
-      {/* Lamp hotspots */}
+      {/* Lamp hotspots - hidden on mobile where lamps aren't visible */}
       <button
         onClick={toggleNight}
-        className="fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
+        className="hidden md:block fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
         style={{ left: "13%", top: "35%" }}
         title="Click to toggle lights"
         aria-label="Toggle day/night"
       />
       <button
         onClick={toggleNight}
-        className="fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
+        className="hidden md:block fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
         style={{ left: "78%", top: "35%" }}
         title="Click to toggle lights"
         aria-label="Toggle day/night"
@@ -251,46 +272,64 @@ export default function Dashboard() {
             <DailyCheckInBox variant="cozy" />
           )}
 
-          {/* Hero Zone */}
-          <div className="esko-hero-zone esko-forest-backdrop p-5 md:p-6">
-            {/* Esko Character */}
-            <div className={`relative flex justify-center py-2 transition-all duration-700 ${showEvolutionAnimation ? "scale-110" : ""}`}>
+          {/* Esko Character */}
+          <div className="flex flex-col items-center">
+            <div className={`relative flex justify-center transition-all duration-700 ${showEvolutionAnimation ? "scale-110" : ""}`}>
               {showEvolutionAnimation && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                   <div className="w-48 h-48 rounded-full bg-yellow-300/30 animate-ping" />
                 </div>
               )}
-              <EskoCharacter
-                totalRuns={frozenTotalRuns !== null ? frozenTotalRuns : (character?.totalRuns || 0)}
-                name="Esko"
-                healthPercent={Math.max(0, 100 - (character?.healthState ?? 0) * 25)}
-                isDead={character?.status === "dead"}
-                size="lg"
-                variant="hero"
-              />
+              <div className="esko-hero-glow">
+                <img
+                  src={`/esko/esko-${stageInfo.stage}.png`}
+                  alt={`Esko - ${stageInfo.name}`}
+                  className={`${isMobile ? "w-[325px] h-[325px]" : "w-[450px] h-[450px]"} object-contain ${
+                    character?.status !== "dead"
+                      ? STAGE_ANIMATIONS[stageInfo.stage] || ""
+                      : "esko-dead"
+                  }`}
+                />
+              </div>
             </div>
 
-            {/* Stat Pills */}
-            <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 dark:bg-white/10 rounded-full text-sm">
-                <Activity size={14} className="text-primary" />
-                <span className="font-semibold">{character?.totalRuns || 0}</span>
-                <span className="text-muted-foreground text-xs">runs</span>
+            {/* Compact stat card */}
+            <div className="mt-2 bg-black/30 backdrop-blur-sm rounded-xl px-5 py-2.5 border border-white/10">
+              <div className="flex items-center gap-2 justify-center mb-1.5">
+                <span className="font-pixel text-xs text-white/90">{stageInfo.name}</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white/80">
+                  {stageInfo.nextStageRuns
+                    ? `${stageInfo.nextStageRuns - currentRuns} runs to evolve`
+                    : "Max stage!"}
+                </span>
               </div>
-
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 dark:bg-white/10 rounded-full text-sm">
-                <Calendar size={14} className="text-secondary" />
-                <span className="font-semibold">{getAge()}</span>
-                <span className="text-muted-foreground text-xs">days</span>
-              </div>
-
-              <div
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 dark:bg-white/10 rounded-full text-sm cursor-pointer hover:bg-white/80 dark:hover:bg-white/15 transition-colors"
-                onClick={() => setUseMiles(!useMiles)}
-                title="Click to toggle"
-              >
-                <Sparkles size={14} className="text-primary" />
-                <span className="font-semibold">{getTotalDistance()}</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-xs text-white/80">
+                  <Activity size={12} className="text-white/60" />
+                  <span className="font-semibold">{character?.totalRuns || 0}</span>
+                  <span className="text-white/50">runs</span>
+                </div>
+                {!isCharacterDead && (
+                  <div className="flex items-center gap-1.5 min-w-[70px]">
+                    <div className="flex-1 h-2 bg-white/15 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          healthPercent > 70 ? "bg-green-400" : healthPercent > 30 ? "bg-amber-400" : "bg-red-400"
+                        }`}
+                        style={{ width: `${healthPercent}%` }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-white/50">{healthPercent}%</span>
+                  </div>
+                )}
+                <div
+                  className="flex items-center gap-1 text-xs text-white/80 cursor-pointer"
+                  onClick={() => setUseMiles(!useMiles)}
+                  title="Click to toggle"
+                >
+                  <Sparkles size={12} className="text-white/60" />
+                  <span className="font-semibold">{getTotalDistance()}</span>
+                </div>
               </div>
             </div>
           </div>

@@ -20,6 +20,7 @@ import {
   Skull,
   Backpack,
   FlameKindling,
+  Info,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -40,7 +41,7 @@ export function TopNav() {
   const { sync, isSyncing } = useSyncContext();
 
   return (
-    <nav className="h-14 bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4 gap-4 z-50 shadow-sm">
+    <nav className="bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4 gap-4 z-50 shadow-sm" style={{ height: "calc(3.5rem + env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)" }}>
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 shrink-0">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-sm">
@@ -111,10 +112,19 @@ export function TopNav() {
           <span className="hidden sm:inline">{isSyncing ? "Syncing..." : "Sync"}</span>
         </button>
 
+        {/* Info - Desktop */}
+        <Link
+          href="/info"
+          className="hidden md:flex items-center p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+          data-testid="nav-info"
+        >
+          <Info size={18} />
+        </Link>
+
         {/* Settings - Desktop */}
         <Link
           href="/settings"
-          className="hidden md:flex items-center p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+          className="hidden md:flex items-center p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
           data-testid="nav-settings"
         >
           <Settings size={18} />
@@ -123,7 +133,7 @@ export function TopNav() {
         {/* Logout - Desktop */}
         <button
           onClick={() => logout()}
-          className="hidden md:flex items-center p-1.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+          className="hidden md:flex items-center p-2 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
           data-testid="button-logout"
         >
           <LogOut size={18} />

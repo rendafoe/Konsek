@@ -68,7 +68,7 @@ export default function Landing() {
 
   return (
     <div
-      className="h-screen overflow-y-auto snap-y snap-mandatory text-[#e8efe5]"
+      className="min-h-[100dvh] h-[100dvh] overflow-y-auto snap-y snap-mandatory text-[#e8efe5]"
     >
       <div
         className="relative"
@@ -82,7 +82,7 @@ export default function Landing() {
         {/* Overlay covering entire landing page */}
         <div className="absolute inset-0 bg-black/15 pointer-events-none" />
       {/* ========== PAGE 1: Hero ========== */}
-      <section className="h-screen snap-start snap-always relative flex flex-col">
+      <section className="min-h-[100dvh] snap-start snap-always relative flex flex-col">
         {/* Navigation */}
         <nav className="relative z-10 w-full max-w-5xl mx-auto px-6 py-8">
           <div className="flex justify-between items-center">

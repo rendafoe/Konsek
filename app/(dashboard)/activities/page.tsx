@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 10;
 
 const rarityBadgeStyles: Record<string, string> = {
   common: "bg-amber-100 text-amber-800 border-amber-400",
@@ -86,19 +86,85 @@ export default function ActivityLog() {
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
         <PageHeader title="Activity Log" subtitle="Your complete running history with items found" />
 
-        {/* Parchment scroll container */}
+        {/* Activity list container */}
         <div className="max-w-2xl mx-auto relative">
+          {/* Mobile: card layout */}
+          <div className="md:hidden cozy-card p-4 relative">
+            {isFetching && !isLoading && (
+              <div className="absolute inset-0 bg-card/50 flex items-center justify-center z-10 rounded-2xl">
+                <Loader2 className="animate-spin w-6 h-6 text-primary" />
+              </div>
+            )}
+
+            {activities.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <ClipboardList className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                <p className="font-pixel text-sm text-foreground">No Activities Yet</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Go for a run to start building your log!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {activities.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors border border-border/50"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="font-pixel text-[11px] text-foreground truncate">
+                        {activity.name || "Run"}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {format(new Date(activity.date), "MMM d, yyyy")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
+                      </div>
+                    </div>
+                    {activity.awardedItems && activity.awardedItems.length > 0 && (
+                      <div className="flex flex-col items-end gap-0.5 shrink-0">
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          {activity.awardedItems.slice(0, 2).map((ri: any, idx: number) => (
+                            <Badge
+                              key={idx}
+                              variant="outline"
+                              className={`text-[9px] px-1.5 py-0 ${
+                                ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
+                              }`}
+                            >
+                              <Sparkles className="w-2.5 h-2.5 mr-0.5" />
+                              {ri.item?.name || "Item"}
+                            </Badge>
+                          ))}
+                          {activity.awardedItems.length > 2 && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-800">
+                              +{activity.awardedItems.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                        {calculateMedalsFromItems(activity.awardedItems) > 0 && (
+                          <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                            <img src="/items/medal.png" alt="" className="w-3 h-3" />
+                            +{calculateMedalsFromItems(activity.awardedItems)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop: parchment scroll background */}
           <div
-            className="relative min-h-[500px] flex flex-col"
+            className="hidden md:flex relative min-h-[700px] flex-col"
             style={{
               backgroundImage: "url(/backgrounds/scroll.webp)",
-              backgroundSize: "contain",
+              backgroundSize: "100% 100%",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center top",
             }}
           >
-            {/* Content area inside the scroll */}
-            <div className="px-[14%] pt-[14%] pb-[16%] flex-1 relative">
+            <div className="px-[14%] pt-[10%] pb-[12%] flex-1 relative">
               {isFetching && !isLoading && (
                 <div className="absolute inset-0 bg-amber-50/50 flex items-center justify-center z-10 rounded-lg">
                   <Loader2 className="animate-spin w-6 h-6 text-amber-700" />
@@ -120,7 +186,6 @@ export default function ActivityLog() {
                       key={activity.id}
                       className="flex items-center gap-3 p-2.5 rounded-lg bg-amber-900/5 hover:bg-amber-900/10 transition-colors border border-amber-900/10"
                     >
-                      {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="font-pixel text-[11px] text-amber-900 truncate">
                           {activity.name || "Run"}
@@ -129,8 +194,6 @@ export default function ActivityLog() {
                           {format(new Date(activity.date), "MMM d, yyyy")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
                         </div>
                       </div>
-
-                      {/* Rewards */}
                       {activity.awardedItems && activity.awardedItems.length > 0 && (
                         <div className="flex flex-col items-end gap-0.5 shrink-0">
                           <div className="flex flex-wrap gap-1 justify-end">

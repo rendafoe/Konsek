@@ -151,6 +151,10 @@
     @apply border-border;
   }
 
+  html, body {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
@@ -533,6 +537,16 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.8);
   }
+
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border: none;
+    }
+  }
 }
 
 /* ==========================================================================
@@ -546,14 +560,15 @@
   75% { transform: rotate(-5deg); }
 }
 
-/* Stage 2: Hatchling V1 - active wobble */
+/* Stage 2: Hatchling V1 - active wobble with pause */
 @keyframes esko-hatchling-v1 {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  15% { transform: rotate(10deg) scale(1.02); }
-  30% { transform: rotate(-8deg) scale(1); }
-  45% { transform: rotate(6deg) scale(1.01); }
-  60% { transform: rotate(-10deg) scale(1.02); }
-  85% { transform: rotate(4deg) scale(1); }
+  0% { transform: rotate(0deg) scale(1); }
+  9% { transform: rotate(10deg) scale(1.02); }
+  18% { transform: rotate(-8deg) scale(1); }
+  27% { transform: rotate(6deg) scale(1.01); }
+  36% { transform: rotate(-10deg) scale(1.02); }
+  50% { transform: rotate(4deg) scale(1); }
+  60%, 100% { transform: rotate(0deg) scale(1); }
 }
 
 /* Stage 3: Hatchling V2 - subtle bounce */
@@ -621,7 +636,7 @@
 }
 
 .animate-esko-hatchling-v1 {
-  animation: esko-hatchling-v1 1.5s ease-in-out infinite;
+  animation: esko-hatchling-v1 3s ease-in-out infinite;
   will-change: transform;
 }
 
@@ -641,8 +656,8 @@
 }
 
 .animate-esko-young-adult {
-  animation: esko-young-adult 0.8s ease-in-out infinite;
-  will-change: transform;
+  animation: esko-mature 2.5s ease-in-out infinite;
+  will-change: transform, filter;
 }
 
 .animate-esko-mature {
@@ -657,21 +672,21 @@
 
 /* Health state animation modifiers - slowed when health is low */
 .health-low .animate-esko-egg { animation-duration: 4.5s; }
-.health-low .animate-esko-hatchling-v1 { animation-duration: 2.25s; }
+.health-low .animate-esko-hatchling-v1 { animation-duration: 4.5s; }
 .health-low .animate-esko-hatchling-v2 { animation-duration: 2.25s; }
 .health-low .animate-esko-child { animation-duration: 1.8s; }
 .health-low .animate-esko-adolescent { animation-duration: 1.5s; }
-.health-low .animate-esko-young-adult { animation-duration: 1.2s; }
+.health-low .animate-esko-young-adult { animation-duration: 3.75s; }
 .health-low .animate-esko-mature { animation-duration: 3.75s; }
 .health-low .animate-esko-maxed { animation-duration: 4.5s; }
 
 /* Critical health - nearly stopped */
 .health-critical .animate-esko-egg { animation-duration: 6s; opacity: 0.7; }
-.health-critical .animate-esko-hatchling-v1 { animation-duration: 3s; opacity: 0.7; }
+.health-critical .animate-esko-hatchling-v1 { animation-duration: 6s; opacity: 0.7; }
 .health-critical .animate-esko-hatchling-v2 { animation-duration: 3s; opacity: 0.7; }
 .health-critical .animate-esko-child { animation-duration: 2.4s; opacity: 0.7; }
 .health-critical .animate-esko-adolescent { animation-duration: 2s; opacity: 0.7; }
-.health-critical .animate-esko-young-adult { animation-duration: 1.6s; opacity: 0.7; }
+.health-critical .animate-esko-young-adult { animation-duration: 5s; opacity: 0.7; }
 .health-critical .animate-esko-mature { animation-duration: 5s; opacity: 0.7; }
 .health-critical .animate-esko-maxed { animation-duration: 6s; opacity: 0.7; }
 
