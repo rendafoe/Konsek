@@ -3,12 +3,12 @@
 import { useStravaStatus } from "@/hooks/use-strava";
 import { useAuth } from "@/hooks/use-auth";
 import { useReferralStats } from "@/hooks/use-referrals";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import { PageBackground } from "@/components/PageBackground";
 
 export default function Settings() {
   const { isLoading } = useStravaStatus();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { data: referralStats } = useReferralStats();
 
   return (
@@ -67,7 +67,16 @@ export default function Settings() {
           </div>
         </section>
 
-        <div className="text-xs text-muted-foreground text-center pt-8">
+        {/* Sign Out */}
+        <button
+          onClick={() => logout()}
+          className="w-full flex items-center justify-center gap-2 p-4 rounded-lg text-destructive hover:bg-destructive/10 transition-colors font-semibold text-sm"
+        >
+          <LogOut size={16} />
+          Sign Out
+        </button>
+
+        <div className="text-xs text-muted-foreground text-center pt-4">
           v1.0.0 • Running Companion
         </div>
       </div>
