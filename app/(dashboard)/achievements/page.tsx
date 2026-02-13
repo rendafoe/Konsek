@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useMedalStatus, usePurchaseItem } from "@/hooks/use-medals";
-import { PageHeader } from "@/components/PageHeader";
 import { Loader2, Trophy, Lock, Star, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageBackground } from "@/components/PageBackground";
@@ -78,13 +77,14 @@ export default function Achievements() {
   return (
     <PageBackground src="/backgrounds/achievements.webp" overlay={0.25}>
     <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-      <PageHeader title="Achievements" subtitle={`Collect all items from your running adventures. ${unlockedCount} / ${totalCount} unlocked`} />
-
       {/* Rarity Filter + Collection Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="inline-flex items-center gap-2 bg-card/70 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/50">
           <Trophy size={18} className="text-primary" />
-          <h2 className="text-base font-pixel text-card-foreground">Item Collection</h2>
+          <div>
+            <h2 className="text-base font-pixel text-card-foreground">Item Collection</h2>
+            <p className="text-[10px] text-card-foreground/60">{unlockedCount} / {totalCount} unlocked</p>
+          </div>
         </div>
 
         <select
@@ -100,14 +100,14 @@ export default function Achievements() {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-3 max-w-lg mx-auto">
         {displayedItems.map((item) => (
-          <div key={item.id} className={`cozy-card p-3 relative transition-all duration-200 group border-2 ${rarityBorderColors[item.rarity] || "border-gray-400/60"} hover:-translate-y-1 hover:shadow-md ${item.unlocked ? "ring-2 ring-green-500 ring-offset-2 ring-offset-background shadow-lg shadow-green-500/20" : ""}`}
+          <div key={item.id} className={`cozy-card p-2 relative transition-all duration-200 group border-2 ${rarityBorderColors[item.rarity] || "border-gray-400/60"} hover:-translate-y-1 hover:shadow-md ${item.unlocked ? "ring-2 ring-green-500 ring-offset-2 ring-offset-background shadow-lg shadow-green-500/20" : ""}`}
             style={item.rarity === "mythic" ? { boxShadow: "0 0 12px rgba(234, 179, 8, 0.15), 0 2px 12px rgba(27, 67, 50, 0.06)" } : undefined}>
-            {!item.unlocked && <div className="absolute top-2 right-2 z-10"><Lock className="w-4 h-4 text-muted-foreground" /></div>}
-            {item.rarity === "mythic" && <div className="absolute top-2 left-2 z-10"><Sparkles className="w-4 h-4 text-yellow-400" /></div>}
-            {item.isSpecialReward && item.rarity !== "mythic" && <div className="absolute top-2 left-2 z-10"><Star className="w-4 h-4 text-amber-500 fill-amber-500" /></div>}
-            <div className="aspect-square bg-muted/30 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
+            {!item.unlocked && <div className="absolute top-1.5 right-1.5 z-10"><Lock className="w-3 h-3 text-muted-foreground" /></div>}
+            {item.rarity === "mythic" && <div className="absolute top-1.5 left-1.5 z-10"><Sparkles className="w-3 h-3 text-yellow-400" /></div>}
+            {item.isSpecialReward && item.rarity !== "mythic" && <div className="absolute top-1.5 left-1.5 z-10"><Star className="w-3 h-3 text-amber-500 fill-amber-500" /></div>}
+            <div className="aspect-square bg-muted/30 rounded-lg mb-1 flex items-center justify-center overflow-hidden">
               <img src={item.imageUrl} alt={item.name} className={`w-full h-full object-contain transition-all duration-200 ${!item.unlocked ? "opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0" : ""}`} onError={(e) => { e.currentTarget.style.display = "none"; }} />
             </div>
             <h3 className="font-pixel text-[9px] truncate mb-1 text-foreground" title={item.name}>{item.name}</h3>
@@ -116,11 +116,11 @@ export default function Achievements() {
               <p className="text-[7px] text-amber-600 mt-1 truncate" title={item.specialRewardCondition}>{item.specialRewardCondition}</p>
             )}
             {item.unlocked ? (
-              <div className="mt-2 text-[10px] font-semibold text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded text-center">Owned</div>
+              <div className="mt-1 text-[8px] font-semibold text-green-600 bg-green-50 dark:bg-green-950/30 px-1.5 py-0.5 rounded text-center">Owned</div>
             ) : item.price ? (
               <button onClick={() => handlePurchase(item.id, item.name, item.price!)} disabled={isPurchasing && purchasingItemId === item.id}
-                className={`mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded transition-all ${medalStatus && medalStatus.balance >= item.price ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-white hover:brightness-110 cursor-pointer" : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"}`}>
-                {isPurchasing && purchasingItemId === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><img src="/items/medal.png" alt="" className="w-3 h-3" />{item.price}</>}
+                className={`mt-1 w-full flex items-center justify-center gap-0.5 text-[8px] font-bold px-1.5 py-1 rounded transition-all ${medalStatus && medalStatus.balance >= item.price ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-white hover:brightness-110 cursor-pointer" : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"}`}>
+                {isPurchasing && purchasingItemId === item.id ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <><img src="/items/medal.png" alt="" className="w-2.5 h-2.5" />{item.price}</>}
               </button>
             ) : null}
           </div>

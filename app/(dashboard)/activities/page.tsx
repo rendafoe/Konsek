@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useActivities } from "@/hooks/use-activities";
-import { PageHeader } from "@/components/PageHeader";
 import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
@@ -84,7 +83,6 @@ export default function ActivityLog() {
   return (
     <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.15}>
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-        <PageHeader title="Activity Log" subtitle="Your complete running history with items found" />
 
         {/* Activity list container */}
         <div className="max-w-2xl mx-auto relative">
@@ -164,7 +162,7 @@ export default function ActivityLog() {
               backgroundPosition: "center top",
             }}
           >
-            <div className="px-[14%] pt-[10%] pb-[12%] flex-1 relative">
+            <div className="px-[14%] pt-[18%] pb-[16%] flex-1 relative">
               {isFetching && !isLoading && (
                 <div className="absolute inset-0 bg-amber-50/50 flex items-center justify-center z-10 rounded-lg">
                   <Loader2 className="animate-spin w-6 h-6 text-amber-700" />

@@ -1,6 +1,5 @@
 "use client";
 
-import { PageHeader } from "@/components/PageHeader";
 import { useStravaStatus } from "@/hooks/use-strava";
 import { useAuth } from "@/hooks/use-auth";
 import { useReferralStats } from "@/hooks/use-referrals";
@@ -15,7 +14,6 @@ export default function Settings() {
   return (
     <PageBackground src="/backgrounds/settings.webp" overlay={0.25}>
     <main className="flex-1 p-4 md:p-8">
-      <PageHeader title="Settings" />
 
       <div className="max-w-xl space-y-8">
         {/* Account Section */}

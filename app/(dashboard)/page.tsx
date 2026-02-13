@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Activity, Sparkles, Heart, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -71,8 +70,6 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { isNight, toggleNight } = useNightMode();
   const { hasCompletedTutorial, openTutorial } = useTutorial();
-  const isMobile = useIsMobile();
-
   const [useMiles, setUseMiles] = useState(false);
   const [rewardModalOpen, setRewardModalOpen] = useState(false);
   const [awardedItems, setAwardedItems] = useState<any[]>([]);
@@ -284,7 +281,7 @@ export default function Dashboard() {
                 <img
                   src={`/esko/esko-${stageInfo.stage}.png`}
                   alt={`Esko - ${stageInfo.name}`}
-                  className={`${isMobile ? "w-[325px] h-[325px]" : "w-[450px] h-[450px]"} object-contain ${
+                  className={`h-[42vh] max-h-[450px] w-auto object-contain ${
                     character?.status !== "dead"
                       ? STAGE_ANIMATIONS[stageInfo.stage] || ""
                       : "esko-dead"

@@ -8,7 +8,6 @@ import {
 import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
 import { useReferralStats, useReferralList } from "@/hooks/use-referrals";
-import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -161,11 +160,6 @@ export default function Friends() {
   return (
     <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
     <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-      <PageHeader
-        title="Friends"
-        subtitle={`${friends.length} friend${friends.length !== 1 ? "s" : ""} connected`}
-      />
-
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button

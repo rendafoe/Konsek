@@ -1,7 +1,6 @@
 "use client";
 
 import { PageBackground } from "@/components/PageBackground";
-import { PageHeader } from "@/components/PageHeader";
 import { useNightMode } from "@/lib/night-mode-context";
 import { useTutorial } from "@/lib/tutorial-context";
 import {
@@ -75,8 +74,6 @@ export default function Info() {
   return (
     <PageBackground src={isNight ? "/backgrounds/home-night.webp" : "/backgrounds/home-day.webp"} overlay={0.2}>
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-        <PageHeader title="Info" subtitle="How Konsek works" />
-
         <div className="max-w-2xl space-y-6">
           {/* Replay Tutorial Card */}
           <button
