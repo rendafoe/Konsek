@@ -30,10 +30,22 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://konsek.vercel.app"),
   title: "Konsek",
-  description: "A running companion that gamifies fitness consistency via Strava integration.",
+  description: "Your running companion for consistency. Raise a digital companion powered by your real-world runs via Strava.",
   icons: {
     icon: "/favicon.png",
+  },
+  openGraph: {
+    title: "Konsek",
+    description: "Your running companion for consistency. Raise a digital companion powered by your real-world runs via Strava.",
+    siteName: "Konsek",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Konsek",
+    description: "Your running companion for consistency. Raise a digital companion powered by your real-world runs via Strava.",
   },
 };
 
