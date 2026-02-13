@@ -16,7 +16,7 @@ const STAGE_IMAGES: Record<string, string> = {
 function MysteryStage({ className }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center ${className || ''}`}>
-      <span className="text-[#40916c]/60 font-serif text-4xl md:text-5xl animate-mystery-bounce select-none">
+      <span className="text-[#c5d4c2] font-serif text-4xl md:text-5xl animate-mystery-bounce select-none" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
         ?
       </span>
     </div>
@@ -75,7 +75,7 @@ export default function Landing() {
         style={{
           backgroundImage: "url(/backgrounds/landing.webp)",
           backgroundSize: "cover",
-          backgroundPosition: "center calc(100% + 30vh)",
+          backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
         }}
       >
