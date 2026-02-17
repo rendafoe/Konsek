@@ -187,7 +187,7 @@ function CompassRose({ x, y }: { x: number; y: number }) {
   );
 }
 
-function StartMarker({ x, y }: { x: number; y: number }) {
+function StartMarker({ x, y, labelDx = 0, labelDy = 9 }: { x: number; y: number; labelDx?: number; labelDy?: number }) {
   return (
     <g transform={`translate(${x}, ${y})`}>
       {/* Flag pole */}
@@ -197,12 +197,12 @@ function StartMarker({ x, y }: { x: number; y: number }) {
       {/* Base dot */}
       <circle cx={0} cy={0} r={2.5} fill="#4a8c1c" stroke="#3d5a1e" strokeWidth={0.8} />
       {/* Label */}
-      <text x={0} y={9} textAnchor="middle" fontSize={5} fontFamily="'Press Start 2P', monospace" fill="#3d5a1e">Start</text>
+      <text x={labelDx} y={labelDy} textAnchor="middle" fontSize={5} fontFamily="'Press Start 2P', monospace" fill="#3d5a1e">Start</text>
     </g>
   );
 }
 
-function EndMarker({ x, y }: { x: number; y: number }) {
+function EndMarker({ x, y, labelDx = 0, labelDy = 14 }: { x: number; y: number; labelDx?: number; labelDy?: number }) {
   return (
     <g transform={`translate(${x}, ${y})`}>
       {/* X marks the spot */}
@@ -211,7 +211,7 @@ function EndMarker({ x, y }: { x: number; y: number }) {
       {/* Outer ring */}
       <circle cx={0} cy={0} r={7} fill="none" stroke="#8b1a1a" strokeWidth={0.8} />
       {/* Label */}
-      <text x={0} y={14} textAnchor="middle" fontSize={5} fontFamily="'Press Start 2P', monospace" fill="#8b1a1a">End</text>
+      <text x={labelDx} y={labelDy} textAnchor="middle" fontSize={5} fontFamily="'Press Start 2P', monospace" fill="#8b1a1a">End</text>
     </g>
   );
 }
@@ -230,7 +230,35 @@ export function FantasyRouteMap({ polyline, activityName, className = "" }: Fant
       const compass = bestCompassCorner(result.start, result.end, W, H);
       const trees = generateTrees(result.start, result.end, compass, W, H);
 
-      return { ...result, compass, trees };
+      // Compute label offsets to avoid overlap when start/end are close
+      const dist = Math.hypot(result.end.x - result.start.x, result.end.y - result.start.y);
+      let startLabel = { dx: 0, dy: 9 };
+      let endLabel = { dx: 0, dy: 14 };
+
+      if (dist < 50) {
+        // Points are close — separate labels on opposite sides
+        if (result.start.x <= result.end.x) {
+          // Start is left of end: push start label left, end label right
+          startLabel = { dx: -16, dy: 5 };
+          endLabel = { dx: 16, dy: 5 };
+        } else {
+          startLabel = { dx: 16, dy: 5 };
+          endLabel = { dx: -16, dy: 5 };
+        }
+        // If they're also vertically close, use vertical separation instead
+        if (Math.abs(result.start.x - result.end.x) < 20) {
+          if (result.start.y <= result.end.y) {
+            // Start is above end
+            startLabel = { dx: 0, dy: -20 };
+            endLabel = { dx: 0, dy: 14 };
+          } else {
+            startLabel = { dx: 0, dy: 9 };
+            endLabel = { dx: 0, dy: -14 };
+          }
+        }
+      }
+
+      return { ...result, compass, trees, startLabel, endLabel };
     } catch {
       return null;
     }
@@ -349,8 +377,8 @@ export function FantasyRouteMap({ polyline, activityName, className = "" }: Fant
       />
 
       {/* Start & End markers */}
-      <StartMarker x={mapData.start.x} y={mapData.start.y} />
-      <EndMarker x={mapData.end.x} y={mapData.end.y} />
+      <StartMarker x={mapData.start.x} y={mapData.start.y} labelDx={mapData.startLabel.dx} labelDy={mapData.startLabel.dy} />
+      <EndMarker x={mapData.end.x} y={mapData.end.y} labelDx={mapData.endLabel.dx} labelDy={mapData.endLabel.dy} />
     </svg>
   );
 }

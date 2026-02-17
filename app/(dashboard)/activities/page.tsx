@@ -270,12 +270,12 @@ export default function ActivityLog() {
 
         {/* Route Map Dialog */}
         <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md checkin-glass border-white/12 rounded-2xl">
             <DialogHeader>
-              <DialogTitle className="font-pixel text-sm">
+              <DialogTitle className="font-pixel text-sm text-white/90">
                 {selectedActivity?.name || "Run"}
               </DialogTitle>
-              <DialogDescription className="text-xs">
+              <DialogDescription className="text-xs text-white/60">
                 {selectedActivity && format(new Date(selectedActivity.date), "MMM d, yyyy")} · {selectedActivity && formatDuration(selectedActivity.duration)} · {selectedActivity && formatDistance(selectedActivity.distance)}
               </DialogDescription>
             </DialogHeader>
@@ -287,7 +287,7 @@ export default function ActivityLog() {
                   className="rounded-lg"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+                <div className="flex flex-col items-center justify-center h-48 text-white/50">
                   <MapPin className="w-8 h-8 mb-2 opacity-40" />
                   <p className="text-sm">No route data available</p>
                 </div>
