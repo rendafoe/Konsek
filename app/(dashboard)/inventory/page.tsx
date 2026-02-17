@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useInventory, useEquipItem, useUnequipItem } from "@/hooks/use-inventory";
+import { useHaptics } from "@/hooks/use-haptics";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageBackground } from "@/components/PageBackground";
@@ -27,6 +28,7 @@ export default function Inventory() {
   const { mutate: equip } = useEquipItem();
   const { mutate: unequip } = useUnequipItem();
   const { toast } = useToast();
+  const { playWithVibrate } = useHaptics();
 
   const groupedItems = useMemo(() => {
     if (!items) return [];
@@ -54,6 +56,7 @@ export default function Inventory() {
   }
 
   const handleToggleEquip = (groupedItem: GroupedItem) => {
+    playWithVibrate("equip", "tap");
     if (groupedItem.equippedId) {
       unequip(groupedItem.equippedId, {
         onSuccess: () => toast({ title: "Unequipped", description: `Removed ${groupedItem.item.name}` })

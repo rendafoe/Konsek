@@ -256,7 +256,7 @@ async function handleSimulateRun(userId: string, body: any) {
       healthUpdated: isFirstRunOfDay,
     });
 
-    let rewardResult = { items: [] as any[], rarities: [] as string[], medalsAwarded: 0 };
+    let rewardResult = { items: [] as any[], rarities: [] as string[], medalsAwarded: 0, awardedItemResults: [] as { item: any; isNew: boolean }[] };
     let progressionReward = null;
 
     const previousRuns = character.totalRuns || 0;
@@ -289,7 +289,7 @@ async function handleSimulateRun(userId: string, body: any) {
     return NextResponse.json({
       success: true,
       run,
-      awardedItems: rewardResult.items,
+      awardedItems: rewardResult.awardedItemResults.map(r => ({ ...r.item, isNew: r.isNew })),
       rarities: rewardResult.rarities,
       medalsAwarded: rewardResult.medalsAwarded,
       progressionReward,
@@ -328,13 +328,17 @@ async function handleAwardItems(userId: string, body: any) {
       const randomItem = matchingItems[Math.floor(Math.random() * matchingItems.length)];
 
       await db.insert(inventory).values({ userId, itemId: randomItem.id, equipped: false });
-      try {
+      const existingUnlock = await db
+        .select({ id: userUnlocks.id })
+        .from(userUnlocks)
+        .where(and(eq(userUnlocks.userId, userId), eq(userUnlocks.itemId, randomItem.id)))
+        .limit(1);
+      const isNew = existingUnlock.length === 0;
+      if (isNew) {
         await db.insert(userUnlocks).values({ userId, itemId: randomItem.id });
-      } catch {
-        // Already unlocked
       }
 
-      awardedItems.push(randomItem);
+      awardedItems.push({ ...randomItem, isNew });
     }
 
     return NextResponse.json({ success: true, awardedItems, message: `Awarded ${count} ${rarity} item(s)` });

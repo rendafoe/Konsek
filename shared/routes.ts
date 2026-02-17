@@ -51,6 +51,7 @@ export const api = {
                 quote: z.string().nullable(),
                 isSpecialReward: z.boolean(),
                 specialRewardCondition: z.string().nullable(),
+                isNew: z.boolean().optional(),
               })).optional(),
               medalsAwarded: z.number().optional(),
               progressionReward: z.object({

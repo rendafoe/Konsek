@@ -201,8 +201,8 @@ export async function POST(req: NextRequest) {
           run.polyline,
           run.date
         );
-        if (rewardResult.items.length > 0) {
-          allAwardedItems.push(...rewardResult.items);
+        if (rewardResult.awardedItemResults.length > 0) {
+          allAwardedItems.push(...rewardResult.awardedItemResults.map(r => ({ ...r.item, isNew: r.isNew })));
         }
         totalMedalsAwarded += rewardResult.medalsAwarded;
       }

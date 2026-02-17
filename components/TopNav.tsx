@@ -6,12 +6,13 @@ import { useStravaStatus } from "@/hooks/use-strava";
 import { useMedalStatus } from "@/hooks/use-medals";
 import { useAuth } from "@/hooks/use-auth";
 import { useSyncContext } from "@/lib/sync-context";
+import { useHaptics } from "@/hooks/use-haptics";
 import {
   Home,
   Sparkles,
   Archive,
   Settings,
-  Mountain,
+
   ClipboardList,
   Trophy,
   Users,
@@ -39,14 +40,13 @@ export function TopNav() {
   const { data: medalStatus } = useMedalStatus();
   const { logout } = useAuth();
   const { sync, isSyncing } = useSyncContext();
+  const { play, playWithVibrate } = useHaptics();
 
   return (
     <nav className="bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4 gap-4 z-50 shadow-sm" style={{ height: "calc(3.5rem + env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)" }}>
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-sm">
-          <Mountain size={16} className="text-white" />
-        </div>
+        <img src="/esko/esko-hatchling-v1.png" alt="Konsek" className="w-8 h-8 rounded-lg shadow-sm" />
         <span className="text-sm font-bold text-foreground hidden sm:block">
           Konsek
         </span>
@@ -60,6 +60,7 @@ export function TopNav() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => play("tap")}
               className={`
                 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                 ${isActive
@@ -103,7 +104,7 @@ export function TopNav() {
 
         {/* Sync Button */}
         <button
-          onClick={sync}
+          onClick={() => { playWithVibrate("tap"); sync(); }}
           disabled={isSyncing}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
           data-testid="button-sync-strava"

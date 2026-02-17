@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useHaptics } from "@/hooks/use-haptics";
 import {
   Home,
   Sparkles,
@@ -29,6 +30,7 @@ const navItems = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { playWithVibrate } = useHaptics();
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 dark:bg-card/95 backdrop-blur-sm border-t border-border z-50 flex items-center justify-around px-2 pt-2 shadow-lg" style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}>
@@ -38,6 +40,7 @@ export function MobileBottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            onClick={() => playWithVibrate("tap")}
             className={`
               flex flex-col items-center gap-0.5 p-1.5 rounded-xl transition-all min-w-0 overflow-hidden
               ${isActive

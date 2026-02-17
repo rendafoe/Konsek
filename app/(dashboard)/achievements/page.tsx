@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useMedalStatus, usePurchaseItem } from "@/hooks/use-medals";
+import { useHaptics } from "@/hooks/use-haptics";
 import { Loader2, Trophy, Lock, Star, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageBackground } from "@/components/PageBackground";
@@ -43,6 +44,7 @@ export default function Achievements() {
   const { data: medalStatus } = useMedalStatus();
   const { mutate: purchaseItem, isPending: isPurchasing } = usePurchaseItem();
   const { toast } = useToast();
+  const { playWithVibrate } = useHaptics();
   const [purchasingItemId, setPurchasingItemId] = useState<number | null>(null);
   const [rarityFilter, setRarityFilter] = useState<string>("all");
 
@@ -53,8 +55,8 @@ export default function Achievements() {
     }
     setPurchasingItemId(itemId);
     purchaseItem(itemId, {
-      onSuccess: () => { toast({ title: "Item Purchased!", description: `You obtained ${itemName}!` }); setPurchasingItemId(null); },
-      onError: (err) => { toast({ title: "Purchase Failed", description: err.message, variant: "destructive" }); setPurchasingItemId(null); },
+      onSuccess: () => { playWithVibrate("success"); toast({ title: "Item Purchased!", description: `You obtained ${itemName}!` }); setPurchasingItemId(null); },
+      onError: (err) => { playWithVibrate("error"); toast({ title: "Purchase Failed", description: err.message, variant: "destructive" }); setPurchasingItemId(null); },
     });
   };
 

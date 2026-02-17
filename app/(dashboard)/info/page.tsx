@@ -5,7 +5,7 @@ import { useNightMode } from "@/lib/night-mode-context";
 import { useTutorial } from "@/lib/tutorial-context";
 import {
   Heart, Footprints, Backpack, Trophy, Users, Sparkles,
-  BookOpen, ShieldCheck, Mountain, ExternalLink, RefreshCw,
+  BookOpen, ShieldCheck, ExternalLink, RefreshCw,
 } from "lucide-react";
 
 const features = [
@@ -95,9 +95,7 @@ export default function Info() {
           {/* About Section */}
           <section className="cozy-card p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
-                <Mountain size={18} className="text-white" />
-              </div>
+              <img src="/esko/esko-hatchling-v1.png" alt="Konsek" className="w-10 h-10 rounded-xl shadow-sm" />
               <div>
                 <h2 className="font-pixel text-sm text-foreground">About Konsek</h2>
                 <p className="text-xs text-muted-foreground">A Nordic forest running companion</p>

@@ -3,6 +3,7 @@
 import { createContext, useContext, useCallback, useRef } from "react";
 import { useStravaSync } from "@/hooks/use-strava";
 import { useToast } from "@/hooks/use-toast";
+import { useHaptics } from "@/hooks/use-haptics";
 
 type SyncSuccessHandler = (data: any) => void;
 
@@ -17,6 +18,7 @@ const SyncContext = createContext<SyncContextValue | null>(null);
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const { mutate: syncStrava, isPending: isSyncing } = useStravaSync();
   const { toast } = useToast();
+  const { playWithVibrate } = useHaptics();
   const handlerRef = useRef<SyncSuccessHandler | null>(null);
 
   const registerSyncHandler = useCallback((handler: SyncSuccessHandler) => {
@@ -31,6 +33,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const sync = useCallback(() => {
     syncStrava(undefined, {
       onSuccess: (data) => {
+        playWithVibrate("success");
         if (handlerRef.current) {
           handlerRef.current(data);
         } else {
@@ -38,10 +41,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         }
       },
       onError: (err) => {
+        playWithVibrate("error");
         toast({ title: "Sync Failed", description: err.message, variant: "destructive" });
       },
     });
-  }, [syncStrava, toast]);
+  }, [syncStrava, toast, playWithVibrate]);
 
   return (
     <SyncContext.Provider value={{ sync, isSyncing, registerSyncHandler }}>

@@ -126,17 +126,23 @@ function rollRarityFromSubset(probabilities: number[], rarities: Rarity[]): Rari
   return rarities[0];
 }
 
+export interface AwardedItemResult {
+  item: Item;
+  isNew: boolean;
+}
+
 export interface RollResult {
   items: Item[];
   rarities: Rarity[];
   medalsAwarded: number;
+  awardedItemResults: AwardedItemResult[];
 }
 
 /**
  * Main function: Roll item(s) for a run based on distance
  */
 export async function rollItemsForRun(distanceMeters: number): Promise<RollResult> {
-  const result: RollResult = { items: [], rarities: [], medalsAwarded: 0 };
+  const result: RollResult = { items: [], rarities: [], medalsAwarded: 0, awardedItemResults: [] };
 
   // Must be at least 1km to get rewards
   if (distanceMeters < 1000) {
@@ -176,7 +182,9 @@ export async function awardItemsToUser(
   userId: string,
   runId: number,
   awardedItems: Item[]
-): Promise<void> {
+): Promise<AwardedItemResult[]> {
+  const results: AwardedItemResult[] = [];
+
   for (const item of awardedItems) {
     // Add to runItems for activity log display
     await db.insert(runItems).values({
@@ -192,16 +200,25 @@ export async function awardItemsToUser(
       equipped: false,
     });
 
-    // Track unlock for achievements (ignore if already unlocked)
-    try {
+    // Check if this is a first-time unlock
+    const existingUnlock = await db
+      .select({ id: userUnlocks.id })
+      .from(userUnlocks)
+      .where(and(eq(userUnlocks.userId, userId), eq(userUnlocks.itemId, item.id)))
+      .limit(1);
+
+    const isNew = existingUnlock.length === 0;
+    if (isNew) {
       await db.insert(userUnlocks).values({
         userId,
         itemId: item.id,
       });
-    } catch {
-      // Ignore duplicate key errors - item already unlocked
     }
+
+    results.push({ item, isNew });
   }
+
+  return results;
 }
 
 interface SpecialRewardContext {
@@ -308,8 +325,9 @@ export async function processRunRewards(
     ...specialRewards.map(i => i.rarity as Rarity)
   ];
 
+  let awardedItemResults: AwardedItemResult[] = [];
   if (allItems.length > 0) {
-    await awardItemsToUser(userId, runId, allItems);
+    awardedItemResults = await awardItemsToUser(userId, runId, allItems);
   }
 
   // Calculate and award medals for item drops
@@ -336,5 +354,5 @@ export async function processRunRewards(
     }
   }
 
-  return { items: allItems, rarities: allRarities, medalsAwarded };
+  return { items: allItems, rarities: allRarities, medalsAwarded, awardedItemResults };
 }

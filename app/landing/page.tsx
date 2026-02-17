@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
-import { ArrowRight, Flame, Sparkles, BarChart3 } from "lucide-react";
+import { ArrowRight, Sparkles, BarChart3, Flame } from "lucide-react";
 import { useEffect } from "react";
 
 const STAGE_IMAGES: Record<string, string> = {
@@ -56,7 +56,6 @@ export default function Landing() {
     { id: "egg", label: "Egg", unlocked: true },
     { id: "hatchling", label: "Hatchling", unlocked: true },
     { id: "child", label: "Child", unlocked: true },
-    { id: "mature", label: "Mature", unlocked: false },
     { id: "maxed", label: "Maxed", unlocked: false },
   ];
 
@@ -68,12 +67,12 @@ export default function Landing() {
 
   return (
     <div
-      className="min-h-[100dvh] h-[100dvh] overflow-y-auto snap-y snap-mandatory text-[#e8efe5]"
+      className="min-h-[100dvh] h-[100dvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory text-[#e8efe5] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
     >
       <div
         className="relative"
         style={{
-          backgroundImage: "url(/backgrounds/landing.webp)",
+          backgroundImage: "url(/backgrounds/landing3.png)",
           backgroundSize: "cover",
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
@@ -86,19 +85,17 @@ export default function Landing() {
         {/* Navigation */}
         <nav className="relative z-10 w-full max-w-5xl mx-auto px-6 py-8">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2.5">
-              <Flame size={20} className="text-[#d4a574]" />
+            <div className="flex items-center">
               <span
-                className="text-base font-light tracking-wide text-[#e8efe5]"
-                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+                className="text-xl md:text-2xl font-bold tracking-wide text-[#e8efe5]"
+                style={{ textShadow: "0 2px 6px rgba(0,0,0,0.7)" }}
               >
                 Konsek
               </span>
             </div>
             <button
               onClick={handleSignIn}
-              className="text-sm text-[#c5d4c2] hover:text-[#e8efe5] transition-colors duration-300"
-              style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+              className="text-sm font-medium text-[#e8efe5] bg-black/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 hover:bg-black/50 transition-all duration-300"
               data-testid="link-login"
             >
               Sign in
@@ -107,7 +104,7 @@ export default function Landing() {
         </nav>
 
         {/* Hero Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-8">
+        <div className="flex-1 flex flex-col items-center justify-start pt-[18vh] md:pt-[20vh] px-6">
           {/* Headline */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -116,7 +113,7 @@ export default function Landing() {
             className="text-center mb-10"
           >
             <h1
-              className="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-[#e8efe5] leading-tight"
+              className="text-3xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-[#e8efe5] leading-tight"
               style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}
             >
               Your running companion for{' '}
@@ -171,7 +168,7 @@ export default function Landing() {
           </p>
 
           {/* Evolution stages */}
-          <div className="flex justify-center items-end gap-6 md:gap-10 lg:gap-14">
+          <div className="flex justify-center items-end gap-4 md:gap-10 lg:gap-14">
             {evolutionStages.map((stage, i) => (
               <motion.div
                 key={stage.id}
@@ -228,7 +225,7 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-                className="flex items-center gap-3 px-5 py-4 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-colors duration-300"
+                className="flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-colors duration-300"
               >
                 <feature.icon
                   size={20}
@@ -261,7 +258,7 @@ export default function Landing() {
             className="text-2xl md:text-3xl lg:text-4xl font-light text-[#e8efe5] mb-10 tracking-tight"
             style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}
           >
-            Your Esko is waiting
+            Your companion is waiting
           </h2>
 
           {/* CTA Button */}
@@ -269,7 +266,7 @@ export default function Landing() {
             onClick={handleSignIn}
             className="group inline-flex items-center gap-3 px-8 py-4 bg-[#40916c] text-[#e8efe5] rounded-full font-medium text-base hover:bg-[#4aa578] transition-all duration-300 shadow-lg shadow-[#40916c]/20"
           >
-            Get started free
+            Get started for free
             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-300" />
           </button>
         </motion.div>

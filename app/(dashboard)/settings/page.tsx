@@ -3,13 +3,17 @@
 import { useStravaStatus } from "@/hooks/use-strava";
 import { useAuth } from "@/hooks/use-auth";
 import { useReferralStats } from "@/hooks/use-referrals";
-import { Loader2, LogOut } from "lucide-react";
+import { useHaptics } from "@/hooks/use-haptics";
+import { Loader2, LogOut, Volume2, Vibrate } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PageBackground } from "@/components/PageBackground";
 
 export default function Settings() {
   const { isLoading } = useStravaStatus();
   const { user, logout } = useAuth();
   const { data: referralStats } = useReferralStats();
+  const { prefs, toggleSound, toggleHaptics } = useHaptics();
+  const supportsVibration = typeof navigator !== "undefined" && "vibrate" in navigator;
 
   return (
     <PageBackground src="/backgrounds/settings.webp" overlay={0.25}>
@@ -63,6 +67,37 @@ export default function Settings() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Not referred by anyone</p>
+            )}
+          </div>
+        </section>
+
+        {/* Preferences Section */}
+        <section className="cozy-card p-5">
+          <h2 className="font-pixel text-sm uppercase mb-4 text-muted-foreground">Preferences</h2>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Volume2 size={18} className="text-muted-foreground" />
+                <div>
+                  <h3 className="font-bold text-sm">Sound Effects</h3>
+                  <p className="text-xs text-muted-foreground">Play sounds on interactions</p>
+                </div>
+              </div>
+              <Switch checked={prefs.soundEnabled} onCheckedChange={toggleSound} />
+            </div>
+
+            {supportsVibration && (
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Vibrate size={18} className="text-muted-foreground" />
+                  <div>
+                    <h3 className="font-bold text-sm">Haptic Feedback</h3>
+                    <p className="text-xs text-muted-foreground">Vibrate on interactions</p>
+                  </div>
+                </div>
+                <Switch checked={prefs.hapticsEnabled} onCheckedChange={toggleHaptics} />
+              </div>
             )}
           </div>
         </section>

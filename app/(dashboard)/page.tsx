@@ -14,6 +14,7 @@ import { MiniRouteMap } from "@/components/MiniRouteMap";
 import { DevPanel } from "@/components/DevPanel";
 import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
+import { useHaptics } from "@/hooks/use-haptics";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Activity, Sparkles, Heart, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const { registerSyncHandler } = useSyncContext();
   const { toast } = useToast();
   const { isNight, toggleNight } = useNightMode();
+  const { playWithVibrate } = useHaptics();
   const { hasCompletedTutorial, openTutorial } = useTutorial();
   const [useMiles, setUseMiles] = useState(false);
   const [rewardModalOpen, setRewardModalOpen] = useState(false);
@@ -94,6 +96,11 @@ export default function Dashboard() {
         setMedalsFromSync(data.medalsAwarded || 0);
         setProgressionReward(data.progressionReward || null);
         hadProgressionRef.current = !!data.progressionReward;
+        if (data.progressionReward) {
+          playWithVibrate("evolution");
+        } else {
+          playWithVibrate("reward");
+        }
         setRewardModalOpen(true);
       }
     });
@@ -132,6 +139,11 @@ export default function Dashboard() {
       setMedalsFromSync(data.medalsAwarded);
       setProgressionReward(data.progressionReward || null);
       hadProgressionRef.current = !!data.progressionReward;
+      if (data.progressionReward) {
+        playWithVibrate("evolution");
+      } else {
+        playWithVibrate("reward");
+      }
       setRewardModalOpen(true);
     }
   }, [character]);
@@ -144,6 +156,7 @@ export default function Dashboard() {
   }, [isCharLoading, character, hasCompletedTutorial, openTutorial]);
 
   const handleCreateCharacter = () => {
+    playWithVibrate("evolution");
     createCharacter({ name: "Esko" }, {
       onSuccess: () => toast({ title: "Esko has arrived!", description: "Your companion is ready to run with you." })
     });
@@ -226,14 +239,14 @@ export default function Dashboard() {
 
       {/* Lamp hotspots - hidden on mobile where lamps aren't visible */}
       <button
-        onClick={toggleNight}
+        onClick={() => { playWithVibrate("tap"); toggleNight(); }}
         className="hidden md:block fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
         style={{ left: "13%", top: "35%" }}
         title="Click to toggle lights"
         aria-label="Toggle day/night"
       />
       <button
-        onClick={toggleNight}
+        onClick={() => { playWithVibrate("tap"); toggleNight(); }}
         className="hidden md:block fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
         style={{ left: "78%", top: "35%" }}
         title="Click to toggle lights"
@@ -332,25 +345,26 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Runs */}
-          <div className="cozy-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-foreground">Recent Runs</h3>
+          <div className="flex justify-center">
+          <div className="checkin-glass rounded-2xl px-4 py-3 sm:px-5 sm:py-4 w-full max-w-sm md:max-w-md">
+            <div className="flex items-center justify-between mb-2.5">
+              <h3 className="text-xs font-bold text-white/90">Recent Runs</h3>
               {activities.length > 0 && (
                 <Link
                   href="/activities"
-                  className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"
+                  className="text-[10px] sm:text-xs text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1 transition-colors"
                 >
-                  View all <ArrowRight size={12} />
+                  View all <ArrowRight size={10} />
                 </Link>
               )}
             </div>
 
             {activities.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {activities.slice(0, 2).map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                    className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                   >
                     {/* Route Map */}
                     <div className="shrink-0">
@@ -359,10 +373,10 @@ export default function Dashboard() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-foreground truncate">
+                      <div className="font-medium text-xs sm:text-sm text-white/90 truncate">
                         {activity.name || "Run"}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[10px] sm:text-xs text-white/45">
                         {format(new Date(activity.date), "MMM d")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
                       </div>
                     </div>
@@ -374,13 +388,13 @@ export default function Dashboard() {
                           <Badge
                             key={idx}
                             variant="outline"
-                            className={`text-[10px] px-1.5 py-0 ${ri.item ? rarityBadgeStyles[ri.item.rarity] : ""}`}
+                            className={`text-[9px] sm:text-[10px] px-1.5 py-0 border-white/20 text-white/70 bg-white/5`}
                           >
                             {ri.item?.name || "Item"}
                           </Badge>
                         ))}
                         {activity.awardedItems.length > 2 && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1.5 py-0 border-white/20 text-white/70">
                             +{activity.awardedItems.length - 2}
                           </Badge>
                         )}
@@ -390,10 +404,11 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm italic">
+              <p className="text-white/40 text-xs italic">
                 No activities logged yet. Sync your runs to keep Esko healthy!
               </p>
             )}
+          </div>
           </div>
         </div>
 
