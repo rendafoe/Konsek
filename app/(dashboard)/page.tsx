@@ -364,31 +364,33 @@ export default function Dashboard() {
                 {activities.slice(0, 2).map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                   >
-                    {/* Route Map */}
-                    <div className="shrink-0">
-                      <MiniRouteMap polyline={activity.polyline} width={44} height={32} />
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-xs sm:text-sm text-white/90 truncate">
-                        {activity.name || "Run"}
+                    <div className="flex items-center gap-3">
+                      {/* Route Map */}
+                      <div className="shrink-0">
+                        <MiniRouteMap polyline={activity.polyline} width={44} height={32} />
                       </div>
-                      <div className="text-[10px] sm:text-xs text-white/45">
-                        {format(new Date(activity.date), "MMM d")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-xs sm:text-sm text-white/90 truncate">
+                          {activity.name || "Run"}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-white/45">
+                          {format(new Date(activity.date), "MMM d")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
+                        </div>
                       </div>
                     </div>
 
                     {/* Rewards */}
                     {activity.awardedItems && activity.awardedItems.length > 0 && (
-                      <div className="flex flex-wrap gap-1 shrink-0">
+                      <div className="flex flex-wrap gap-1 mt-1.5 ml-[56px]">
                         {activity.awardedItems.slice(0, 2).map((ri: any, idx: number) => (
                           <Badge
                             key={idx}
                             variant="outline"
-                            className={`text-[9px] sm:text-[10px] px-1.5 py-0 border-white/20 text-white/70 bg-white/5`}
+                            className={`text-[9px] sm:text-[10px] px-1.5 py-0 border-white/20 text-white/70 bg-white/5 max-w-[140px] truncate`}
                           >
                             {ri.item?.name || "Item"}
                           </Badge>

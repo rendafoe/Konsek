@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 7;
 
 const rarityBadgeStyles: Record<string, string> = {
   common: "bg-amber-100 text-amber-800 border-amber-400",
@@ -107,42 +107,42 @@ export default function ActivityLog() {
                 {activities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors border border-border/50"
+                    className="p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors border border-border/50"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="font-pixel text-[11px] text-foreground truncate">
-                        {activity.name || "Run"}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-pixel text-[11px] text-foreground truncate">
+                          {activity.name || "Run"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          {format(new Date(activity.date), "MMM d, yyyy")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
-                        {format(new Date(activity.date), "MMM d, yyyy")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
-                      </div>
+                      {activity.awardedItems && activity.awardedItems.length > 0 && calculateMedalsFromItems(activity.awardedItems) > 0 && (
+                        <div className="flex items-center gap-1 text-[9px] text-muted-foreground shrink-0">
+                          <img src="/items/medal.png" alt="" className="w-3 h-3" />
+                          +{calculateMedalsFromItems(activity.awardedItems)}
+                        </div>
+                      )}
                     </div>
                     {activity.awardedItems && activity.awardedItems.length > 0 && (
-                      <div className="flex flex-col items-end gap-0.5 shrink-0">
-                        <div className="flex flex-wrap gap-1 justify-end">
-                          {activity.awardedItems.slice(0, 2).map((ri: any, idx: number) => (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              className={`text-[9px] px-1.5 py-0 ${
-                                ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
-                              }`}
-                            >
-                              <Sparkles className="w-2.5 h-2.5 mr-0.5" />
-                              {ri.item?.name || "Item"}
-                            </Badge>
-                          ))}
-                          {activity.awardedItems.length > 2 && (
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-800">
-                              +{activity.awardedItems.length - 2}
-                            </Badge>
-                          )}
-                        </div>
-                        {calculateMedalsFromItems(activity.awardedItems) > 0 && (
-                          <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                            <img src="/items/medal.png" alt="" className="w-3 h-3" />
-                            +{calculateMedalsFromItems(activity.awardedItems)}
-                          </div>
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {activity.awardedItems.slice(0, 3).map((ri: any, idx: number) => (
+                          <Badge
+                            key={idx}
+                            variant="outline"
+                            className={`text-[9px] px-1.5 py-0 max-w-[160px] truncate ${
+                              ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
+                            }`}
+                          >
+                            <Sparkles className="w-2.5 h-2.5 mr-0.5 shrink-0" />
+                            <span className="truncate">{ri.item?.name || "Item"}</span>
+                          </Badge>
+                        ))}
+                        {activity.awardedItems.length > 3 && (
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-800">
+                            +{activity.awardedItems.length - 3}
+                          </Badge>
                         )}
                       </div>
                     )}
@@ -162,7 +162,7 @@ export default function ActivityLog() {
               backgroundPosition: "center top",
             }}
           >
-            <div className="px-[14%] pt-[18%] pb-[16%] flex-1 relative">
+            <div className="px-[14%] pt-[22%] pb-[20%] flex-1 relative">
               {isFetching && !isLoading && (
                 <div className="absolute inset-0 bg-amber-50/50 flex items-center justify-center z-10 rounded-lg">
                   <Loader2 className="animate-spin w-6 h-6 text-amber-700" />
@@ -182,42 +182,42 @@ export default function ActivityLog() {
                   {activities.map((activity) => (
                     <div
                       key={activity.id}
-                      className="flex items-center gap-3 p-2.5 rounded-lg bg-amber-900/5 hover:bg-amber-900/10 transition-colors border border-amber-900/10"
+                      className="p-2.5 rounded-lg bg-amber-900/5 hover:bg-amber-900/10 transition-colors border border-amber-900/10"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="font-pixel text-[11px] text-amber-900 truncate">
-                          {activity.name || "Run"}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-pixel text-[11px] text-amber-900 truncate">
+                            {activity.name || "Run"}
+                          </div>
+                          <div className="text-[10px] text-amber-800/70 mt-0.5">
+                            {format(new Date(activity.date), "MMM d, yyyy")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
+                          </div>
                         </div>
-                        <div className="text-[10px] text-amber-800/70 mt-0.5">
-                          {format(new Date(activity.date), "MMM d, yyyy")} · {formatDuration(activity.duration)} · {formatDistance(activity.distance)}
-                        </div>
+                        {activity.awardedItems && activity.awardedItems.length > 0 && calculateMedalsFromItems(activity.awardedItems) > 0 && (
+                          <div className="flex items-center gap-1 text-[9px] text-amber-800 shrink-0">
+                            <img src="/items/medal.png" alt="" className="w-3 h-3" />
+                            +{calculateMedalsFromItems(activity.awardedItems)}
+                          </div>
+                        )}
                       </div>
                       {activity.awardedItems && activity.awardedItems.length > 0 && (
-                        <div className="flex flex-col items-end gap-0.5 shrink-0">
-                          <div className="flex flex-wrap gap-1 justify-end">
-                            {activity.awardedItems.slice(0, 2).map((ri: any, idx: number) => (
-                              <Badge
-                                key={idx}
-                                variant="outline"
-                                className={`text-[9px] px-1.5 py-0 ${
-                                  ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
-                                }`}
-                              >
-                                <Sparkles className="w-2.5 h-2.5 mr-0.5" />
-                                {ri.item?.name || "Item"}
-                              </Badge>
-                            ))}
-                            {activity.awardedItems.length > 2 && (
-                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-800">
-                                +{activity.awardedItems.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                          {calculateMedalsFromItems(activity.awardedItems) > 0 && (
-                            <div className="flex items-center gap-1 text-[9px] text-amber-800">
-                              <img src="/items/medal.png" alt="" className="w-3 h-3" />
-                              +{calculateMedalsFromItems(activity.awardedItems)}
-                            </div>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {activity.awardedItems.slice(0, 3).map((ri: any, idx: number) => (
+                            <Badge
+                              key={idx}
+                              variant="outline"
+                              className={`text-[9px] px-1.5 py-0 max-w-[200px] truncate ${
+                                ri.item ? rarityBadgeStyles[ri.item.rarity] : ""
+                              }`}
+                            >
+                              <Sparkles className="w-2.5 h-2.5 mr-0.5 shrink-0" />
+                              <span className="truncate">{ri.item?.name || "Item"}</span>
+                            </Badge>
+                          ))}
+                          {activity.awardedItems.length > 3 && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-800">
+                              +{activity.awardedItems.length - 3}
+                            </Badge>
                           )}
                         </div>
                       )}
