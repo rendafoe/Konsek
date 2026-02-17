@@ -5,7 +5,9 @@ import { useActivities } from "@/hooks/use-activities";
 import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { MiniRouteMap } from "@/components/MiniRouteMap";
+import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { format } from "date-fns";
 
 const ITEMS_PER_PAGE = 7;
@@ -55,6 +57,7 @@ function formatDistance(meters: number): string {
 
 export default function ActivityLog() {
   const [page, setPage] = useState(1);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const { data, isLoading, isFetching } = useActivities({ page, limit: ITEMS_PER_PAGE });
   const { isNight } = useNightMode();
 
@@ -107,7 +110,8 @@ export default function ActivityLog() {
                 {activities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors border border-border/50"
+                    onClick={() => setSelectedActivity(activity)}
+                    className="p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all border border-border/50 cursor-pointer hover:scale-[1.01] hover:shadow-md active:scale-[0.99]"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -182,7 +186,8 @@ export default function ActivityLog() {
                   {activities.map((activity) => (
                     <div
                       key={activity.id}
-                      className="p-2.5 rounded-lg bg-amber-900/5 hover:bg-amber-900/10 transition-colors border border-amber-900/10"
+                      onClick={() => setSelectedActivity(activity)}
+                      className="p-2.5 rounded-lg bg-amber-900/5 hover:bg-amber-900/10 transition-all border border-amber-900/10 cursor-pointer hover:scale-[1.01] hover:shadow-md"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -262,6 +267,36 @@ export default function ActivityLog() {
             </div>
           )}
         </div>
+
+        {/* Route Map Dialog */}
+        <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-pixel text-sm">
+                {selectedActivity?.name || "Run"}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {selectedActivity && format(new Date(selectedActivity.date), "MMM d, yyyy")} · {selectedActivity && formatDuration(selectedActivity.duration)} · {selectedActivity && formatDistance(selectedActivity.distance)}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-center">
+              {selectedActivity?.polyline ? (
+                <MiniRouteMap
+                  polyline={selectedActivity.polyline}
+                  width={400}
+                  height={300}
+                  strokeWidth={2.5}
+                  className="w-full max-w-[400px] rounded-lg"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+                  <MapPin className="w-8 h-8 mb-2 opacity-40" />
+                  <p className="text-sm">No route data available</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </PageBackground>
   );
