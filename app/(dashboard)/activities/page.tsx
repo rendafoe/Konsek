@@ -6,7 +6,7 @@ import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { MiniRouteMap } from "@/components/MiniRouteMap";
+import { FantasyRouteMap } from "@/components/FantasyRouteMap";
 import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { format } from "date-fns";
 
@@ -281,12 +281,10 @@ export default function ActivityLog() {
             </DialogHeader>
             <div className="flex items-center justify-center">
               {selectedActivity?.polyline ? (
-                <MiniRouteMap
+                <FantasyRouteMap
                   polyline={selectedActivity.polyline}
-                  width={400}
-                  height={300}
-                  strokeWidth={2.5}
-                  className="w-full max-w-[400px] rounded-lg"
+                  activityName={selectedActivity?.name}
+                  className="rounded-lg"
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
