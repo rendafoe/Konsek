@@ -119,51 +119,182 @@ function bestCompassCorner(
   return best;
 }
 
-/** Generate a few tree positions scattered in empty areas */
-function generateTrees(
+type Decoration = { x: number; y: number; scale: number; type: "tree" | "mountain" | "water" | "bush" | "rocks" };
+
+/** Check if a position is far enough from route points, markers, and compass */
+function isClearOfRoute(
+  pos: { x: number; y: number },
+  routePoints: { x: number; y: number }[],
   start: { x: number; y: number },
   end: { x: number; y: number },
   compassPos: { x: number; y: number },
+  minDist: number = 30
+): boolean {
+  const dStart = Math.hypot(pos.x - start.x, pos.y - start.y);
+  const dEnd = Math.hypot(pos.x - end.x, pos.y - end.y);
+  const dCompass = Math.hypot(pos.x - compassPos.x, pos.y - compassPos.y);
+  if (dStart < minDist || dEnd < minDist || dCompass < 35) return false;
+
+  // Check against sampled route points
+  for (const rp of routePoints) {
+    if (Math.hypot(pos.x - rp.x, pos.y - rp.y) < minDist - 5) return false;
+  }
+  return true;
+}
+
+/** Simple seeded pseudo-random number generator */
+function seededRandom(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+/** Generate decorations (trees, mountains, water, bushes, rocks) scattered in empty areas */
+function generateDecorations(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  compassPos: { x: number; y: number },
+  routePoints: { x: number; y: number }[],
   width: number,
   height: number
-): { x: number; y: number; scale: number }[] {
-  // Use deterministic positions based on route
-  const seed = Math.abs(start.x * 7 + start.y * 13 + end.x * 19 + end.y * 23);
-  const trees: { x: number; y: number; scale: number }[] = [];
+): Decoration[] {
+  const seed = Math.abs(Math.round(start.x * 7 + start.y * 13 + end.x * 19 + end.y * 23));
+  const rand = seededRandom(seed);
+  const decorations: Decoration[] = [];
 
-  const candidates = [
-    { x: 28, y: height - 30 },
-    { x: width - 28, y: height - 30 },
-    { x: 24, y: 70 },
-    { x: width - 24, y: 70 },
-    { x: width / 2 - 40, y: height - 25 },
-    { x: width / 2 + 40, y: height - 25 },
-  ];
+  // Sample route points for collision detection (every 5th point)
+  const sampledRoute = routePoints.filter((_, i) => i % 5 === 0);
 
-  for (let i = 0; i < candidates.length; i++) {
-    const c = candidates[i];
-    const dStart = Math.hypot(c.x - start.x, c.y - start.y);
-    const dEnd = Math.hypot(c.x - end.x, c.y - end.y);
-    const dCompass = Math.hypot(c.x - compassPos.x, c.y - compassPos.y);
-
-    if (dStart > 40 && dEnd > 40 && dCompass > 35) {
-      const scale = 0.6 + ((seed + i * 17) % 5) / 10;
-      trees.push({ ...c, scale });
-      if (trees.length >= 4) break;
+  // Generate a grid of candidate positions with jitter
+  const margin = 22;
+  const step = 35;
+  const candidates: { x: number; y: number }[] = [];
+  for (let gx = margin; gx < width - margin; gx += step) {
+    for (let gy = margin + 30; gy < height - margin; gy += step) {
+      candidates.push({
+        x: gx + (rand() - 0.5) * 20,
+        y: gy + (rand() - 0.5) * 20,
+      });
     }
   }
 
-  return trees;
+  // Shuffle candidates
+  for (let i = candidates.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+  }
+
+  // Place decorations
+  let treeCount = 0;
+  let mountainCount = 0;
+  let waterCount = 0;
+  let bushCount = 0;
+  let rockCount = 0;
+
+  for (const c of candidates) {
+    if (decorations.length >= 16) break;
+    if (!isClearOfRoute(c, sampledRoute, start, end, compassPos, 25)) continue;
+
+    // Also check against already placed decorations
+    const tooClose = decorations.some(d => Math.hypot(d.x - c.x, d.y - c.y) < 28);
+    if (tooClose) continue;
+
+    const r = rand();
+    const scale = 0.5 + rand() * 0.5;
+
+    if (r < 0.35 && treeCount < 7) {
+      decorations.push({ ...c, scale, type: "tree" });
+      treeCount++;
+    } else if (r < 0.55 && mountainCount < 3) {
+      decorations.push({ ...c, scale: 0.7 + rand() * 0.4, type: "mountain" });
+      mountainCount++;
+    } else if (r < 0.7 && waterCount < 2) {
+      decorations.push({ ...c, scale: 0.6 + rand() * 0.4, type: "water" });
+      waterCount++;
+    } else if (r < 0.85 && bushCount < 3) {
+      decorations.push({ ...c, scale: 0.5 + rand() * 0.3, type: "bush" });
+      bushCount++;
+    } else if (rockCount < 3) {
+      decorations.push({ ...c, scale: 0.5 + rand() * 0.4, type: "rocks" });
+      rockCount++;
+    }
+  }
+
+  return decorations;
 }
 
 function PineTree({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
   return (
     <g transform={`translate(${x}, ${y}) scale(${scale})`} opacity={0.3}>
-      <polygon points="0,-12 -5,0 5,0" fill="#5a6e3a" />
-      <polygon points="0,-8 -4,0 4,0" fill="#6b8042" transform="translate(0, -4)" />
+      <polygon points="0,-14 -6,0 6,0" fill="#4a6032" />
+      <polygon points="0,-10 -5,-2 5,-2" fill="#5a7040" />
+      <polygon points="0,-6 -4,0 4,0" fill="#6b8042" transform="translate(0, -4)" />
       <rect x={-1} y={0} width={2} height={4} fill="#7a5c3a" />
     </g>
   );
+}
+
+function Mountain({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
+  return (
+    <g transform={`translate(${x}, ${y}) scale(${scale})`} opacity={0.25}>
+      {/* Back peak */}
+      <polygon points="-4,-14 -16,4 8,4" fill="#8a7e6a" />
+      {/* Front peak */}
+      <polygon points="3,-18 -12,4 18,4" fill="#9a8e7a" />
+      {/* Snow cap */}
+      <polygon points="3,-18 -2,-10 8,-10" fill="#d4c8b0" opacity={0.7} />
+      {/* Ridge line */}
+      <line x1={3} y1={-18} x2={8} y2={-10} stroke="#7a6e5a" strokeWidth={0.5} opacity={0.5} />
+    </g>
+  );
+}
+
+function WaterSymbol({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
+  return (
+    <g transform={`translate(${x}, ${y}) scale(${scale})`} opacity={0.25}>
+      {/* Wavy lines representing water/lake */}
+      <path d="M-10,0 Q-6,-3 -2,0 Q2,3 6,0 Q10,-3 14,0" fill="none" stroke="#5a7a9a" strokeWidth={1} />
+      <path d="M-8,4 Q-4,1 0,4 Q4,7 8,4 Q12,1 16,4" fill="none" stroke="#5a7a9a" strokeWidth={0.8} />
+      <path d="M-6,8 Q-2,5 2,8 Q6,11 10,8" fill="none" stroke="#5a7a9a" strokeWidth={0.6} />
+    </g>
+  );
+}
+
+function Bush({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
+  return (
+    <g transform={`translate(${x}, ${y}) scale(${scale})`} opacity={0.25}>
+      <circle cx={-3} cy={-2} r={4} fill="#5a6e3a" />
+      <circle cx={3} cy={-3} r={3.5} fill="#4a5e2a" />
+      <circle cx={0} cy={-5} r={3} fill="#6b8042" />
+    </g>
+  );
+}
+
+function Rocks({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
+  return (
+    <g transform={`translate(${x}, ${y}) scale(${scale})`} opacity={0.2}>
+      <ellipse cx={-3} cy={0} rx={5} ry={3} fill="#8a7e6a" />
+      <ellipse cx={4} cy={1} rx={4} ry={2.5} fill="#9a8e7a" />
+      <ellipse cx={0} cy={-2} rx={3} ry={2} fill="#a09482" />
+    </g>
+  );
+}
+
+function DecorationElement({ decoration }: { decoration: Decoration }) {
+  switch (decoration.type) {
+    case "tree":
+      return <PineTree x={decoration.x} y={decoration.y} scale={decoration.scale} />;
+    case "mountain":
+      return <Mountain x={decoration.x} y={decoration.y} scale={decoration.scale} />;
+    case "water":
+      return <WaterSymbol x={decoration.x} y={decoration.y} scale={decoration.scale} />;
+    case "bush":
+      return <Bush x={decoration.x} y={decoration.y} scale={decoration.scale} />;
+    case "rocks":
+      return <Rocks x={decoration.x} y={decoration.y} scale={decoration.scale} />;
+  }
 }
 
 function CompassRose({ x, y }: { x: number; y: number }) {
@@ -228,7 +359,27 @@ export function FantasyRouteMap({ polyline, activityName, className = "" }: Fant
       if (!result.path) return null;
 
       const compass = bestCompassCorner(result.start, result.end, W, H);
-      const trees = generateTrees(result.start, result.end, compass, W, H);
+
+      // Get SVG points for route collision detection
+      const padding = 40;
+      const innerWidth = W - padding * 2;
+      const innerHeight = H - padding * 2;
+      let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+      for (const [lat, lng] of coordinates) {
+        minLat = Math.min(minLat, lat); maxLat = Math.max(maxLat, lat);
+        minLng = Math.min(minLng, lng); maxLng = Math.max(maxLng, lng);
+      }
+      const latRange = maxLat - minLat || 1;
+      const lngRange = maxLng - minLng || 1;
+      const scale = Math.min(innerWidth / lngRange, innerHeight / latRange);
+      const xOffset = padding + (innerWidth - lngRange * scale) / 2;
+      const yOffset = padding + (innerHeight - latRange * scale) / 2;
+      const routePoints = coordinates.map(([lat, lng]) => ({
+        x: xOffset + (lng - minLng) * scale,
+        y: yOffset + (maxLat - lat) * scale,
+      }));
+
+      const decorations = generateDecorations(result.start, result.end, compass, routePoints, W, H);
 
       // Compute label offsets to avoid overlap when start/end are close
       const dist = Math.hypot(result.end.x - result.start.x, result.end.y - result.start.y);
@@ -258,7 +409,7 @@ export function FantasyRouteMap({ polyline, activityName, className = "" }: Fant
         }
       }
 
-      return { ...result, compass, trees, startLabel, endLabel };
+      return { ...result, compass, decorations, startLabel, endLabel };
     } catch {
       return null;
     }
@@ -345,9 +496,9 @@ export function FantasyRouteMap({ polyline, activityName, className = "" }: Fant
         </g>
       )}
 
-      {/* Decorative trees */}
-      {mapData.trees.map((tree, i) => (
-        <PineTree key={i} x={tree.x} y={tree.y} scale={tree.scale} />
+      {/* Decorative elements */}
+      {mapData.decorations.map((dec, i) => (
+        <DecorationElement key={i} decoration={dec} />
       ))}
 
       {/* Compass rose */}

@@ -392,7 +392,7 @@ export default function Friends() {
                           <div className="bg-background rounded-lg p-2 text-center">
                             <Ruler size={12} className="mx-auto mb-1 text-muted-foreground" />
                             <p className="text-xs font-bold text-foreground">
-                              {friend.totalDistance ? (friend.totalDistance / 1000).toFixed(1) : "0"} km
+                              {friend.totalDistance ? (friend.totalDistance / 1609.344).toFixed(1) : "0"} mi
                             </p>
                             <p className="text-[9px] text-muted-foreground">Distance</p>
                           </div>
@@ -535,7 +535,7 @@ export default function Friends() {
                           <Footprints size={10} /> {user.totalRuns}
                         </span>
                         <span className="flex items-center gap-0.5" title="Distance">
-                          <Ruler size={10} /> {(user.totalDistance / 1000).toFixed(0)}km
+                          <Ruler size={10} /> {(user.totalDistance / 1609.344).toFixed(0)}mi
                         </span>
                         <span className="flex items-center gap-0.5" title="Medals">
                           <Crown size={10} className="text-yellow-500" /> {user.medalBalance}

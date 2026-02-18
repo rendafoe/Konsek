@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@/shared/routes";
+import type { z } from "zod";
+
+export type ItemOrigin = z.infer<typeof api.inventory.itemOrigin.responses[200]>;
 
 export function useInventory() {
   return useQuery({
@@ -45,5 +48,19 @@ export function useUnequipItem() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.inventory.list.path] });
     },
+  });
+}
+
+export function useItemOrigin(itemId: number | null) {
+  return useQuery({
+    queryKey: [api.inventory.itemOrigin.path, itemId],
+    queryFn: async (): Promise<ItemOrigin> => {
+      const res = await fetch(`${api.inventory.itemOrigin.path}?itemId=${itemId}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch item origin");
+      return api.inventory.itemOrigin.responses[200].parse(await res.json());
+    },
+    enabled: itemId !== null,
   });
 }

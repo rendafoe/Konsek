@@ -15,6 +15,7 @@ import { DevPanel } from "@/components/DevPanel";
 import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
 import { useHaptics } from "@/hooks/use-haptics";
+import { useDistanceUnit } from "@/hooks/use-distance-unit";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Activity, Sparkles, Heart, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -23,12 +24,12 @@ import { format } from "date-fns";
 import Link from "next/link";
 
 const rarityBadgeStyles: Record<string, string> = {
-  common: "bg-gray-100 text-gray-700 border-gray-300",
-  uncommon: "bg-green-100 text-green-700 border-green-300",
-  rare: "bg-blue-100 text-blue-700 border-blue-300",
-  epic: "bg-purple-100 text-purple-700 border-purple-300",
-  legendary: "bg-yellow-100 text-yellow-800 border-yellow-400",
-  mythic: "bg-gradient-to-r from-yellow-100 via-pink-100 to-purple-100 text-purple-700 border-purple-300",
+  common: "bg-amber-100 text-amber-800 border-amber-400",
+  uncommon: "bg-green-100 text-green-800 border-green-400",
+  rare: "bg-blue-100 text-blue-800 border-blue-400",
+  epic: "bg-purple-100 text-purple-800 border-purple-400",
+  legendary: "bg-yellow-100 text-yellow-900 border-yellow-500",
+  mythic: "bg-gradient-to-r from-yellow-100 via-pink-100 to-purple-100 text-purple-800 border-purple-400",
 };
 
 const rarityMedalRewards: Record<string, number> = {
@@ -56,10 +57,6 @@ function formatDuration(seconds: number): string {
   return `${mins}m`;
 }
 
-function formatDistance(meters: number): string {
-  const km = meters / 1000;
-  return `${km.toFixed(2)} km`;
-}
 
 export default function Dashboard() {
   const { data: character, isLoading: isCharLoading } = useCharacter();
@@ -71,8 +68,8 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { isNight, toggleNight } = useNightMode();
   const { playWithVibrate } = useHaptics();
-  const { hasCompletedTutorial, openTutorial } = useTutorial();
-  const [useMiles, setUseMiles] = useState(false);
+  const { openTutorial } = useTutorial();
+  const { useMiles, toggleUnit, formatDistance } = useDistanceUnit();
   const [rewardModalOpen, setRewardModalOpen] = useState(false);
   const [awardedItems, setAwardedItems] = useState<any[]>([]);
   const [medalsFromSync, setMedalsFromSync] = useState<number>(0);
@@ -80,6 +77,7 @@ export default function Dashboard() {
   const [frozenTotalRuns, setFrozenTotalRuns] = useState<number | null>(null);
   const [showEvolutionAnimation, setShowEvolutionAnimation] = useState(false);
   const hadProgressionRef = useRef(false);
+  const tutorialAutoTriggered = useRef(false);
 
   const activities = activitiesData?.activities || [];
   const isCharacterDead = character?.status === "dead";
@@ -148,12 +146,13 @@ export default function Dashboard() {
     }
   }, [character]);
 
-  // Auto-trigger tutorial for first-time users
+  // Auto-trigger tutorial for new users (no character = new account)
   useEffect(() => {
-    if (!isCharLoading && !character && !hasCompletedTutorial) {
+    if (!isCharLoading && !character && !tutorialAutoTriggered.current) {
+      tutorialAutoTriggered.current = true;
       openTutorial();
     }
-  }, [isCharLoading, character, hasCompletedTutorial, openTutorial]);
+  }, [isCharLoading, character, openTutorial]);
 
   const handleCreateCharacter = () => {
     playWithVibrate("evolution");
@@ -237,18 +236,18 @@ export default function Dashboard() {
         }}
       />
 
-      {/* Lamp hotspots - hidden on mobile where lamps aren't visible */}
+      {/* Lamp hotspots - desktop only */}
       <button
         onClick={() => { playWithVibrate("tap"); toggleNight(); }}
-        className="hidden md:block fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
-        style={{ left: "13%", top: "35%" }}
+        className="hidden md:block fixed z-20 w-16 h-32 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
+        style={{ left: "37.75%", top: "15%" }}
         title="Click to toggle lights"
         aria-label="Toggle day/night"
       />
       <button
         onClick={() => { playWithVibrate("tap"); toggleNight(); }}
-        className="hidden md:block fixed z-20 w-16 h-16 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
-        style={{ left: "78%", top: "35%" }}
+        className="hidden md:block fixed z-20 w-16 h-32 rounded-full hover:bg-yellow-400/20 transition-all duration-300 cursor-pointer"
+        style={{ left: "80.41%", top: "23%" }}
         title="Click to toggle lights"
         aria-label="Toggle day/night"
       />
@@ -309,7 +308,7 @@ export default function Dashboard() {
                 <span className="font-pixel text-xs text-white/90">{stageInfo.name}</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white/80">
                   {stageInfo.nextStageRuns
-                    ? `${stageInfo.nextStageRuns - currentRuns} runs to evolve`
+                    ? `${stageInfo.nextStageRuns - currentRuns} ${stageInfo.nextStageRuns - currentRuns === 1 ? "run" : "runs"} to evolve`
                     : "Max stage!"}
                 </span>
               </div>
@@ -334,7 +333,7 @@ export default function Dashboard() {
                 )}
                 <div
                   className="flex items-center gap-1 text-xs text-white/80 cursor-pointer"
-                  onClick={() => setUseMiles(!useMiles)}
+                  onClick={() => toggleUnit()}
                   title="Click to toggle"
                 >
                   <Sparkles size={12} className="text-white/60" />
@@ -390,9 +389,12 @@ export default function Dashboard() {
                           <Badge
                             key={idx}
                             variant="outline"
-                            className={`text-[9px] sm:text-[10px] px-1.5 py-0 border-white/20 text-white/70 bg-white/5 max-w-[140px] truncate`}
+                            className={`text-[9px] sm:text-[10px] px-1.5 py-0 max-w-[140px] truncate ${
+                              ri.item ? rarityBadgeStyles[ri.item.rarity] : "border-white/20 text-white/70 bg-white/5"
+                            }`}
                           >
-                            {ri.item?.name || "Item"}
+                            <Sparkles className="w-2.5 h-2.5 mr-0.5 shrink-0" />
+                            <span className="truncate">{ri.item?.name || "Item"}</span>
                           </Badge>
                         ))}
                         {activity.awardedItems.length > 2 && (

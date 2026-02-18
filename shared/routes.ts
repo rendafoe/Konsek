@@ -117,6 +117,26 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
+    itemOrigin: {
+      method: 'GET' as const,
+      path: '/api/inventory/item-origin',
+      query: z.object({
+        itemId: z.coerce.number(),
+      }),
+      responses: {
+        200: z.object({
+          runId: z.number(),
+          name: z.string().nullable(),
+          distance: z.number(),
+          duration: z.number(),
+          date: z.string(),
+          polyline: z.string().nullable(),
+          awardedAt: z.string(),
+          specialRewardCondition: z.string().nullable(),
+        }),
+        404: errorSchemas.notFound,
+      },
+    },
   },
 
   // === RUNS ===

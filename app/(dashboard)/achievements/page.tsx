@@ -83,10 +83,7 @@ export default function Achievements() {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="inline-flex items-center gap-2 bg-card/70 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/50">
           <Trophy size={18} className="text-primary" />
-          <div>
-            <h2 className="text-base font-pixel text-card-foreground">Item Collection</h2>
-            <p className="text-[10px] text-card-foreground/60">{unlockedCount} / {totalCount} unlocked</p>
-          </div>
+          <h2 className="text-base font-pixel text-card-foreground">Items Unlocked: {unlockedCount} / {totalCount}</h2>
         </div>
 
         <select

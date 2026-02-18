@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Konsek is a running companion web app that gamifies fitness consistency via Strava integration. Users maintain a pixel-art digital companion (Esko) whose health depends on their real-world running habits. Features collectible items, medals (in-game currency), achievements, and a Nordic forest-themed UI.
+Konsek is a running companion web app that gamifies fitness consistency via Strava integration. Users maintain a digital companion (Esko) whose health depends on their real-world running habits. Features collectible items, medals (in-game currency), achievements, and a Nordic forest & cabin themed UI.
 
 ## Commands
 
@@ -86,6 +86,6 @@ npm run db:reset         # Clear user data (dev only)
 - Character health states range 0-4 (dead to perfect health)
 - Minimum 1km runs count for health updates
 - Item rarities: common, uncommon, rare, epic, legendary, mythic
-- UI uses Nordic forest theme with light/dark modes via CSS variables
+- UI uses Nordic forest & cabin theme with light/dark modes via CSS variables
 - Press Start 2P font for pixel-art aesthetic, DM Sans for UI text
 - Environment variables: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `OPENWEATHER_API_KEY`

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useActivities } from "@/hooks/use-activities";
+import { useDistanceUnit } from "@/hooks/use-distance-unit";
 import { PageBackground } from "@/components/PageBackground";
 import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
@@ -50,16 +51,13 @@ function formatDuration(seconds: number): string {
   return `${mins}m ${secs}s`;
 }
 
-function formatDistance(meters: number): string {
-  const km = meters / 1000;
-  return `${km.toFixed(2)} km`;
-}
 
 export default function ActivityLog() {
   const [page, setPage] = useState(1);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const { data, isLoading, isFetching } = useActivities({ page, limit: ITEMS_PER_PAGE });
   const { isNight } = useNightMode();
+  const { formatDistance } = useDistanceUnit();
 
   const activities = data?.activities || [];
   const pagination = data?.pagination;
@@ -270,7 +268,7 @@ export default function ActivityLog() {
 
         {/* Route Map Dialog */}
         <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
-          <DialogContent className="max-w-md checkin-glass border-white/12 rounded-2xl">
+          <DialogContent className="max-w-md bg-[rgba(15,12,8,0.92)] backdrop-blur-xl border-amber-900/30 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)]">
             <DialogHeader>
               <DialogTitle className="font-pixel text-sm text-white/90">
                 {selectedActivity?.name || "Run"}

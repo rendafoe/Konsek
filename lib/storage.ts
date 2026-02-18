@@ -276,6 +276,26 @@ export class DatabaseStorage implements IStorage {
     return !!existing;
   }
 
+  // Item Origin
+  async getItemOriginRun(userId: string, itemId: number) {
+    const [result] = await db
+      .select({
+        runId: runs.id,
+        name: runs.name,
+        distance: runs.distance,
+        duration: runs.duration,
+        date: runs.date,
+        polyline: runs.polyline,
+        awardedAt: runItems.awardedAt,
+      })
+      .from(runItems)
+      .innerJoin(runs, eq(runItems.runId, runs.id))
+      .where(and(eq(runItems.userId, userId), eq(runItems.itemId, itemId)))
+      .orderBy(asc(runItems.awardedAt))
+      .limit(1);
+    return result ?? null;
+  }
+
   // Run Items
   async getRunItems(runId: number): Promise<(RunItem & { item: Item })[]> {
     const result = await db

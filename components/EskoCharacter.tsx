@@ -75,6 +75,13 @@ export function getStageProgress(totalRuns: number): number {
   return Math.min(100, Math.round((runsInCurrentStage / runsNeededForNext) * 100));
 }
 
+/**
+ * Get the image path for a given Esko stage
+ */
+export function getEskoImage(stage: EskoStage): string {
+  return STAGE_IMAGES[stage];
+}
+
 // Stage colors for visual distinction
 const STAGE_COLORS: Record<EskoStage, { bg: string; text: string; border: string }> = {
   "egg": { bg: "bg-stone-100", text: "text-stone-700", border: "border-stone-300" },
@@ -88,7 +95,7 @@ const STAGE_COLORS: Record<EskoStage, { bg: string; text: string; border: string
 };
 
 // Image paths for each stage
-const STAGE_IMAGES: Record<EskoStage, string> = {
+export const STAGE_IMAGES: Record<EskoStage, string> = {
   "egg": "/esko/esko-egg.png",
   "hatchling-v1": "/esko/esko-hatchling-v1.png",
   "hatchling-v2": "/esko/esko-hatchling-v2.png",
@@ -182,7 +189,7 @@ export function EskoCharacter({
               data-testid="character-stage"
             >
               {stageInfo.nextStageRuns
-                ? `${stageInfo.nextStageRuns - totalRuns} runs to evolve`
+                ? `${stageInfo.nextStageRuns - totalRuns} ${stageInfo.nextStageRuns - totalRuns === 1 ? "run" : "runs"} to evolve`
                 : "Max stage!"}
             </span>
           </div>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
-import { useInventory, useEquipItem, useUnequipItem } from "@/hooks/use-inventory";
+import { useMemo, useState } from "react";
+import { useInventory } from "@/hooks/use-inventory";
 import { useHaptics } from "@/hooks/use-haptics";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { PageBackground } from "@/components/PageBackground";
+import { ItemCardFlipOverlay } from "@/components/ItemCardFlipOverlay";
 
 const rarityTextColors: Record<string, string> = {
   common: "text-gray-500",
@@ -13,6 +13,16 @@ const rarityTextColors: Record<string, string> = {
   rare: "text-blue-600",
   epic: "text-purple-600",
   legendary: "text-yellow-600",
+  mythic: "text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500",
+};
+
+const rarityBorderColors: Record<string, string> = {
+  common: "border-gray-400/60",
+  uncommon: "border-green-500/70",
+  rare: "border-blue-500/70",
+  epic: "border-purple-500/70",
+  legendary: "border-yellow-500/70",
+  mythic: "border-yellow-500/70",
 };
 
 interface GroupedItem {
@@ -25,10 +35,8 @@ interface GroupedItem {
 
 export default function Inventory() {
   const { data: items, isLoading } = useInventory();
-  const { mutate: equip } = useEquipItem();
-  const { mutate: unequip } = useUnequipItem();
-  const { toast } = useToast();
   const { playWithVibrate } = useHaptics();
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
 
   const groupedItems = useMemo(() => {
     if (!items) return [];
@@ -48,25 +56,24 @@ export default function Inventory() {
         });
       }
     }
-    return Array.from(groups.values());
+    return Array.from(groups.values()).sort((a, b) => {
+      const nameA = a.item?.name ?? "";
+      const nameB = b.item?.name ?? "";
+      const aIsNumeric = /^\d/.test(nameA);
+      const bIsNumeric = /^\d/.test(nameB);
+      if (aIsNumeric !== bIsNumeric) return aIsNumeric ? 1 : -1;
+      return nameA.localeCompare(nameB);
+    });
   }, [items]);
+
+  const selectedItem = useMemo(() => {
+    if (selectedItemId === null) return null;
+    return groupedItems.find((g) => g.itemId === selectedItemId) ?? null;
+  }, [selectedItemId, groupedItems]);
 
   if (isLoading) {
     return <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
   }
-
-  const handleToggleEquip = (groupedItem: GroupedItem) => {
-    playWithVibrate("equip", "tap");
-    if (groupedItem.equippedId) {
-      unequip(groupedItem.equippedId, {
-        onSuccess: () => toast({ title: "Unequipped", description: `Removed ${groupedItem.item.name}` })
-      });
-    } else {
-      equip(groupedItem.firstInventoryId, {
-        onSuccess: () => toast({ title: "Equipped", description: `Equipped ${groupedItem.item.name}` })
-      });
-    }
-  };
 
   return (
     <PageBackground src="/backgrounds/gear.webp" overlay={0.25}>
@@ -83,8 +90,11 @@ export default function Inventory() {
             {groupedItems.map((groupedItem) => (
               <div
                 key={groupedItem.itemId}
-                className={`cozy-card p-2 relative group cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md ${groupedItem.equippedId ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
-                onClick={() => handleToggleEquip(groupedItem)}
+                className={`cozy-card p-2 relative group cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md border-2 ${rarityBorderColors[groupedItem.item?.rarity] || "border-gray-400/60"} ${groupedItem.equippedId ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+                onClick={() => {
+                  playWithVibrate("tap", "tap");
+                  setSelectedItemId(groupedItem.itemId);
+                }}
               >
                 <div className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full ${groupedItem.item?.rarity === 'legendary' ? 'bg-yellow-500' : groupedItem.item?.rarity === 'epic' ? 'bg-purple-500' : groupedItem.item?.rarity === 'rare' ? 'bg-blue-500' : groupedItem.item?.rarity === 'uncommon' ? 'bg-green-500' : 'bg-gray-400'}`} />
 
@@ -95,9 +105,8 @@ export default function Inventory() {
                   <Shield className={`w-8 h-8 text-muted-foreground opacity-50 ${groupedItem.item?.imageUrl ? 'hidden' : ''}`} />
                 </div>
 
-                <h3 className="font-pixel text-[10px] truncate mb-0.5">{groupedItem.item?.name}</h3>
-                <p className={`text-[8px] capitalize font-semibold mb-1 ${rarityTextColors[groupedItem.item?.rarity] || "text-gray-400"}`}>{groupedItem.item?.rarity}</p>
-                <p className="text-[9px] text-muted-foreground italic truncate">{groupedItem.item?.quote ? `"${groupedItem.item.quote}"` : "A mysterious item..."}</p>
+                <h3 className={`font-pixel leading-tight break-words mb-0.5 ${(groupedItem.item?.name?.split(/\s+/) ?? []).some((w: string) => w.length > 10) ? 'text-[6px]' : 'text-[8px]'}`}>{groupedItem.item?.name}</h3>
+                <p className={`text-[8px] capitalize font-semibold ${rarityTextColors[groupedItem.item?.rarity] || "text-gray-400"}`}>{groupedItem.item?.rarity}</p>
 
                 {groupedItem.equippedId && (
                   <div className="absolute top-1.5 left-1.5 bg-primary text-[7px] font-pixel text-primary-foreground px-1 py-0.5 rounded">EQP</div>
@@ -110,6 +119,21 @@ export default function Inventory() {
           </div>
         )}
       </main>
+
+      {selectedItem && (
+        <ItemCardFlipOverlay
+          item={{
+            itemId: selectedItem.itemId,
+            name: selectedItem.item?.name ?? "Unknown",
+            rarity: selectedItem.item?.rarity ?? "common",
+            imageUrl: selectedItem.item?.imageUrl ?? "",
+            quote: selectedItem.item?.quote ?? null,
+            equippedId: selectedItem.equippedId,
+          }}
+          open={selectedItemId !== null}
+          onClose={() => setSelectedItemId(null)}
+        />
+      )}
     </PageBackground>
   );
 }
