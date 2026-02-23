@@ -100,7 +100,7 @@ const STEPS: TutorialStep[] = [
     title: "Items & Gear",
     subtitle: "55 collectibles to find",
     description:
-      "Every run has a chance to reward you with collectible items. Item rariry ranges from Common to Mythic. Browse your full collection in the Gear tab.",
+      "Every run has a chance to reward you with collectible items. Item rarity ranges from Common to Mythic. Browse your full collection in the Gear tab.",
     visual: (
       <div className="grid grid-cols-4 gap-2">
         {[
