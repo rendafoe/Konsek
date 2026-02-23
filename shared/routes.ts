@@ -29,6 +29,7 @@ export const api = {
               lastSync: z.string().nullable(),
               athleteName: z.string().nullable(),
               athleteProfilePicture: z.string().nullable(),
+              hasFullAccess: z.boolean(),
             })
         }
     },

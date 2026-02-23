@@ -21,6 +21,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (account.stravaScopes && !account.stravaScopes.includes("activity:read_all")) {
+      return NextResponse.json(
+        { message: "Strava permissions are incomplete. Please reconnect your Strava account in Settings to enable syncing of all activities." },
+        { status: 400 }
+      );
+    }
+
     const character = await storage.getActiveCharacter(userId);
     if (!character) {
       return NextResponse.json(

@@ -107,7 +107,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             athleteFirstName: firstName,
             athleteLastName: lastName,
             athleteProfilePicture: profilePicture,
-            stravaScopes: "activity:read_all",
+            stravaScopes: account.scope ?? null,
           });
 
           await db

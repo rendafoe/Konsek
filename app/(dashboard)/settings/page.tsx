@@ -4,12 +4,13 @@ import { useStravaStatus } from "@/hooks/use-strava";
 import { useAuth } from "@/hooks/use-auth";
 import { useReferralStats } from "@/hooks/use-referrals";
 import { useHaptics } from "@/hooks/use-haptics";
-import { Loader2, LogOut, Volume2, Vibrate } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { Loader2, LogOut, Volume2, Vibrate, RefreshCw, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { PageBackground } from "@/components/PageBackground";
 
 export default function Settings() {
-  const { isLoading } = useStravaStatus();
+  const { data: stravaStatus, isLoading } = useStravaStatus();
   const { user, logout } = useAuth();
   const { data: referralStats } = useReferralStats();
   const { prefs, toggleSound, toggleHaptics } = useHaptics();
@@ -38,16 +39,36 @@ export default function Settings() {
         <section className="cozy-card p-5">
           <h2 className="font-pixel text-sm uppercase mb-4 text-muted-foreground">Integrations</h2>
 
-          <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-            <div>
-              <h3 className="font-bold text-sm">Strava</h3>
-              <p className="text-xs text-muted-foreground">Sync your runs automatically</p>
+          <div className="flex flex-col gap-3 p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm">Strava</h3>
+                <p className="text-xs text-muted-foreground">Sync your runs automatically</p>
+              </div>
+              {isLoading ? (
+                <Loader2 className="animate-spin text-muted-foreground" size={16} />
+              ) : (
+                <span className="text-xs text-green-600 font-bold uppercase">Connected</span>
+              )}
             </div>
 
-            {isLoading ? (
-              <Loader2 className="animate-spin text-muted-foreground" size={16} />
-            ) : (
-              <span className="text-xs text-green-600 font-bold uppercase">Connected</span>
+            {!isLoading && stravaStatus?.isConnected && !stravaStatus.hasFullAccess && (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Missing permissions to sync followers-only or private activities. Reconnect to fix.
+                </p>
+              </div>
+            )}
+
+            {!isLoading && stravaStatus?.isConnected && (
+              <button
+                onClick={() => signIn("strava", { callbackUrl: "/settings" }, { approval_prompt: "force" })}
+                className="flex items-center justify-center gap-2 w-full p-2 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <RefreshCw size={12} />
+                Reconnect Strava
+              </button>
             )}
           </div>
         </section>
