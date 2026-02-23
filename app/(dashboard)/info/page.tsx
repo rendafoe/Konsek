@@ -29,15 +29,15 @@ const features = [
     icon: Backpack,
     title: "Collectible Items",
     description:
-      "There are 55 unique items to collect, spanning 6 rarity tiers: Common, Uncommon, Rare, Epic, Legendary, and Mythic. Items are awarded randomly after runs. Equip items to customize how Esko looks in the Gear tab.",
+      "There are 55 unique items to collect, spanning 6 rarity tiers: Common, Uncommon, Rare, Epic, Legendary, and Mythic. Items are awarded randomly after runs.",
     color: "text-blue-500",
     bg: "bg-blue-500/10",
   },
   {
     icon: Sparkles,
-    title: "Medals & Economy",
+    title: "Medals",
     description:
-      "Medals are the in-game currency. Earn them from item drops (1-8 medals based on rarity), daily check-ins (+2), Esko evolution milestones, and referring friends (+5 per referral). Spend medals in the Shop to buy specific items.",
+      "Medals are the in-game currency. Earn them from item drops, daily check-ins, evolving Esko, and referring friends. Medals can be spent to buy Mythic items.",
     color: "text-yellow-600",
     bg: "bg-yellow-500/10",
   },
@@ -45,7 +45,7 @@ const features = [
     icon: Trophy,
     title: "Achievements",
     description:
-      "Track your item collection progress in the Achievements tab. Complete full rarity sets to become a Konsek master. Your achievement percentage reflects how many of the 55 items you've unlocked.",
+      "Track your item collection progress in the Achievements tab. Your achievement percentage reflects how many of the 55 items you've unlocked.",
     color: "text-purple-500",
     bg: "bg-purple-500/10",
   },
@@ -53,7 +53,7 @@ const features = [
     icon: Users,
     title: "Friends & Referrals",
     description:
-      "Connect with other runners using your unique friend code (XXXX-XXXX format). Browse the Discover tab to find and add new friends. Share your referral link to earn bonus medals when friends join Konsek.",
+      "Connect with other runners using your unique friend code. Browse the Discover tab to find and add new friends. Share your referral link to earn bonus medals when friends join Konsek.",
     color: "text-primary",
     bg: "bg-primary/10",
   },
@@ -98,14 +98,14 @@ export default function Info() {
               <img src="/esko/esko-hatchling-v1.png" alt="Konsek" className="w-10 h-10 rounded-xl shadow-sm" />
               <div>
                 <h2 className="font-pixel text-sm text-foreground">About Konsek</h2>
-                <p className="text-xs text-muted-foreground">A Nordic forest running companion</p>
+                <p className="text-xs text-muted-foreground">Your consistency rewarded</p>
               </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-              Konsek is a gamified fitness companion that connects to your Strava account and turns your running consistency into a pixel-art adventure. Care for Esko, collect rare items, earn medals, and compete with friends — all fueled by the runs you actually do.
+              Konsek is a gamified fitness companion app that syncs with your Strava activities to turn your running consistency into an adventure. Care for your pet Esko, collect rare items, earn medals, and connect with friends — all fueled by real movement.
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Built for runners who want a fun reason to stay consistent. Whether you run 1 km or a marathon, every run counts. Inspired by virtual pet games and the Nordic wilderness.
+              Built by runner for runners. Whether you run 1 mile or 100 miles, every run counts towards consistency.
             </p>
           </section>
 
@@ -140,12 +140,12 @@ export default function Info() {
                 <p className="text-muted-foreground">1 km</p>
               </div>
               <div className="bg-muted/30 rounded-lg p-3">
-                <p className="font-semibold text-foreground mb-1">Health Decay</p>
+                <p className="font-semibold text-foreground mb-1">Esko Health Decay</p>
                 <p className="text-muted-foreground">After 2 rest days</p>
               </div>
               <div className="bg-muted/30 rounded-lg p-3">
                 <p className="font-semibold text-foreground mb-1">Evolution Stages</p>
-                <p className="text-muted-foreground">8 stages (30 runs to max)</p>
+                <p className="text-muted-foreground">8 stages</p>
               </div>
               <div className="bg-muted/30 rounded-lg p-3">
                 <p className="font-semibold text-foreground mb-1">Total Items</p>
@@ -157,7 +157,7 @@ export default function Info() {
               </div>
               <div className="bg-muted/30 rounded-lg p-3">
                 <p className="font-semibold text-foreground mb-1">Daily Check-in</p>
-                <p className="text-muted-foreground">+2 medals per day</p>
+                <p className="text-muted-foreground">Additional Medal bonus each day</p>
               </div>
             </div>
           </section>

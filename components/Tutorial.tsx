@@ -25,7 +25,7 @@ const STEPS: TutorialStep[] = [
     title: "Welcome to Konsek",
     subtitle: "Your running companion",
     description:
-      "Konsek turns your real-world runs into a pixel-art adventure. Care for Esko, your digital companion, by staying consistent with your running. The more you run, the more Esko thrives.",
+      "Konsek turns your real-world runs into an adventure. Care for Esko, your digital companion, by staying consistent with your running. The more you run, the more Esko thrives.",
     visual: (
       <div className="relative flex items-center justify-center">
         <div className="absolute w-32 h-32 rounded-full bg-primary/20 animate-pulse" />
@@ -40,7 +40,7 @@ const STEPS: TutorialStep[] = [
     title: "Meet Esko",
     subtitle: "8 evolution stages",
     description:
-      "Esko starts as an egg and evolves through 8 stages as you complete runs. Each milestone unlocks a new form — from hatchling all the way to a fully maxed companion.",
+      "Esko starts as an egg and evolves through 8 stages as you complete runs. Each milestone unlocks a new form — from hatchling all the way to fully maxed.",
     visual: (
       <div className="flex items-end justify-center gap-1">
         {[
@@ -100,7 +100,7 @@ const STEPS: TutorialStep[] = [
     title: "Items & Gear",
     subtitle: "55 collectibles to find",
     description:
-      "Every run has a chance to reward you with collectible items. Items range from common to mythic rarity. Equip them to customize Esko's look, and browse your full collection in the Gear tab.",
+      "Every run has a chance to reward you with collectible items. Item rariry ranges from Common to Mythic. Browse your full collection in the Gear tab.",
     visual: (
       <div className="grid grid-cols-4 gap-2">
         {[
@@ -136,7 +136,7 @@ const STEPS: TutorialStep[] = [
     title: "Medals & Shop",
     subtitle: "Earn and spend",
     description:
-      "Medals are your in-game currency. Earn them from finding items, completing daily check-ins, evolving Esko, and referring friends. Spend medals in the shop to buy specific items you want for your collection.",
+      "Medals are your in-game currency. Earn them from finding items, completing daily check-ins, evolving Esko, and referring friends. Spend Medals in the shop to unlock Mythical Items.",
     visual: (
       <div className="flex flex-col items-center gap-3">
         <motion.img
@@ -148,15 +148,15 @@ const STEPS: TutorialStep[] = [
         />
         <div className="flex gap-3 text-[10px] text-muted-foreground">
           <div className="flex flex-col items-center gap-1 px-3 py-2 bg-background/60 rounded-lg border border-border/50">
-            <span className="font-pixel text-xs text-foreground">+1-8</span>
+            <span className="font-pixel text-xs text-foreground">+</span>
             <span>Per Item</span>
           </div>
           <div className="flex flex-col items-center gap-1 px-3 py-2 bg-background/60 rounded-lg border border-border/50">
-            <span className="font-pixel text-xs text-foreground">+2</span>
+            <span className="font-pixel text-xs text-foreground">++</span>
             <span>Check-in</span>
           </div>
           <div className="flex flex-col items-center gap-1 px-3 py-2 bg-background/60 rounded-lg border border-border/50">
-            <span className="font-pixel text-xs text-foreground">+5</span>
+            <span className="font-pixel text-xs text-foreground">+++</span>
             <span>Referral</span>
           </div>
         </div>

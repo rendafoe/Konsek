@@ -32,6 +32,20 @@ function savePrefs(prefs: HapticsPrefs) {
   } catch {}
 }
 
+// Module-level singleton so all hook instances share the same prefs
+let globalPrefs: HapticsPrefs = DEFAULT_PREFS;
+const listeners = new Set<(prefs: HapticsPrefs) => void>();
+
+function initGlobalPrefs() {
+  globalPrefs = loadPrefs();
+}
+
+function setGlobalPrefs(next: HapticsPrefs) {
+  globalPrefs = next;
+  savePrefs(next);
+  listeners.forEach((l) => l(next));
+}
+
 const VIBRATION_PATTERNS: Record<VibrationPattern, number | number[]> = {
   tap: 10,
   success: [15, 50, 15],
@@ -182,13 +196,18 @@ const SOUND_PLAYERS: Record<SoundType, (ctx: AudioContext) => void> = {
 };
 
 export function useHaptics() {
-  const [prefs, setPrefs] = useState<HapticsPrefs>(DEFAULT_PREFS);
+  const [prefs, setPrefs] = useState<HapticsPrefs>(globalPrefs);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const initializedRef = useRef(false);
 
-  // Load prefs from localStorage on mount
+  // Subscribe to global prefs on mount and sync from localStorage once
   useEffect(() => {
-    setPrefs(loadPrefs());
+    initGlobalPrefs();
+    setPrefs(globalPrefs);
+    listeners.add(setPrefs);
+    return () => {
+      listeners.delete(setPrefs);
+    };
   }, []);
 
   const getAudioContext = useCallback((): AudioContext | null => {
@@ -234,19 +253,11 @@ export function useHaptics() {
   );
 
   const toggleSound = useCallback(() => {
-    setPrefs((prev) => {
-      const next = { ...prev, soundEnabled: !prev.soundEnabled };
-      savePrefs(next);
-      return next;
-    });
+    setGlobalPrefs({ ...globalPrefs, soundEnabled: !globalPrefs.soundEnabled });
   }, []);
 
   const toggleHaptics = useCallback(() => {
-    setPrefs((prev) => {
-      const next = { ...prev, hapticsEnabled: !prev.hapticsEnabled };
-      savePrefs(next);
-      return next;
-    });
+    setGlobalPrefs({ ...globalPrefs, hapticsEnabled: !globalPrefs.hapticsEnabled });
   }, []);
 
   return { play, vibrate, playWithVibrate, prefs, toggleSound, toggleHaptics };
