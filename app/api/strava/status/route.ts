@@ -14,6 +14,6 @@ export async function GET() {
       ? `${account.athleteFirstName || ""} ${account.athleteLastName || ""}`.trim() || null
       : null,
     athleteProfilePicture: account?.athleteProfilePicture || null,
-    hasFullAccess: account?.stravaScopes?.includes("activity:read_all") ?? false,
+    hasFullAccess: !account?.stravaScopes || account.stravaScopes.includes("activity:read_all"),
   });
 }
