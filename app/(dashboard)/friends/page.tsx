@@ -492,7 +492,7 @@ export default function Friends() {
               <p className="text-xs text-muted-foreground mt-1">
                 {debouncedSearch
                   ? "Try a different search term"
-                  : "All Konsek users are already your friends!"}
+                  : "No other users on Konsek yet"}
               </p>
             </div>
           ) : (
@@ -543,13 +543,19 @@ export default function Friends() {
                       </div>
 
                       {/* Add button */}
-                      <button
-                        onClick={() => handleAddFromDiscover(user.userId)}
-                        disabled={isAdding}
-                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-semibold text-xs hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex-shrink-0"
-                      >
-                        <UserPlus size={14} />
-                      </button>
+                      {user.isFriend ? (
+                        <div className="px-3 py-1.5 bg-green-500 text-white rounded-lg flex-shrink-0 cursor-default" title="Already friends">
+                          <Check size={14} />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleAddFromDiscover(user.userId)}
+                          disabled={isAdding}
+                          className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-semibold text-xs hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex-shrink-0"
+                        >
+                          <UserPlus size={14} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

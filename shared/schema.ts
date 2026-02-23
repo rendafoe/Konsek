@@ -339,4 +339,5 @@ export interface DiscoverableUser {
   medalBalance: number;
   eskoStage: string | null;
   eskoCreatedAt: string | null;
+  isFriend: boolean;
 }

@@ -47,7 +47,7 @@ export function TopNav() {
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 shrink-0">
         <img src="/esko/esko-hatchling-v1.png" alt="Konsek" className="w-8 h-8 rounded-lg shadow-sm" />
-        <span className="text-sm font-bold text-foreground hidden sm:block">
+        <span className="text-sm font-bold text-foreground">
           Konsek
         </span>
       </Link>
@@ -110,7 +110,7 @@ export function TopNav() {
           data-testid="button-sync-strava"
         >
           <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
-          <span className="hidden sm:inline">{isSyncing ? "Syncing..." : "Sync"}</span>
+          <span>{isSyncing ? "Syncing..." : "Sync"}</span>
         </button>
 
         {/* Info - Desktop */}

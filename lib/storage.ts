@@ -505,22 +505,15 @@ export class DatabaseStorage implements IStorage {
   async getDiscoverableUsers(userId: string, page: number, limit: number, search?: string, sort: string = "name"): Promise<PaginatedResult<DiscoverableUser>> {
     const offset = (page - 1) * limit;
 
-    // Get existing friend athlete IDs to exclude
+    // Get existing friend athlete IDs (to mark as already added)
     const existingFriends = await db.select({ stravaAthleteId: friends.stravaAthleteId })
       .from(friends).where(eq(friends.userId, userId));
-    const friendAthleteIds = existingFriends.map(f => f.stravaAthleteId);
+    const friendAthleteIdSet = new Set(existingFriends.map(f => f.stravaAthleteId));
 
-    // Build base conditions: exclude self
+    // Build base conditions: exclude self only
     const baseConditions = [
       sql`${stravaAccounts.userId} != ${userId}`,
     ];
-
-    // Exclude already-friended users
-    if (friendAthleteIds.length > 0) {
-      baseConditions.push(
-        sql`${stravaAccounts.athleteId} NOT IN (${sql.join(friendAthleteIds.map(id => sql`${id}`), sql`, `)})`
-      );
-    }
 
     // Search filter
     if (search && search.trim()) {
@@ -608,6 +601,7 @@ export class DatabaseStorage implements IStorage {
         medalBalance: r.medalBalance ?? 0,
         eskoStage: stage ? (STAGE_DISPLAY_NAMES[stage] || stage) : null,
         eskoCreatedAt: r.eskoCreatedAt?.toISOString() ?? null,
+        isFriend: friendAthleteIdSet.has(r.stravaAthleteId),
       };
     });
 
