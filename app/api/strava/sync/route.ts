@@ -124,8 +124,10 @@ export async function POST(req: NextRequest) {
 
     const activities = await activitiesResponse.json();
 
+    const COUNTED_ACTIVITY_TYPES = new Set(["Run", "TrailRun", "Walk", "Hike"]);
     const runActivities = activities.filter((a: any) => {
-      if (a.type !== "Run") return false;
+      const activityType = a.sport_type || a.type;
+      if (!COUNTED_ACTIVITY_TYPES.has(activityType)) return false;
       const activityDate = new Date(a.start_date);
       return activityDate >= startOfCreationDay;
     });

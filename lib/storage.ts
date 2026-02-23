@@ -6,7 +6,7 @@ import {
   type Character, type InsertCharacter,
   type Item, type InventoryItem,
   type Run, type RunWithItems, type StravaAccount, type RunItem, type UserUnlock,
-  type FriendProfile, type DiscoverableUser, type Referral,
+  type FriendProfile, type DiscoverableUser, type Referral, type FriendSource,
   SPRITE_TYPES, type SpriteType
 } from "@/shared/schema";
 import { type User } from "@/shared/models/auth";
@@ -470,7 +470,7 @@ export class DatabaseStorage implements IStorage {
           totalMedals: char?.medalBalance ?? null,
           totalItemsUnlocked: unlockCount,
           lastItemReceived: lastItem,
-          source: f.source as "club" | "code",
+          source: f.source as FriendSource,
           friendSince: f.createdAt.toISOString(),
         };
       }
@@ -487,7 +487,7 @@ export class DatabaseStorage implements IStorage {
         totalMedals: null,
         totalItemsUnlocked: null,
         lastItemReceived: null,
-        source: f.source as "club" | "code",
+        source: f.source as FriendSource,
         friendSince: f.createdAt.toISOString(),
       };
     });
