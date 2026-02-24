@@ -29,6 +29,15 @@ const rarityBorderColors: Record<string, string> = {
 
 const RARITY_OPTIONS = ["all", "common", "uncommon", "rare", "epic", "legendary", "mythic"] as const;
 
+function getNameFontSize(name: string): string {
+  const longestWord = name.split(" ").reduce((a, b) => (a.length >= b.length ? a : b), "");
+  const len = longestWord.length;
+  if (len <= 6) return "text-[9px]";
+  if (len <= 8) return "text-[8px]";
+  if (len <= 10) return "text-[7px]";
+  return "text-[6px]";
+}
+
 function sortItemsAlphabetically(items: any[]) {
   return [...items].sort((a, b) => {
     const aStartsWithNumber = /^\d/.test(a.name);
@@ -109,10 +118,10 @@ export default function Achievements() {
             <div className="aspect-square bg-muted/30 rounded-lg mb-1 flex items-center justify-center overflow-hidden">
               <img src={item.imageUrl} alt={item.name} className={`w-full h-full object-contain transition-all duration-200 ${!item.unlocked ? "opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0" : ""}`} onError={(e) => { e.currentTarget.style.display = "none"; }} />
             </div>
-            <h3 className="font-pixel text-[9px] truncate mb-1 text-foreground" title={item.name}>{item.name}</h3>
+            <h3 className={`font-pixel ${getNameFontSize(item.name)} leading-tight mb-1 text-foreground`}>{item.name}</h3>
             <p className={`text-[8px] capitalize font-semibold ${rarityTextColors[item.rarity] || "text-gray-400"}`}>{item.rarity}</p>
             {item.isSpecialReward && item.specialRewardCondition && (
-              <p className="text-[7px] text-amber-600 mt-1 truncate" title={item.specialRewardCondition}>{item.specialRewardCondition}</p>
+              <p className="text-[7px] text-amber-600 mt-1 break-words leading-tight">{item.specialRewardCondition}</p>
             )}
             {item.unlocked ? (
               <div className="mt-1 text-[8px] font-semibold text-green-600 bg-green-50 dark:bg-green-950/30 px-1.5 py-0.5 rounded text-center">Owned</div>
