@@ -4,9 +4,10 @@ import { api, type ActivitiesResponse } from "@/shared/routes";
 interface UseActivitiesOptions {
   page?: number;
   limit?: number;
+  staleTime?: number;
 }
 
-export function useActivities({ page = 1, limit = 25 }: UseActivitiesOptions = {}) {
+export function useActivities({ page = 1, limit = 25, staleTime }: UseActivitiesOptions = {}) {
   return useQuery({
     queryKey: [api.activities.list.path, page, limit],
     queryFn: async (): Promise<ActivitiesResponse> => {
@@ -16,5 +17,6 @@ export function useActivities({ page = 1, limit = 25 }: UseActivitiesOptions = {
       return res.json();
     },
     placeholderData: keepPreviousData,
+    ...(staleTime !== undefined && { staleTime }),
   });
 }

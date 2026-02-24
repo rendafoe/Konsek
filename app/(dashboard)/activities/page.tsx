@@ -8,7 +8,7 @@ import { useNightMode } from "@/lib/night-mode-context";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FantasyRouteMap } from "@/components/FantasyRouteMap";
-import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { Loader2, ClipboardList, Sparkles, ChevronLeft, ChevronRight, MapPin, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 
 const ITEMS_PER_PAGE = 7;
@@ -55,7 +55,7 @@ function formatDuration(seconds: number): string {
 export default function ActivityLog() {
   const [page, setPage] = useState(1);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
-  const { data, isLoading, isFetching } = useActivities({ page, limit: ITEMS_PER_PAGE });
+  const { data, isLoading, isFetching, isError, refetch } = useActivities({ page, limit: ITEMS_PER_PAGE, staleTime: 0 });
   const { isNight } = useNightMode();
   const { formatDistance } = useDistanceUnit();
 
@@ -95,7 +95,21 @@ export default function ActivityLog() {
               </div>
             )}
 
-            {activities.length === 0 ? (
+            {isError ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <AlertCircle className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                <p className="font-pixel text-sm text-foreground">Failed to load</p>
+                <p className="text-xs text-muted-foreground mt-1 mb-3">
+                  Could not fetch your activities.
+                </p>
+                <button
+                  onClick={() => refetch()}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : activities.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64">
                 <ClipboardList className="w-10 h-10 text-muted-foreground/40 mb-3" />
                 <p className="font-pixel text-sm text-foreground">No Activities Yet</p>
@@ -171,7 +185,21 @@ export default function ActivityLog() {
                 </div>
               )}
 
-              {activities.length === 0 ? (
+              {isError ? (
+                <div className="flex flex-col items-center justify-center h-64">
+                  <AlertCircle className="w-10 h-10 text-amber-700/40 mb-3" />
+                  <p className="font-pixel text-sm text-amber-900">Failed to load</p>
+                  <p className="text-xs text-amber-800/70 mt-1 mb-3">
+                    Could not fetch your activities.
+                  </p>
+                  <button
+                    onClick={() => refetch()}
+                    className="text-xs text-amber-700 hover:underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : activities.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64">
                   <ClipboardList className="w-10 h-10 text-amber-700/40 mb-3" />
                   <p className="font-pixel text-sm text-amber-900">No Activities Yet</p>
