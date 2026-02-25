@@ -278,7 +278,9 @@ export default function Dashboard() {
 
           {/* Daily Check-In (outside hero zone) */}
           {!isCharacterDead && (
-            <DailyCheckInBox variant="cozy" />
+            <div className="relative md:z-30">
+              <DailyCheckInBox variant="cozy" />
+            </div>
           )}
 
           {/* Esko Character */}

@@ -59,7 +59,6 @@ const SORT_OPTIONS = [
   { value: "name", label: "Name" },
   { value: "distance", label: "Distance" },
   { value: "medals", label: "Medals" },
-  { value: "runs", label: "Runs" },
   { value: "esko_age", label: "Esko Age" },
 ] as const;
 
@@ -440,7 +439,7 @@ export default function Friends() {
       )}
 
       {tab === "discover" && (
-        <>
+        <div className="lg:max-w-2xl lg:mx-auto">
           {/* Search input */}
           <div className="relative mb-4">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -514,32 +513,30 @@ export default function Friends() {
                         </div>
                       )}
 
-                      {/* Name + Esko stage */}
+                      {/* Name + Esko stage + stats */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
-                        {user.eskoStage && (
-                          <div className="flex items-center gap-1.5">
-                            <img
-                              src={getEskoImageUrl(user.eskoStage)}
-                              alt={user.eskoStage}
-                              className="w-4 h-4 object-contain"
-                            />
-                            <span className="text-[10px] text-muted-foreground">{user.eskoStage}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Compact stats (visible on sm+) */}
-                      <div className="hidden sm:flex items-center gap-3 text-[10px] text-muted-foreground flex-shrink-0">
-                        <span className="flex items-center gap-0.5" title="Runs">
-                          <Footprints size={10} /> {user.totalRuns}
-                        </span>
-                        <span className="flex items-center gap-0.5" title="Distance">
-                          <Ruler size={10} /> {(user.totalDistance / 1609.344).toFixed(0)}mi
-                        </span>
-                        <span className="flex items-center gap-0.5" title="Medals">
-                          <Crown size={10} className="text-yellow-500" /> {user.medalBalance}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+                          {user.eskoStage && (
+                            <div className="flex items-center gap-1">
+                              <img
+                                src={getEskoImageUrl(user.eskoStage)}
+                                alt={user.eskoStage}
+                                className="w-4 h-4 object-contain"
+                              />
+                              <span>{user.eskoStage}</span>
+                            </div>
+                          )}
+                          <span className="flex items-center gap-0.5" title="Medals">
+                            <Crown size={10} className="text-yellow-500" /> {user.medalBalance}
+                          </span>
+                          <span className="flex items-center gap-0.5" title="Runs">
+                            <Footprints size={10} /> {user.totalRuns}
+                          </span>
+                          <span className="flex items-center gap-0.5" title="Distance">
+                            <Ruler size={10} /> {(user.totalDistance / 1609.344).toFixed(0)}mi
+                          </span>
+                        </div>
                       </div>
 
                       {/* Add button */}
@@ -587,7 +584,7 @@ export default function Friends() {
               )}
             </>
           )}
-        </>
+        </div>
       )}
     </main>
     </PageBackground>

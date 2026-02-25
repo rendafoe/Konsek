@@ -64,6 +64,13 @@ export async function claimReferral(
     // Referrer's character may be dead — skip silently
   }
 
+  // Auto-add both users as friends
+  try {
+    await storage.addFriendByCode(referredUserId, referralCode);
+  } catch {
+    // Skip silently if friend add fails (e.g. already friends, missing Strava account)
+  }
+
   return { referrerName: referrer.displayName, welcomeBonus: WELCOME_BONUS };
 }
 
