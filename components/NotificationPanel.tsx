@@ -76,7 +76,7 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
-        align="end"
+        align="center"
         sideOffset={8}
         className="w-80 p-0 overflow-hidden"
       >
