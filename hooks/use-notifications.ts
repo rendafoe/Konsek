@@ -25,6 +25,7 @@ export function useNotifications() {
       return json;
     },
     staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 }
 
