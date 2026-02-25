@@ -82,7 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user, account, profile }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id ?? token.sub;
       }
 
       // On initial Strava sign-in, populate strava_accounts and update user profile.
@@ -128,8 +128,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token?.id) {
-        session.user.id = token.id as string;
+      const id = (token.id as string | undefined) ?? token.sub;
+      if (id) {
+        session.user.id = id;
       }
       return session;
     },
