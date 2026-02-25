@@ -37,18 +37,28 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     };
 
-    const discordForm = new FormData();
-    discordForm.append("payload_json", JSON.stringify({ embeds: [embed] }));
+    const validImages = images.filter((f) => f instanceof File && f.size > 0).slice(0, 3);
 
-    const validImages = images.filter((f) => f instanceof File && f.size > 0);
-    validImages.slice(0, 3).forEach((file, i) => {
-      discordForm.append(`files[${i}]`, file, file.name || `screenshot-${i}.png`);
-    });
-
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      body: discordForm,
-    });
+    let res: Response;
+    if (validImages.length === 0) {
+      // No attachments — send plain JSON
+      res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embeds: [embed] }),
+      });
+    } else {
+      // Attachments present — send multipart
+      const discordForm = new FormData();
+      discordForm.append("payload_json", JSON.stringify({ embeds: [embed] }));
+      validImages.forEach((file, i) => {
+        discordForm.append(`files[${i}]`, file, file.name || `screenshot-${i}.png`);
+      });
+      res = await fetch(webhookUrl, {
+        method: "POST",
+        body: discordForm,
+      });
+    }
 
     if (!res.ok) {
       const text = await res.text();
