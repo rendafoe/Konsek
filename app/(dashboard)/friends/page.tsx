@@ -184,74 +184,74 @@ export default function Friends() {
       {tab === "friends" && (
         <>
           {/* Action Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mb-4 lg:mb-6">
             {/* Your Friend Code */}
-            <div className="cozy-card p-4">
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Your Friend Code</h3>
+            <div className="cozy-card p-2.5 lg:p-4">
+              <h3 className="text-xs lg:text-sm font-semibold text-muted-foreground mb-1 lg:mb-2">Your Friend Code</h3>
               {codeData?.friendCode ? (
-                <div className="flex items-center gap-3">
-                  <span className="font-pixel text-lg tracking-widest text-foreground">
+                <div className="flex items-center gap-1.5 lg:gap-3">
+                  <span className="font-pixel text-sm lg:text-lg tracking-widest text-foreground truncate">
                     {formatCode(codeData.friendCode)}
                   </span>
                   <button
                     onClick={handleCopyCode}
-                    className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-all"
+                    className="p-1.5 lg:p-2 rounded-lg bg-muted hover:bg-muted/80 transition-all flex-shrink-0"
                     title="Copy code"
                   >
-                    {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                    {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
                   </button>
                 </div>
               ) : (
-                <span className="text-sm text-muted-foreground">Sync your runs to get a code</span>
+                <span className="text-xs text-muted-foreground">Sync runs to get a code</span>
               )}
             </div>
 
             {/* Add a Friend */}
-            <div className="cozy-card p-4">
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Add a Friend</h3>
-              <div className="flex items-center gap-2">
+            <div className="cozy-card p-2.5 lg:p-4">
+              <h3 className="text-xs lg:text-sm font-semibold text-muted-foreground mb-1 lg:mb-2">Add a Friend</h3>
+              <div className="flex items-center gap-1.5 lg:gap-2">
                 <input
                   type="text"
                   value={codeInput}
                   onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
                   placeholder="XXXX-XXXX"
                   maxLength={9}
-                  className="flex-1 px-3 py-2 bg-background border-2 border-border rounded-lg text-sm font-pixel tracking-wider focus:outline-none focus:border-primary"
+                  className="flex-1 min-w-0 px-2 py-1.5 lg:px-3 lg:py-2 bg-background border-2 border-border rounded-lg text-xs lg:text-sm font-pixel tracking-wider focus:outline-none focus:border-primary"
                 />
                 <button
                   onClick={handleAddByCode}
                   disabled={isAdding || codeInput.replace(/-/g, "").length !== 8}
-                  className="px-4 py-2 bg-primary text-white rounded-lg font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
+                  className="px-2.5 py-1.5 lg:px-4 lg:py-2 bg-primary text-white rounded-lg font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50 flex-shrink-0"
                 >
-                  {isAdding ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                  {isAdding ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
                 </button>
               </div>
             </div>
 
             {/* Invite a Friend */}
-            <div className="cozy-card p-4">
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Invite a Friend</h3>
+            <div className="cozy-card p-2.5 lg:p-4">
+              <h3 className="text-xs lg:text-sm font-semibold text-muted-foreground mb-1 lg:mb-2">Invite a Friend</h3>
               <button
                 onClick={handleCopyInviteLink}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg font-semibold text-sm hover:bg-primary hover:text-white transition-all"
+                className="w-full flex items-center justify-center gap-1.5 lg:gap-2 px-2 py-1.5 lg:px-4 lg:py-2 bg-primary/10 text-primary rounded-lg font-semibold text-xs lg:text-sm hover:bg-primary hover:text-white transition-all"
               >
-                {inviteCopied ? <Check size={16} /> : <ExternalLink size={16} />}
-                {inviteCopied ? "Link Copied!" : "Copy Invite Link"}
+                {inviteCopied ? <Check size={14} /> : <ExternalLink size={14} />}
+                <span className="truncate">{inviteCopied ? "Copied!" : "Copy Invite Link"}</span>
               </button>
             </div>
 
             {/* Referrals Count */}
             <button
               onClick={() => setReferralModalOpen(true)}
-              className="cozy-card p-4 text-left hover:border-primary/30 transition-all"
+              className="cozy-card p-2.5 lg:p-4 text-left hover:border-primary/30 transition-all"
             >
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Referrals</h3>
-              <div className="flex items-center gap-2">
-                <Gift size={20} className="text-primary" />
-                <span className="font-pixel text-lg text-foreground">
+              <h3 className="text-xs lg:text-sm font-semibold text-muted-foreground mb-1 lg:mb-2">Referrals</h3>
+              <div className="flex items-center gap-1.5 lg:gap-2">
+                <Gift size={16} className="text-primary flex-shrink-0 lg:w-5 lg:h-5" />
+                <span className="font-pixel text-sm lg:text-lg text-foreground">
                   {referralStats?.totalReferrals ?? 0}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground truncate">
                   friend{(referralStats?.totalReferrals ?? 0) !== 1 ? "s" : ""} referred
                 </span>
               </div>
