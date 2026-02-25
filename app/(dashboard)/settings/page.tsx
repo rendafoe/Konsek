@@ -5,9 +5,166 @@ import { useAuth } from "@/hooks/use-auth";
 import { useReferralStats } from "@/hooks/use-referrals";
 import { useHaptics } from "@/hooks/use-haptics";
 import { signIn } from "next-auth/react";
-import { Loader2, LogOut, Volume2, Vibrate, RefreshCw, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Loader2,
+  LogOut,
+  Volume2,
+  Vibrate,
+  RefreshCw,
+  AlertTriangle,
+  Send,
+  ImagePlus,
+  X,
+  CheckCircle,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { PageBackground } from "@/components/PageBackground";
+
+function FeedbackForm() {
+  const [message, setMessage] = useState("");
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (images.length === 0) {
+      setPreviews([]);
+      return;
+    }
+    const newPreviews: string[] = new Array(images.length).fill("");
+    let pending = images.length;
+    images.forEach((file, i) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newPreviews[i] = e.target?.result as string;
+        pending--;
+        if (pending === 0) setPreviews([...newPreviews]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }, [images]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    setImages((prev) => [...prev, ...files].slice(0, 3));
+    e.target.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (!message.trim() || status === "loading") return;
+    setStatus("loading");
+
+    const formData = new FormData();
+    formData.append("message", message.trim());
+    images.forEach((img) => formData.append("images", img));
+
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+      setMessage("");
+      setImages([]);
+      setTimeout(() => setStatus("idle"), 5000);
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 4000);
+    }
+  };
+
+  if (status === "success") {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6 text-center">
+        <CheckCircle size={28} className="text-green-500" />
+        <p className="font-semibold text-sm">Thanks for the feedback!</p>
+        <p className="text-xs text-muted-foreground">Your report has been sent.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Found a bug or have a suggestion? Let us know.
+      </p>
+
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Describe the issue or your feedback..."
+        rows={4}
+        className="w-full p-3 text-sm bg-muted/30 border border-border rounded-lg resize-none placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
+      />
+
+      {previews.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          {previews.map((src, i) => (
+            <div key={i} className="relative group">
+              <img
+                src={src}
+                alt={`Screenshot ${i + 1}`}
+                className="w-20 h-20 object-cover rounded-lg border border-border"
+              />
+              <button
+                onClick={() => removeImage(i)}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-2 items-center">
+        {images.length < 3 && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
+            >
+              <ImagePlus size={14} />
+              {images.length > 0 ? `${images.length}/3 screenshots` : "Add Screenshot"}
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          disabled={!message.trim() || status === "loading"}
+          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-auto"
+        >
+          {status === "loading" ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Send size={14} />
+          )}
+          Submit
+        </button>
+      </div>
+
+      {status === "error" && (
+        <p className="text-xs text-destructive">Failed to send. Please try again.</p>
+      )}
+    </div>
+  );
+}
 
 export default function Settings() {
   const { data: stravaStatus, isLoading } = useStravaStatus();
@@ -121,6 +278,14 @@ export default function Settings() {
               </div>
             )}
           </div>
+        </section>
+
+        {/* Feedback & Bug Report */}
+        <section className="cozy-card p-5">
+          <h2 className="font-pixel text-sm uppercase mb-4 text-muted-foreground">
+            Feedback & Bug Report
+          </h2>
+          <FeedbackForm />
         </section>
 
         {/* Sign Out */}
