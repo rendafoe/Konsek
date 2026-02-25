@@ -17,6 +17,8 @@ export function useActivities({ page = 1, limit = 25, staleTime }: UseActivities
       return res.json();
     },
     placeholderData: keepPreviousData,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
     ...(staleTime !== undefined && { staleTime }),
   });
 }
