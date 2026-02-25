@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { items, runItems, inventory, userUnlocks, type Item, type Rarity } from "@/shared/schema";
 import { eq, and } from "drizzle-orm";
 import { checkWeatherConditions, type WeatherCheckResult } from "@/lib/services/weatherService";
+import { createNotification } from "@/lib/services/notificationService";
 
 // Distance-based rarity probability tables
 // Each array: [common, uncommon, rare, epic, legendary]
@@ -216,6 +217,14 @@ export async function awardItemsToUser(
     }
 
     results.push({ item, isNew });
+
+    await createNotification(
+      userId,
+      "item_received",
+      "Item found!",
+      `You found a ${item.rarity} item: ${item.name}!`,
+      { itemName: item.name, rarity: item.rarity, imageUrl: item.imageUrl }
+    );
   }
 
   return results;

@@ -2,15 +2,17 @@ import { db } from "./db";
 import { eq, desc, asc, and, count, gte, lt, notInArray, inArray, sql, ilike, or } from "drizzle-orm";
 import {
   characters, items, inventory, runs, stravaAccounts, runItems, userUnlocks,
-  friends, referrals,
+  friends, referrals, notifications,
   type Character, type InsertCharacter,
   type Item, type InventoryItem,
   type Run, type RunWithItems, type StravaAccount, type RunItem, type UserUnlock,
   type FriendProfile, type DiscoverableUser, type Referral, type FriendSource,
+  type Notification,
   SPRITE_TYPES, type SpriteType
 } from "@/shared/schema";
 import { type User } from "@/shared/models/auth";
 import { getCharacterStage, STAGE_DISPLAY_NAMES } from "./services/medalService";
+import { createNotification } from "./services/notificationService";
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -68,6 +70,11 @@ export interface IStorage {
   updateReferralMedals(referralId: number, newTotal: number): Promise<void>;
   getReferralCount(referrerId: string): Promise<number>;
   getReferrerByFriendCode(friendCode: string): Promise<{ userId: string; displayName: string } | undefined>;
+
+  // Notifications
+  getNotifications(userId: string): Promise<Notification[]>;
+  getUnreadCount(userId: string): Promise<number>;
+  markAllNotificationsRead(userId: string): Promise<void>;
 
   // Friends
   getFriendsWithProfiles(userId: string): Promise<FriendProfile[]>;
@@ -385,6 +392,31 @@ export class DatabaseStorage implements IStorage {
     return { userId: account.userId, displayName };
   }
 
+  // === NOTIFICATIONS ===
+
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async getUnreadCount(userId: string): Promise<number> {
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+    return total;
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  }
+
   // === FRIENDS ===
 
   async getFriendsWithProfiles(userId: string): Promise<FriendProfile[]> {
@@ -643,6 +675,14 @@ export class DatabaseStorage implements IStorage {
       profilePicture: ownAccount.athleteProfilePicture,
       source: "discover",
     }).onConflictDoNothing();
+
+    await createNotification(
+      targetAccount.userId,
+      "friend_added",
+      "New friend!",
+      `${ownDisplayName} added you as a friend.`,
+      { friendName: ownDisplayName, profilePicture: ownAccount.athleteProfilePicture }
+    );
   }
 
   async addFriendByCode(userId: string, friendCode: string): Promise<void> {
@@ -679,6 +719,14 @@ export class DatabaseStorage implements IStorage {
       profilePicture: ownAccount.athleteProfilePicture,
       source: "code",
     }).onConflictDoNothing();
+
+    await createNotification(
+      targetAccount.userId,
+      "friend_added",
+      "New friend!",
+      `${ownDisplayName} added you as a friend.`,
+      { friendName: ownDisplayName, profilePicture: ownAccount.athleteProfilePicture }
+    );
   }
 
   async removeFriend(userId: string, stravaAthleteId: string): Promise<void> {

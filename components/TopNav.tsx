@@ -7,6 +7,8 @@ import { useMedalStatus } from "@/hooks/use-medals";
 import { useAuth } from "@/hooks/use-auth";
 import { useSyncContext } from "@/lib/sync-context";
 import { useHaptics } from "@/hooks/use-haptics";
+import { useNotifications } from "@/hooks/use-notifications";
+import { NotificationPanel } from "@/components/NotificationPanel";
 import {
   Home,
   Sparkles,
@@ -41,6 +43,8 @@ export function TopNav() {
   const { logout } = useAuth();
   const { sync, isSyncing } = useSyncContext();
   const { play, playWithVibrate } = useHaptics();
+  const { data: notificationsData } = useNotifications();
+  const unreadCount = notificationsData?.unreadCount ?? 0;
 
   return (
     <nav className="bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4 gap-4 z-50 shadow-sm" style={{ height: "calc(3.5rem + env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)" }}>
@@ -89,17 +93,26 @@ export function TopNav() {
           </div>
         )}
 
-        {/* Strava Profile */}
+        {/* Strava Profile + Notification Badge */}
         {stravaStatus?.isConnected && stravaStatus.athleteProfilePicture && (
-          <img
-            src={stravaStatus.athleteProfilePicture}
-            alt={stravaStatus.athleteName || "Profile"}
-            className="w-8 h-8 rounded-full border-2 border-primary/30 hidden sm:block"
-            title={stravaStatus.lastSync
-              ? `${stravaStatus.athleteName} · Synced ${format(new Date(stravaStatus.lastSync), "MMM d, h:mm a")}`
-              : stravaStatus.athleteName || undefined
-            }
-          />
+          <NotificationPanel>
+            <div className="relative cursor-pointer">
+              <img
+                src={stravaStatus.athleteProfilePicture}
+                alt={stravaStatus.athleteName || "Profile"}
+                className="w-8 h-8 rounded-full border-2 border-primary/30"
+                title={stravaStatus.lastSync
+                  ? `${stravaStatus.athleteName} · Synced ${format(new Date(stravaStatus.lastSync), "MMM d, h:mm a")}`
+                  : stravaStatus.athleteName || undefined
+                }
+              />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 border border-background leading-none">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </div>
+          </NotificationPanel>
         )}
 
         {/* Sync Button */}

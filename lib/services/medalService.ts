@@ -8,6 +8,7 @@ import {
   type MedalTransaction
 } from "@/shared/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
+import { createNotification } from "./notificationService";
 
 // Streak bonus probability table (for every 3rd day)
 // [medals, probability%]
@@ -322,6 +323,25 @@ export async function performCheckIn(
     : `Daily check-in reward`;
 
   await awardMedals(userId, medalsAwarded, "check_in", checkIn.id, description);
+
+  // Notifications (fire-and-forget — errors are swallowed inside createNotification)
+  if (isStreakBonus) {
+    await createNotification(
+      userId,
+      "check_in_streak",
+      `${newStreakDay}-day streak!`,
+      `You hit a ${newStreakDay}-day check-in streak! You earned ${medalsAwarded} medals.`,
+      { streakDay: newStreakDay, medals: medalsAwarded }
+    );
+  } else {
+    await createNotification(
+      userId,
+      "check_in",
+      "Daily check-in!",
+      `You earned ${medalsAwarded} medal${medalsAwarded !== 1 ? "s" : ""} for checking in today.`,
+      { medals: medalsAwarded }
+    );
+  }
 
   return {
     medalsAwarded,

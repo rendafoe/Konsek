@@ -4,6 +4,7 @@ import { storage } from "@/lib/storage";
 import { processRunRewards } from "@/lib/services/itemRewards";
 import { checkProgressionReward } from "@/lib/services/medalService";
 import { processReferralRunMedals } from "@/lib/services/referralService";
+import { createNotification } from "@/lib/services/notificationService";
 
 export async function POST(req: NextRequest) {
   const userId = await getAuthenticatedUser();
@@ -239,6 +240,14 @@ export async function POST(req: NextRequest) {
           medalsAwarded: progression.medalsAwarded,
         };
         totalMedalsAwarded += progression.medalsAwarded;
+
+        await createNotification(
+          userId,
+          "evolution",
+          "Esko evolved!",
+          `Esko grew to ${progression.displayName}! You earned ${progression.medalsAwarded} medals.`,
+          { stage: progression.displayName, medals: progression.medalsAwarded }
+        );
       }
 
       // Award progressive referral medals to the referrer (if this user was referred)

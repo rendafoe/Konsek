@@ -1,5 +1,6 @@
 import { storage } from "@/lib/storage";
 import { awardMedals } from "./medalService";
+import { createNotification } from "./notificationService";
 
 const MAX_MEDALS_PER_REFERRAL = 25;
 const SIGNUP_BONUS = 5;
@@ -60,6 +61,13 @@ export async function claimReferral(
       `Referral bonus: new user joined`
     );
     await storage.updateReferralMedals(referral.id, SIGNUP_BONUS);
+    await createNotification(
+      referrer.userId,
+      "referral_signup",
+      "New referral!",
+      `Someone joined Konsek using your referral link. You earned ${SIGNUP_BONUS} medals.`,
+      { medals: SIGNUP_BONUS }
+    );
   } catch {
     // Referrer's character may be dead — skip silently
   }
@@ -120,6 +128,16 @@ export async function processReferralRunMedals(
         : `Referral: ${newRuns} new run${newRuns > 1 ? "s" : ""} by referred user`
     );
     await storage.updateReferralMedals(referral.id, currentMedals + medalsToAward);
+
+    if (previousTotalRuns === 0) {
+      await createNotification(
+        referral.referrerId,
+        "referral_first_run",
+        "Referral first run!",
+        `Your referred friend completed their first run! You earned ${medalsToAward} medals.`,
+        { medals: medalsToAward }
+      );
+    }
   } catch {
     // Referrer's character may be dead — skip silently
   }

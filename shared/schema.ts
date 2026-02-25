@@ -140,6 +140,18 @@ export const medalTransactions = pgTable("medal_transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// In-app notifications
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  metadata: jsonb("metadata"),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Referrals (schema only for now - implementation deferred)
 export const referrals = pgTable("referrals", {
   id: serial("id").primaryKey(),
@@ -295,6 +307,7 @@ export const insertDailyCheckInSchema = createInsertSchema(dailyCheckIns).omit({
 export const insertMedalTransactionSchema = createInsertSchema(medalTransactions).omit({ id: true, createdAt: true });
 export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
 export const insertFriendSchema = createInsertSchema(friends).omit({ id: true, createdAt: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 
 // === TYPES ===
 export type Character = typeof characters.$inferSelect;
@@ -311,6 +324,7 @@ export type DailyCheckIn = typeof dailyCheckIns.$inferSelect;
 export type MedalTransaction = typeof medalTransactions.$inferSelect;
 export type Referral = typeof referrals.$inferSelect;
 export type Friend = typeof friends.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
 // Friend profile type returned by getFriendsWithProfiles
 export interface FriendProfile {
   displayName: string;
