@@ -35,6 +35,12 @@ export const metadata: Metadata = {
   description: "Your running companion for consistency. Raise a digital companion powered by your real-world runs via Strava.",
   icons: {
     icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Konsek",
   },
   openGraph: {
     title: "Konsek",
